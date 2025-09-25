@@ -93,6 +93,13 @@ function openModal(modalId) {
                 if (editor) {
                     editor.focus();
                     console.log('Blog editor focused for testing');
+                    
+                    // MANUEL TEST: Editor'a yazı ekle
+                    setTimeout(() => {
+                        editor.innerHTML = '<p>MANUEL TEST YAZISI</p>';
+                        console.log('MANUEL TEST: Editor content set to:', editor.innerHTML);
+                        syncEditorContent();
+                    }, 500);
                 }
             }, 100);
         } else if (modalId === 'announcement-modal') {
@@ -1314,6 +1321,21 @@ function addEditorListeners(editorId) {
         editor.addEventListener('keypress', () => {
             console.log('KEYPRESS EVENT TRIGGERED for:', editorId);
             syncEditorContent();
+        });
+        
+        // AGGRESSIVE TEST: Click event
+        editor.addEventListener('click', () => {
+            console.log('CLICK EVENT TRIGGERED for:', editorId);
+            editor.focus();
+        });
+        
+        // AGGRESSIVE TEST: Mouse events
+        editor.addEventListener('mousedown', () => {
+            console.log('MOUSEDOWN EVENT TRIGGERED for:', editorId);
+        });
+        
+        editor.addEventListener('mouseup', () => {
+            console.log('MOUSEUP EVENT TRIGGERED for:', editorId);
         });
         
         // Add paste event listener
