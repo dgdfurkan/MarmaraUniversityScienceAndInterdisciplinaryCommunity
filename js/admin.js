@@ -242,6 +242,11 @@ async function handleBlogSubmit(e) {
         status: data.status || 'published'
     };
     
+    // Debug: Log the content being sent
+    console.log('Blog content being sent to Supabase:', data.content);
+    console.log('Content type:', typeof data.content);
+    console.log('Content length:', data.content ? data.content.length : 'null/undefined');
+    
     // Add image data only if provided
     if (imageUrl) {
         cleanData.image_url = imageUrl;
@@ -253,6 +258,11 @@ async function handleBlogSubmit(e) {
     try {
         const result = await DatabaseService.createBlogPost(cleanData);
         const newRecord = result[0];
+        
+        // Debug: Log the record ID
+        console.log('New blog record:', newRecord);
+        console.log('Record ID type:', typeof newRecord.id);
+        console.log('Record ID value:', newRecord.id);
         
         // Log activity
         await DatabaseService.logActivity('create', 'blog_posts', newRecord.id, newRecord.title, null, newRecord);
