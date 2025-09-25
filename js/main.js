@@ -76,7 +76,7 @@ async function loadBlogPosts() {
             incrementViewCount(post.id);
             
             return `
-                <div class="card" data-post-id="${post.id}">
+                <div class="card" data-post-id="${post.id}" onclick="readFullBlog(${post.id})" style="cursor: pointer;">
                     <div class="card-img-holder">
                         <img src="${imageSrc}" alt="${post.title}">
                     </div>
@@ -86,10 +86,10 @@ async function loadBlogPosts() {
                         ${post.excerpt || post.content.substring(0, 150) + '...'}
                     </p>
                     <div class="options">
-                        <span onclick="readFullBlog(${post.id})">
+                        <span>
                             Blog Yazısını Oku
                         </span>
-                        <button class="btn" onclick="toggleLike(${post.id})">
+                        <button class="btn" onclick="event.stopPropagation(); toggleLike(${post.id})">
                             <i class="fas fa-heart" style="color: ${post.user_liked ? '#ef4444' : '#22215B'}"></i>
                             ${post.like_count || 0}
                         </button>
@@ -274,8 +274,125 @@ async function sharePost(postId) {
 }
 
 function readFullBlog(postId) {
-    // TODO: Implement full blog reading page
-    alert('Blog detay sayfası yakında eklenecek!');
+    // Add click animation
+    const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (cardElement) {
+        cardElement.classList.add('clicking');
+        setTimeout(() => {
+            cardElement.classList.remove('clicking');
+        }, 200);
+    }
+    
+    // Find the post data
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    if (!postElement) return;
+    
+    // Get post data from the element or fetch from database
+    const postTitle = postElement.querySelector('.blog-title').textContent;
+    const postDate = postElement.querySelector('.blog-time').textContent;
+    const postDescription = postElement.querySelector('.description').textContent;
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="blog-modal-overlay" id="blog-modal-overlay">
+            <div class="blog-modal">
+                <button class="blog-modal-close" onclick="closeBlogModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="blog-modal-header">
+                    <h1 class="blog-modal-title">${postTitle}</h1>
+                    <div class="blog-modal-meta">
+                        <div class="blog-modal-date">
+                            <i class="fas fa-calendar"></i>
+                            <span>${postDate}</span>
+                        </div>
+                        <div class="blog-modal-author">
+                            <i class="fas fa-user"></i>
+                            <span>MUSIC Ekibi</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="blog-modal-content" id="blog-modal-content">
+                    <p>${postDescription}</p>
+                    <p>Bu blog yazısının tam içeriği yakında eklenecek. Şu anda özet bilgileri görüntülüyorsunuz.</p>
+                    <p>Marmara Üniversitesi Bilim ve Disiplinlerarası Topluluğu olarak, bilimi geniş kitlelere ulaştırmak ve disiplinlerarası etkileşimi artırmak için çalışıyoruz.</p>
+                    <p>Etkinliklerimiz, atölyelerimiz ve bilimsel çalışmalarımız hakkında daha fazla bilgi için bizi takip etmeye devam edin!</p>
+                </div>
+                <div class="blog-modal-actions">
+                    <button class="blog-modal-like" onclick="toggleModalLike(${postId})" id="modal-like-${postId}">
+                        <i class="fas fa-heart"></i>
+                        <span>Beğen</span>
+                    </button>
+                    <button class="blog-modal-share" onclick="shareModalPost(${postId})">
+                        <i class="fas fa-share-alt"></i>
+                        <span>Paylaş</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        const modalOverlay = document.getElementById('blog-modal-overlay');
+        modalOverlay.classList.add('active');
+        
+        // Close modal when clicking outside
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                closeBlogModal();
+            }
+        });
+    }, 10);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBlogModal() {
+    const modal = document.getElementById('blog-modal-overlay');
+    if (modal) {
+        modal.classList.remove('active');
+        
+        // Remove modal after animation
+        setTimeout(() => {
+            modal.remove();
+            document.body.style.overflow = '';
+        }, 300);
+    }
+}
+
+function toggleModalLike(postId) {
+    // Use the existing toggleLike function
+    toggleLike(postId);
+    
+    // Update modal like button
+    const modalLikeBtn = document.getElementById(`modal-like-${postId}`);
+    if (modalLikeBtn) {
+        // This will be updated by the toggleLike function
+        setTimeout(() => {
+            // Check if the card like button shows liked state
+            const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
+            const cardLikeBtn = cardElement.querySelector(`[onclick="toggleLike(${postId})"]`);
+            const cardIcon = cardLikeBtn.querySelector('i');
+            
+            if (cardIcon.style.color === 'rgb(239, 68, 68)') {
+                modalLikeBtn.classList.add('liked');
+                modalLikeBtn.querySelector('span').textContent = 'Beğenildi';
+            } else {
+                modalLikeBtn.classList.remove('liked');
+                modalLikeBtn.querySelector('span').textContent = 'Beğen';
+            }
+        }, 100);
+    }
+}
+
+function shareModalPost(postId) {
+    // Use the existing sharePost function
+    sharePost(postId);
 }
 
 function openCommentModal(postId) {
