@@ -40,16 +40,43 @@ ALTER TABLE version_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE drafts ENABLE ROW LEVEL SECURITY;
 
 -- Allow anonymous read access for activity logs
-CREATE POLICY IF NOT EXISTS "Allow anonymous read access" ON activity_logs
-    FOR SELECT USING (true);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'activity_logs' 
+        AND policyname = 'Allow anonymous read access'
+    ) THEN
+        CREATE POLICY "Allow anonymous read access" ON activity_logs
+            FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Allow anonymous read access for version history
-CREATE POLICY IF NOT EXISTS "Allow anonymous read access" ON version_history
-    FOR SELECT USING (true);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'version_history' 
+        AND policyname = 'Allow anonymous read access'
+    ) THEN
+        CREATE POLICY "Allow anonymous read access" ON version_history
+            FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Allow anonymous read access for drafts
-CREATE POLICY IF NOT EXISTS "Allow anonymous read access" ON drafts
-    FOR SELECT USING (true);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'drafts' 
+        AND policyname = 'Allow anonymous read access'
+    ) THEN
+        CREATE POLICY "Allow anonymous read access" ON drafts
+            FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_activity_logs_table_record ON activity_logs(table_name, record_id);
