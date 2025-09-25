@@ -68,6 +68,9 @@
                     <div class="user-info">
                         <img src="https://via.placeholder.com/40" alt="Admin" class="user-avatar">
                         <span class="user-name">Admin</span>
+                        <button class="logout-btn" onclick="logout()" title="Çıkış Yap">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -493,5 +496,23 @@
 
     <script src="js/database.js"></script>
     <script src="js/admin.js"></script>
+    <script>
+        // Check authentication
+        document.addEventListener('DOMContentLoaded', () => {
+            const isLoggedIn = sessionStorage.getItem('adminLoggedIn') === 'true' || localStorage.getItem('adminLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                window.location.href = 'admin-login.html';
+            }
+        });
+        
+        // Logout function
+        function logout() {
+            sessionStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminUsername');
+            localStorage.removeItem('adminUsername');
+            window.location.href = 'admin-login.html';
+        }
+    </script>
 </body>
 </html>

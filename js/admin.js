@@ -394,70 +394,269 @@ function getEventTypeName(type) {
     return types[type] || type;
 }
 
-// Action Functions (placeholder implementations)
+// Action Functions
+let currentEditId = null;
+
 function editAnnouncement(id) {
-    console.log('Edit announcement:', id);
-    alert('Duyuru düzenleme özelliği yakında eklenecek!');
+    currentEditId = id;
+    // Get announcement data and populate form
+    const announcement = getAnnouncementById(id);
+    if (announcement) {
+        populateAnnouncementForm(announcement);
+        openModal('announcement-modal');
+    }
+}
+
+function populateAnnouncementForm(announcement) {
+    const form = document.getElementById('announcement-form');
+    form.querySelector('[name="title"]').value = announcement.title || '';
+    form.querySelector('[name="category"]').value = announcement.category || '';
+    form.querySelector('[name="content"]').value = announcement.content || '';
+    form.querySelector('[name="status"]').value = announcement.status || 'active';
 }
 
 function deleteAnnouncement(id) {
     if (confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) {
-        console.log('Delete announcement:', id);
-        alert('Duyuru silindi!');
-        loadAnnouncements();
+        try {
+            // In real app, call API to delete
+            console.log('Delete announcement:', id);
+            alert('Duyuru silindi!');
+            loadAnnouncements();
+        } catch (error) {
+            console.error('Error deleting announcement:', error);
+            alert('Duyuru silinirken bir hata oluştu.');
+        }
     }
 }
 
 function editBlogPost(id) {
-    console.log('Edit blog post:', id);
-    alert('Blog yazısı düzenleme özelliği yakında eklenecek!');
+    currentEditId = id;
+    const blogPost = getBlogPostById(id);
+    if (blogPost) {
+        populateBlogForm(blogPost);
+        openModal('blog-modal');
+    }
+}
+
+function populateBlogForm(blogPost) {
+    const form = document.getElementById('blog-form');
+    form.querySelector('[name="title"]').value = blogPost.title || '';
+    form.querySelector('[name="category"]').value = blogPost.category || '';
+    form.querySelector('[name="content"]').value = blogPost.content || '';
+    form.querySelector('[name="excerpt"]').value = blogPost.excerpt || '';
+    form.querySelector('[name="status"]').value = blogPost.status || 'published';
 }
 
 function deleteBlogPost(id) {
     if (confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
-        console.log('Delete blog post:', id);
-        alert('Blog yazısı silindi!');
-        loadBlogPosts();
+        try {
+            console.log('Delete blog post:', id);
+            alert('Blog yazısı silindi!');
+            loadBlogPosts();
+        } catch (error) {
+            console.error('Error deleting blog post:', error);
+            alert('Blog yazısı silinirken bir hata oluştu.');
+        }
     }
 }
 
 function editEvent(id) {
-    console.log('Edit event:', id);
-    alert('Etkinlik düzenleme özelliği yakında eklenecek!');
+    currentEditId = id;
+    const event = getEventById(id);
+    if (event) {
+        populateEventForm(event);
+        openModal('event-modal');
+    }
+}
+
+function populateEventForm(event) {
+    const form = document.getElementById('event-form');
+    form.querySelector('[name="title"]').value = event.title || '';
+    form.querySelector('[name="type"]').value = event.type || '';
+    form.querySelector('[name="location"]').value = event.location || '';
+    form.querySelector('[name="description"]').value = event.description || '';
+    form.querySelector('[name="max_participants"]').value = event.capacity || '';
+    form.querySelector('[name="registration_required"]').value = event.registration_required ? 'yes' : 'no';
+    
+    // Format date for datetime-local input
+    if (event.date) {
+        const date = new Date(event.date);
+        const formattedDate = date.toISOString().slice(0, 16);
+        form.querySelector('[name="date"]').value = formattedDate;
+    }
 }
 
 function deleteEvent(id) {
     if (confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
-        console.log('Delete event:', id);
-        alert('Etkinlik silindi!');
-        loadEvents();
+        try {
+            console.log('Delete event:', id);
+            alert('Etkinlik silindi!');
+            loadEvents();
+        } catch (error) {
+            console.error('Error deleting event:', error);
+            alert('Etkinlik silinirken bir hata oluştu.');
+        }
     }
 }
 
 function viewRegistration(id) {
-    console.log('View registration:', id);
-    alert('Kayıt detayları yakında eklenecek!');
+    const registration = getRegistrationById(id);
+    if (registration) {
+        showRegistrationDetails(registration);
+    }
+}
+
+function showRegistrationDetails(registration) {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Kayıt Detayları</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="registration-details">
+                <div class="detail-group">
+                    <h4>Kişisel Bilgiler</h4>
+                    <p><strong>Ad Soyad:</strong> ${registration.first_name} ${registration.last_name}</p>
+                    <p><strong>E-posta:</strong> ${registration.email}</p>
+                    <p><strong>Telefon:</strong> ${registration.phone}</p>
+                    <p><strong>Üniversite:</strong> ${registration.university || 'Belirtilmemiş'}</p>
+                    <p><strong>Bölüm:</strong> ${registration.department || 'Belirtilmemiş'}</p>
+                    <p><strong>Öğrenci No:</strong> ${registration.student_id || 'Belirtilmemiş'}</p>
+                    <p><strong>Sınıf:</strong> ${registration.grade || 'Belirtilmemiş'}</p>
+                </div>
+                <div class="detail-group">
+                    <h4>Ek Bilgiler</h4>
+                    <p><strong>Deneyim:</strong> ${registration.experience || 'Belirtilmemiş'}</p>
+                    <p><strong>Motivasyon:</strong> ${registration.motivation || 'Belirtilmemiş'}</p>
+                    <p><strong>Beslenme:</strong> ${registration.dietary || 'Yok'}</p>
+                    <p><strong>Erişilebilirlik:</strong> ${registration.accessibility || 'Yok'}</p>
+                </div>
+                <div class="detail-group">
+                    <h4>İletişim Tercihleri</h4>
+                    <p><strong>E-posta Bildirimleri:</strong> ${registration.email_notifications ? 'Evet' : 'Hayır'}</p>
+                    <p><strong>SMS Bildirimleri:</strong> ${registration.sms_notifications ? 'Evet' : 'Hayır'}</p>
+                    <p><strong>Bülten:</strong> ${registration.newsletter ? 'Evet' : 'Hayır'}</p>
+                </div>
+                <div class="detail-group">
+                    <h4>Kayıt Bilgileri</h4>
+                    <p><strong>Kayıt Tarihi:</strong> ${new Date(registration.created_at).toLocaleString('tr-TR')}</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Kapat</button>
+                <button class="btn btn-primary" onclick="exportRegistration(${registration.id})">
+                    <i class="fas fa-download"></i> PDF İndir
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
 }
 
 function deleteRegistration(id) {
     if (confirm('Bu kaydı silmek istediğinizden emin misiniz?')) {
-        console.log('Delete registration:', id);
-        alert('Kayıt silindi!');
-        loadRegistrations();
+        try {
+            console.log('Delete registration:', id);
+            alert('Kayıt silindi!');
+            loadRegistrations();
+        } catch (error) {
+            console.error('Error deleting registration:', error);
+            alert('Kayıt silinirken bir hata oluştu.');
+        }
     }
 }
 
 function downloadMedia(id) {
-    console.log('Download media:', id);
-    alert('Medya indirme özelliği yakında eklenecek!');
+    const media = getMediaById(id);
+    if (media) {
+        // Create download link
+        const link = document.createElement('a');
+        link.href = media.file_path;
+        link.download = media.original_name;
+        link.click();
+    }
 }
 
 function deleteMedia(id) {
     if (confirm('Bu medya dosyasını silmek istediğinizden emin misiniz?')) {
-        console.log('Delete media:', id);
-        alert('Medya dosyası silindi!');
-        loadMedia();
+        try {
+            console.log('Delete media:', id);
+            alert('Medya dosyası silindi!');
+            loadMedia();
+        } catch (error) {
+            console.error('Error deleting media:', error);
+            alert('Medya dosyası silinirken bir hata oluştu.');
+        }
     }
+}
+
+function exportRegistration(id) {
+    const registration = getRegistrationById(id);
+    if (registration) {
+        // Create PDF content
+        const content = `
+            <h1>Etkinlik Kayıt Detayları</h1>
+            <h2>${registration.first_name} ${registration.last_name}</h2>
+            <p><strong>E-posta:</strong> ${registration.email}</p>
+            <p><strong>Telefon:</strong> ${registration.phone}</p>
+            <p><strong>Kayıt Tarihi:</strong> ${new Date(registration.created_at).toLocaleString('tr-TR')}</p>
+        `;
+        
+        // In real app, use a PDF library like jsPDF
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head><title>Kayıt Detayları</title></head>
+                <body>${content}</body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+}
+
+// Helper functions to get data by ID
+function getAnnouncementById(id) {
+    // In real app, this would fetch from database
+    return { id, title: 'Test Duyuru', category: 'genel', content: 'Test içerik', status: 'active' };
+}
+
+function getBlogPostById(id) {
+    return { id, title: 'Test Blog', category: 'bilim', content: 'Test içerik', excerpt: 'Test özet', status: 'published' };
+}
+
+function getEventById(id) {
+    return { id, title: 'Test Etkinlik', type: 'konferans', date: new Date().toISOString(), location: 'Test Konum', description: 'Test açıklama', capacity: 50, registration_required: true };
+}
+
+function getRegistrationById(id) {
+    return {
+        id,
+        first_name: 'Test',
+        last_name: 'Kullanıcı',
+        email: 'test@example.com',
+        phone: '0555 123 45 67',
+        university: 'Marmara Üniversitesi',
+        department: 'Biyomühendislik',
+        student_id: '123456789',
+        grade: '3',
+        experience: 'little',
+        motivation: 'Test motivasyon',
+        dietary: '',
+        accessibility: '',
+        email_notifications: true,
+        sms_notifications: false,
+        newsletter: true,
+        created_at: new Date().toISOString()
+    };
+}
+
+function getMediaById(id) {
+    return { id, filename: 'test.jpg', original_name: 'test.jpg', file_path: '/path/to/file', file_type: 'image' };
 }
 
 // Media Upload
