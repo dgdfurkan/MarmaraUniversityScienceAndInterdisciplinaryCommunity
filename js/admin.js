@@ -133,6 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleAnnouncementSubmit(e) {
     e.preventDefault();
+    
+    // Sync editor content before submitting
+    syncEditorContent();
+    
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
@@ -159,7 +163,7 @@ async function handleAnnouncementSubmit(e) {
     // Clean data - remove empty fields and image if not needed
     const cleanData = {
         title: data.title,
-        content: data.content,
+        content: data.content, // This now contains HTML from rich text editor
         category: data.category,
         status: data.status || 'active'
     };
@@ -177,6 +181,11 @@ async function handleAnnouncementSubmit(e) {
         alert('Duyuru başarıyla eklendi!');
         closeModal('announcement-modal');
         loadAnnouncements();
+        
+        // Clear editor
+        document.getElementById('announcement-content-editor').innerHTML = '';
+        syncEditorContent();
+        
     } catch (error) {
         console.error('Error creating announcement:', error);
         alert('Duyuru eklenirken bir hata oluştu: ' + error.message);
@@ -247,6 +256,10 @@ async function handleBlogSubmit(e) {
 
 async function handleEventSubmit(e) {
     e.preventDefault();
+    
+    // Sync editor content before submitting
+    syncEditorContent();
+    
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
@@ -277,6 +290,7 @@ async function handleEventSubmit(e) {
         date: data.date,
         location: data.location,
         description: data.description,
+        content: data.content, // This now contains HTML from rich text editor
         price: parseFloat(data.price) || 0,
         capacity: parseInt(data.capacity) || 0,
         registration_required: data.registration_required === 'on',
@@ -296,6 +310,11 @@ async function handleEventSubmit(e) {
         alert('Etkinlik başarıyla eklendi!');
         closeModal('event-modal');
         loadEvents();
+        
+        // Clear editor
+        document.getElementById('event-content-editor').innerHTML = '';
+        syncEditorContent();
+        
     } catch (error) {
         console.error('Error creating event:', error);
         alert('Etkinlik eklenirken bir hata oluştu: ' + error.message);
@@ -1022,22 +1041,45 @@ document.addEventListener('selectionchange', updateToolbarButtons);
 
 // Sync editor content with hidden textarea
 function syncEditorContent() {
-    const editor = document.getElementById('blog-content-editor');
-    const hiddenTextarea = document.getElementById('blog-content-hidden');
-    if (editor && hiddenTextarea) {
-        hiddenTextarea.value = editor.innerHTML;
+    // Sync announcement editor
+    const announcementEditor = document.getElementById('announcement-content-editor');
+    const announcementHidden = document.getElementById('announcement-content-hidden');
+    if (announcementEditor && announcementHidden) {
+        announcementHidden.value = announcementEditor.innerHTML;
+    }
+    
+    // Sync blog editor
+    const blogEditor = document.getElementById('blog-content-editor');
+    const blogHidden = document.getElementById('blog-content-hidden');
+    if (blogEditor && blogHidden) {
+        blogHidden.value = blogEditor.innerHTML;
+    }
+    
+    // Sync event editor
+    const eventEditor = document.getElementById('event-content-editor');
+    const eventHidden = document.getElementById('event-content-hidden');
+    if (eventEditor && eventHidden) {
+        eventHidden.value = eventEditor.innerHTML;
     }
 }
 
-// Add event listener to editor
+// Add event listener to all editors
 document.addEventListener('DOMContentLoaded', () => {
-    const editor = document.getElementById('blog-content-editor');
-    if (editor) {
-        editor.addEventListener('input', syncEditorContent);
-        editor.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const text = e.clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
-        });
-    }
+    const editors = [
+        'announcement-content-editor',
+        'blog-content-editor', 
+        'event-content-editor'
+    ];
+    
+    editors.forEach(editorId => {
+        const editor = document.getElementById(editorId);
+        if (editor) {
+            editor.addEventListener('input', syncEditorContent);
+            editor.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+        }
+    });
 });
