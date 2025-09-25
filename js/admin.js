@@ -1196,29 +1196,36 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - Force focus and get content
+    // Sync blog editor - Get all possible content
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
-        // Force focus to ensure content is captured
-        blogEditor.focus();
+        // Get all possible content types
+        const innerHTML = blogEditor.innerHTML;
+        const textContent = blogEditor.textContent || '';
+        const innerText = blogEditor.innerText || '';
+        const value = blogEditor.value || '';
         
-        // Get content from editor
-        const content = blogEditor.innerHTML;
-        blogHidden.value = content;
+        console.log('Blog editor innerHTML:', innerHTML);
+        console.log('Blog editor textContent:', textContent);
+        console.log('Blog editor innerText:', innerText);
+        console.log('Blog editor value:', value);
         
-        console.log('Blog editor synced:', content);
-        console.log('Blog hidden field value:', blogHidden.value);
-        
-        // If content is empty, try to get text content
-        if (!content || content.trim() === '') {
-            const textContent = blogEditor.textContent || blogEditor.innerText || '';
-            console.log('Blog editor text content:', textContent);
-            if (textContent.trim() !== '') {
-                blogHidden.value = `<p>${textContent}</p>`;
-                console.log('Blog hidden field updated with text:', blogHidden.value);
-            }
+        // Use the first non-empty content
+        let finalContent = '';
+        if (innerHTML && innerHTML.trim() !== '') {
+            finalContent = innerHTML;
+        } else if (textContent && textContent.trim() !== '') {
+            finalContent = `<p>${textContent}</p>`;
+        } else if (innerText && innerText.trim() !== '') {
+            finalContent = `<p>${innerText}</p>`;
+        } else if (value && value.trim() !== '') {
+            finalContent = `<p>${value}</p>`;
         }
+        
+        blogHidden.value = finalContent;
+        console.log('Blog editor final content:', finalContent);
+        console.log('Blog hidden field value:', blogHidden.value);
     }
     
     // Sync event editor
