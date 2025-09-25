@@ -1127,8 +1127,10 @@ function formatText(command) {
     switch(command) {
         case 'bold':
             // Check if already bold, then remove formatting
-            const existingStrong = range.commonAncestorContainer.closest('strong') || 
-                                  range.commonAncestorContainer.closest('b');
+            const container = range.commonAncestorContainer;
+            const element = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+            const existingStrong = element?.closest('strong') || element?.closest('b');
+            
             if (existingStrong) {
                 // Remove bold formatting
                 const parent = existingStrong.parentNode;
@@ -1152,8 +1154,10 @@ function formatText(command) {
             
         case 'italic':
             // Check if already italic, then remove formatting
-            const existingEm = range.commonAncestorContainer.closest('em') || 
-                              range.commonAncestorContainer.closest('i');
+            const containerItalic = range.commonAncestorContainer;
+            const elementItalic = containerItalic.nodeType === Node.TEXT_NODE ? containerItalic.parentElement : containerItalic;
+            const existingEm = elementItalic?.closest('em') || elementItalic?.closest('i');
+            
             if (existingEm) {
                 // Remove italic formatting
                 const parent = existingEm.parentNode;
@@ -1176,7 +1180,10 @@ function formatText(command) {
             
         case 'underline':
             // Check if already underlined, then remove formatting
-            const existingU = range.commonAncestorContainer.closest('u');
+            const containerUnderline = range.commonAncestorContainer;
+            const elementUnderline = containerUnderline.nodeType === Node.TEXT_NODE ? containerUnderline.parentElement : containerUnderline;
+            const existingU = elementUnderline?.closest('u');
+            
             if (existingU) {
                 // Remove underline formatting
                 const parent = existingU.parentNode;
