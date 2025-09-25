@@ -1022,7 +1022,14 @@ function formatText(command) {
     // Get the currently focused editor
     const activeEditor = document.activeElement;
     if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
-        return;
+        // If no active editor, try to find any visible editor
+        const visibleEditor = document.querySelector('.editor-content:not([style*="display: none"])');
+        if (visibleEditor) {
+            visibleEditor.focus();
+        } else {
+            console.log('No active editor found');
+            return;
+        }
     }
     
     switch(command) {
@@ -1065,9 +1072,17 @@ function changeTextColor(color) {
     if (color) {
         // Get the currently focused editor
         const activeEditor = document.activeElement;
-        if (activeEditor && activeEditor.classList.contains('editor-content')) {
-            document.execCommand('foreColor', false, color);
+        if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
+            // If no active editor, try to find any visible editor
+            const visibleEditor = document.querySelector('.editor-content:not([style*="display: none"])');
+            if (visibleEditor) {
+                visibleEditor.focus();
+            } else {
+                console.log('No active editor found for color change');
+                return;
+            }
         }
+        document.execCommand('foreColor', false, color);
     }
 }
 
@@ -1077,7 +1092,14 @@ function insertImage() {
         // Get the currently focused editor
         const activeEditor = document.activeElement;
         if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
-            return;
+            // If no active editor, try to find any visible editor
+            const visibleEditor = document.querySelector('.editor-content:not([style*="display: none"])');
+            if (visibleEditor) {
+                visibleEditor.focus();
+            } else {
+                console.log('No active editor found for image insert');
+                return;
+            }
         }
         
         const img = document.createElement('img');
@@ -1092,7 +1114,7 @@ function insertImage() {
             const range = selection.getRangeAt(0);
             range.insertNode(img);
         } else {
-            activeEditor.appendChild(img);
+            document.activeElement.appendChild(img);
         }
     }
 }
@@ -1103,7 +1125,14 @@ function insertVideo() {
         // Get the currently focused editor
         const activeEditor = document.activeElement;
         if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
-            return;
+            // If no active editor, try to find any visible editor
+            const visibleEditor = document.querySelector('.editor-content:not([style*="display: none"])');
+            if (visibleEditor) {
+                visibleEditor.focus();
+            } else {
+                console.log('No active editor found for video insert');
+                return;
+            }
         }
         
         const video = document.createElement('video');
@@ -1119,7 +1148,7 @@ function insertVideo() {
             const range = selection.getRangeAt(0);
             range.insertNode(video);
         } else {
-            activeEditor.appendChild(video);
+            document.activeElement.appendChild(video);
         }
     }
 }
