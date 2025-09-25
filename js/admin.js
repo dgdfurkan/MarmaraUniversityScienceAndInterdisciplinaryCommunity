@@ -208,6 +208,8 @@ async function handleBlogSubmit(e) {
     e.preventDefault();
     
     // Sync editor content before submitting
+    console.log('Before sync - Blog editor element:', document.getElementById('blog-content-editor'));
+    console.log('Before sync - Blog hidden element:', document.getElementById('blog-content-hidden'));
     syncEditorContent();
     
     const formData = new FormData(e.target);
@@ -264,11 +266,12 @@ async function handleBlogSubmit(e) {
         console.log('Record ID type:', typeof newRecord.id);
         console.log('Record ID value:', newRecord.id);
         
-        // Log activity
-        await DatabaseService.logActivity('create', 'blog_posts', newRecord.id, newRecord.title, null, newRecord);
+        // Log activity - Convert ID to string for UUID compatibility
+        const recordId = String(newRecord.id);
+        await DatabaseService.logActivity('create', 'blog_posts', recordId, newRecord.title, null, newRecord);
         
-        // Save version history
-        await DatabaseService.saveVersionHistory('blog_posts', newRecord.id, newRecord, 'Initial version');
+        // Save version history - Convert ID to string for UUID compatibility
+        await DatabaseService.saveVersionHistory('blog_posts', recordId, newRecord, 'Initial version');
         
         alert('Blog yazısı başarıyla eklendi!');
         closeModal('blog-modal');
