@@ -94,7 +94,12 @@ function openModal(modalId) {
                     editor.focus();
                     console.log('Blog editor focused for testing');
                     
-                    // MANUEL TEST KALDIRILDI - Sadece odaklan
+                    // DEBUG TEST: Editor'a test yazısı ekle
+                    setTimeout(() => {
+                        editor.innerHTML = '<p>TEST YAZISI</p>';
+                        console.log('🔥 DEBUG: Test yazısı eklendi:', editor.innerHTML);
+                        syncEditorContent();
+                    }, 500);
                 }
             }, 100);
         } else if (modalId === 'announcement-modal') {
@@ -1302,10 +1307,17 @@ function addEditorListeners(editorId) {
         editor.removeEventListener('keyup', syncEditorContent);
         editor.removeEventListener('blur', syncEditorContent);
         
-        // Add input event listener - OPTIMIZED
-        editor.addEventListener('input', () => {
-            console.log('INPUT EVENT TRIGGERED for:', editorId);
+        // Add input event listener - DEBUG VERSION
+        editor.addEventListener('input', (e) => {
+            console.log('🔥 INPUT EVENT TRIGGERED for:', editorId);
+            console.log('🔥 Event target:', e.target);
+            console.log('🔥 Editor innerHTML:', editor.innerHTML);
             syncEditorContent();
+        });
+        
+        // Add keydown for debugging
+        editor.addEventListener('keydown', (e) => {
+            console.log('🔥 KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
         });
         
         // Only add keyup for special keys
