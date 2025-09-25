@@ -339,40 +339,47 @@ class DatabaseService {
         }
     }
 
-    // Blog Interactions
+    // Blog Interactions - IP Based (One per IP)
     static async incrementBlogView(postId) {
         try {
-            // Önce mevcut sayıyı al
-            const { data: currentPost, error: fetchError } = await supabase
-                .from('blog_posts')
-                .select('view_count')
-                .eq('id', postId)
-                .single();
+            const userIP = await this.getUserIP();
+            const userFingerprint = await this.getUserFingerprint();
             
-            if (fetchError) throw fetchError;
+            // Check if this IP already viewed this post
+            const { data: existingView, error: checkError } = await supabase
+                .from('blog_interactions')
+                .select('id')
+                .eq('blog_id', postId)
+                .eq('interaction_type', 'view')
+                .or(`user_ip.eq.${userIP},user_fingerprint.eq.${userFingerprint}`)
+                .limit(1);
             
-            // Sayıyı artır
-            const { data, error } = await supabase
-                .from('blog_posts')
-                .update({ view_count: (currentPost.view_count || 0) + 1 })
-                .eq('id', postId)
-                .select();
+            if (checkError) throw checkError;
             
-            if (error) throw error;
+            // If already viewed by this IP, don't increment
+            if (existingView && existingView.length > 0) {
+                console.log('Post already viewed by this IP:', userIP);
+                return { alreadyViewed: true };
+            }
             
-            // Log interaction
-            await supabase
+            // Add new view interaction
+            const { error: insertError } = await supabase
                 .from('blog_interactions')
                 .insert([{
                     blog_id: postId,
-                    user_ip: await this.getUserIP(),
-                    interaction_type: 'view'
+                    interaction_type: 'view',
+                    user_ip: userIP,
+                    user_fingerprint: userFingerprint
                 }]);
             
-            return data;
+            if (insertError) throw insertError;
+            
+            console.log('Blog view incremented for IP:', userIP);
+            return { success: true };
+            
         } catch (error) {
             console.error('Error incrementing blog view:', error);
-            throw error;
+            return { error: error.message };
         }
     }
 
@@ -381,111 +388,91 @@ class DatabaseService {
             const userIP = await this.getUserIP();
             const userFingerprint = await this.getUserFingerprint();
             
-            // Check if user already liked this post (IP + Fingerprint kontrolü)
+            // Check if this IP already liked this post
             const { data: existingLike, error: checkError } = await supabase
                 .from('blog_interactions')
-                .select('*')
+                .select('id')
                 .eq('blog_id', postId)
-                .eq('user_ip', userIP)
                 .eq('interaction_type', 'like')
-                .single();
+                .or(`user_ip.eq.${userIP},user_fingerprint.eq.${userFingerprint}`)
+                .limit(1);
             
-            if (checkError && checkError.code !== 'PGRST116') {
-                throw checkError;
-            }
+            if (checkError) throw checkError;
             
-            if (existingLike) {
-                // Unlike: remove interaction and decrement count
-                await supabase
+            if (existingLike && existingLike.length > 0) {
+                // Unlike: Remove the like
+                const { error: deleteError } = await supabase
                     .from('blog_interactions')
                     .delete()
-                    .eq('id', existingLike.id);
+                    .eq('id', existingLike[0].id);
                 
-                // Önce mevcut sayıyı al
-                const { data: currentPost, error: fetchError } = await supabase
-                    .from('blog_posts')
-                    .select('like_count')
-                    .eq('id', postId)
-                    .single();
+                if (deleteError) throw deleteError;
                 
-                if (fetchError) throw fetchError;
-                
-                const { data, error } = await supabase
-                    .from('blog_posts')
-                    .update({ like_count: Math.max((currentPost.like_count || 0) - 1, 0) })
-                    .eq('id', postId)
-                    .select();
-                
-                if (error) throw error;
-                return { ...data[0], action: 'unliked' };
+                console.log('Blog like removed for IP:', userIP);
+                return { action: 'unliked', success: true };
             } else {
-                // Like: add interaction and increment count
-                await supabase
+                // Like: Add new like
+                const { error: insertError } = await supabase
                     .from('blog_interactions')
                     .insert([{
                         blog_id: postId,
+                        interaction_type: 'like',
                         user_ip: userIP,
-                        user_fingerprint: userFingerprint,
-                        interaction_type: 'like'
+                        user_fingerprint: userFingerprint
                     }]);
                 
-                // Önce mevcut sayıyı al
-                const { data: currentPost, error: fetchError } = await supabase
-                    .from('blog_posts')
-                    .select('like_count')
-                    .eq('id', postId)
-                    .single();
+                if (insertError) throw insertError;
                 
-                if (fetchError) throw fetchError;
-                
-                const { data, error } = await supabase
-                    .from('blog_posts')
-                    .update({ like_count: (currentPost.like_count || 0) + 1 })
-                    .eq('id', postId)
-                    .select();
-                
-                if (error) throw error;
-                return { ...data[0], action: 'liked' };
+                console.log('Blog like added for IP:', userIP);
+                return { action: 'liked', success: true };
             }
+            
         } catch (error) {
             console.error('Error toggling blog like:', error);
-            throw error;
+            return { error: error.message };
         }
     }
 
     static async incrementBlogShare(postId) {
         try {
-            // Önce mevcut sayıyı al
-            const { data: currentPost, error: fetchError } = await supabase
-                .from('blog_posts')
-                .select('share_count')
-                .eq('id', postId)
-                .single();
+            const userIP = await this.getUserIP();
+            const userFingerprint = await this.getUserFingerprint();
             
-            if (fetchError) throw fetchError;
+            // Check if this IP already shared this post
+            const { data: existingShare, error: checkError } = await supabase
+                .from('blog_interactions')
+                .select('id')
+                .eq('blog_id', postId)
+                .eq('interaction_type', 'share')
+                .or(`user_ip.eq.${userIP},user_fingerprint.eq.${userFingerprint}`)
+                .limit(1);
             
-            // Sayıyı artır
-            const { data, error } = await supabase
-                .from('blog_posts')
-                .update({ share_count: (currentPost.share_count || 0) + 1 })
-                .eq('id', postId)
-                .select();
+            if (checkError) throw checkError;
             
-            if (error) throw error;
+            // If already shared by this IP, don't increment
+            if (existingShare && existingShare.length > 0) {
+                console.log('Post already shared by this IP:', userIP);
+                return { alreadyShared: true };
+            }
             
-            // Log interaction
-            await supabase
+            // Add new share interaction
+            const { error: insertError } = await supabase
                 .from('blog_interactions')
                 .insert([{
                     blog_id: postId,
-                    user_ip: await this.getUserIP(),
-                    interaction_type: 'share'
+                    interaction_type: 'share',
+                    user_ip: userIP,
+                    user_fingerprint: userFingerprint
                 }]);
             
-            return data;
+            if (insertError) throw insertError;
+            
+            console.log('Blog share incremented for IP:', userIP);
+            return { success: true };
+            
         } catch (error) {
             console.error('Error incrementing blog share:', error);
-            throw error;
+            return { error: error.message };
         }
     }
 

@@ -185,12 +185,11 @@ function getEventIcon(type) {
 // Blog interaction functions
 async function incrementViewCount(postId) {
     try {
-        await DatabaseService.incrementBlogView(postId);
-        // Update the view count in UI
-        const viewElement = document.querySelector(`[onclick="incrementViewCount(${postId})"] span`);
-        if (viewElement) {
-            const currentCount = parseInt(viewElement.textContent) || 0;
-            viewElement.textContent = currentCount + 1;
+        const result = await DatabaseService.incrementBlogView(postId);
+        if (result.alreadyViewed) {
+            console.log('Post already viewed by this IP');
+        } else if (result.success) {
+            console.log('View count incremented');
         }
     } catch (error) {
         console.error('Error incrementing view count:', error);
@@ -201,44 +200,44 @@ async function toggleLike(postId) {
     try {
         const result = await DatabaseService.toggleBlogLike(postId);
         
+        if (result.error) {
+            console.error('Error toggling like:', result.error);
+            return;
+        }
+        
         // Update the like count and icon color in UI
         const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
         if (cardElement) {
             const likeButton = cardElement.querySelector(`[onclick="toggleLike(${postId})"]`);
             const icon = likeButton.querySelector('i');
             
-            // Update like count
-            const textNode = likeButton.childNodes[likeButton.childNodes.length - 1];
-            textNode.textContent = ` ${result.like_count}`;
-            
-            // Update icon color
+            // Update icon color based on action
             if (result.action === 'liked') {
                 icon.style.color = '#ef4444'; // Red for liked
-            } else {
+            } else if (result.action === 'unliked') {
                 icon.style.color = '#22215B'; // Default color for unliked
             }
         }
         
-        console.log('Like toggled:', result.action, 'Count:', result.like_count);
+        console.log('Like toggled:', result.action);
     } catch (error) {
         console.error('Error toggling like:', error);
-        if (error.message.includes('duplicate key')) {
-            alert('Bu yazıyı zaten beğendiniz!');
-        } else {
-            alert('Beğeni işlemi sırasında bir hata oluştu.');
-        }
+        alert('Beğeni işlemi sırasında bir hata oluştu.');
     }
 }
 
 async function sharePost(postId) {
     try {
-        await DatabaseService.incrementBlogShare(postId);
+        const result = await DatabaseService.incrementBlogShare(postId);
         
-        // Update the share count in UI
-        const shareElement = document.querySelector(`[onclick="sharePost(${postId})"] span`);
-        if (shareElement) {
-            const currentCount = parseInt(shareElement.textContent) || 0;
-            shareElement.textContent = currentCount + 1;
+        if (result.alreadyShared) {
+            console.log('Post already shared by this IP');
+            return;
+        }
+        
+        if (result.error) {
+            console.error('Error sharing post:', result.error);
+            return;
         }
         
         // Show share options
