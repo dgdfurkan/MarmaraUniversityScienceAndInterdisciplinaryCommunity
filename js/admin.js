@@ -183,8 +183,11 @@ async function handleAnnouncementSubmit(e) {
         loadAnnouncements();
         
         // Clear editor
-        document.getElementById('announcement-content-editor').innerHTML = '';
-        syncEditorContent();
+        const announcementEditor = document.getElementById('announcement-content-editor');
+        if (announcementEditor) {
+            announcementEditor.innerHTML = '';
+            syncEditorContent();
+        }
         
     } catch (error) {
         console.error('Error creating announcement:', error);
@@ -245,8 +248,11 @@ async function handleBlogSubmit(e) {
         loadBlogPosts();
         
         // Clear editor
-        document.getElementById('blog-content-editor').innerHTML = '';
-        syncEditorContent();
+        const blogEditor = document.getElementById('blog-content-editor');
+        if (blogEditor) {
+            blogEditor.innerHTML = '';
+            syncEditorContent();
+        }
         
     } catch (error) {
         console.error('Error creating blog post:', error);
@@ -312,8 +318,11 @@ async function handleEventSubmit(e) {
         loadEvents();
         
         // Clear editor
-        document.getElementById('event-content-editor').innerHTML = '';
-        syncEditorContent();
+        const eventEditor = document.getElementById('event-content-editor');
+        if (eventEditor) {
+            eventEditor.innerHTML = '';
+            syncEditorContent();
+        }
         
     } catch (error) {
         console.error('Error creating event:', error);
@@ -967,19 +976,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Rich Text Editor Functions
 function formatText(command) {
-    document.execCommand(command, false, null);
+    // Get the currently focused editor
+    const activeEditor = document.activeElement;
+    if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
+        return;
+    }
+    
+    switch(command) {
+        case 'bold':
+            document.execCommand('bold', false, null);
+            break;
+        case 'italic':
+            document.execCommand('italic', false, null);
+            break;
+        case 'underline':
+            document.execCommand('underline', false, null);
+            break;
+        case 'h1':
+            document.execCommand('formatBlock', false, 'h1');
+            break;
+        case 'h2':
+            document.execCommand('formatBlock', false, 'h2');
+            break;
+        case 'ul':
+            document.execCommand('insertUnorderedList', false, null);
+            break;
+        case 'ol':
+            document.execCommand('insertOrderedList', false, null);
+            break;
+        case 'quote':
+            document.execCommand('formatBlock', false, 'blockquote');
+            break;
+        case 'link':
+            const url = prompt('Link URL\'sini girin:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+            }
+            break;
+    }
+    
     updateToolbarButtons();
 }
 
 function changeTextColor(color) {
     if (color) {
-        document.execCommand('foreColor', false, color);
+        // Get the currently focused editor
+        const activeEditor = document.activeElement;
+        if (activeEditor && activeEditor.classList.contains('editor-content')) {
+            document.execCommand('foreColor', false, color);
+        }
     }
 }
 
 function insertImage() {
     const url = prompt('Resim URL\'sini girin:');
     if (url) {
+        // Get the currently focused editor
+        const activeEditor = document.activeElement;
+        if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
+            return;
+        }
+        
         const img = document.createElement('img');
         img.src = url;
         img.style.maxWidth = '100%';
@@ -992,7 +1049,7 @@ function insertImage() {
             const range = selection.getRangeAt(0);
             range.insertNode(img);
         } else {
-            document.getElementById('blog-content-editor').appendChild(img);
+            activeEditor.appendChild(img);
         }
     }
 }
@@ -1000,6 +1057,12 @@ function insertImage() {
 function insertVideo() {
     const url = prompt('Video URL\'sini girin (YouTube, Vimeo, vb.):');
     if (url) {
+        // Get the currently focused editor
+        const activeEditor = document.activeElement;
+        if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
+            return;
+        }
+        
         const video = document.createElement('video');
         video.src = url;
         video.controls = true;
@@ -1013,7 +1076,7 @@ function insertVideo() {
             const range = selection.getRangeAt(0);
             range.insertNode(video);
         } else {
-            document.getElementById('blog-content-editor').appendChild(video);
+            activeEditor.appendChild(video);
         }
     }
 }
