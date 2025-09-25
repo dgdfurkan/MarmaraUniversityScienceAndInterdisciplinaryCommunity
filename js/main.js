@@ -273,7 +273,7 @@ async function sharePost(postId) {
     }
 }
 
-function readFullBlog(postId) {
+async function readFullBlog(postId) {
     // Add click animation
     const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
     if (cardElement) {
@@ -283,73 +283,86 @@ function readFullBlog(postId) {
         }, 200);
     }
     
-    // Find the post data
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (!postElement) return;
-    
-    // Get post data from the element or fetch from database
-    const postTitle = postElement.querySelector('.blog-title').textContent;
-    const postDate = postElement.querySelector('.blog-time').textContent;
-    const postDescription = postElement.querySelector('.description').textContent;
-    
-    // Create modal HTML
-    const modalHTML = `
-        <div class="blog-modal-overlay" id="blog-modal-overlay">
-            <div class="blog-modal">
-                <button class="blog-modal-close" onclick="closeBlogModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="blog-modal-header">
-                    <h1 class="blog-modal-title">${postTitle}</h1>
-                    <div class="blog-modal-meta">
-                        <div class="blog-modal-date">
-                            <i class="fas fa-calendar"></i>
-                            <span>${postDate}</span>
-                        </div>
-                        <div class="blog-modal-author">
-                            <i class="fas fa-user"></i>
-                            <span>MUSIC Ekibi</span>
+    try {
+        // Get full blog post data from Supabase
+        const posts = await DatabaseService.getBlogPosts();
+        const post = posts.find(p => p.id === postId);
+        
+        if (!post) {
+            alert('Blog yazısı bulunamadı!');
+            return;
+        }
+        
+        const postTitle = post.title;
+        const postDate = new Date(post.created_at).toLocaleDateString('tr-TR', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        const postContent = post.content;
+        const authorName = post.author_name || 'MUSIC Ekibi';
+        
+        // Create modal HTML
+        const modalHTML = `
+            <div class="blog-modal-overlay" id="blog-modal-overlay">
+                <div class="blog-modal">
+                    <button class="blog-modal-close" onclick="closeBlogModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="blog-modal-header">
+                        <h1 class="blog-modal-title">${postTitle}</h1>
+                        <div class="blog-modal-meta">
+                            <div class="blog-modal-date">
+                                <i class="fas fa-calendar"></i>
+                                <span>${postDate}</span>
+                            </div>
+                            <div class="blog-modal-author">
+                                <i class="fas fa-user"></i>
+                                <span>${authorName}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="blog-modal-content" id="blog-modal-content">
-                    <p>${postDescription}</p>
-                    <p>Bu blog yazısının tam içeriği yakında eklenecek. Şu anda özet bilgileri görüntülüyorsunuz.</p>
-                    <p>Marmara Üniversitesi Bilim ve Disiplinlerarası Topluluğu olarak, bilimi geniş kitlelere ulaştırmak ve disiplinlerarası etkileşimi artırmak için çalışıyoruz.</p>
-                    <p>Etkinliklerimiz, atölyelerimiz ve bilimsel çalışmalarımız hakkında daha fazla bilgi için bizi takip etmeye devam edin!</p>
-                </div>
-                <div class="blog-modal-actions">
-                    <button class="blog-modal-like" onclick="toggleModalLike(${postId})" id="modal-like-${postId}">
-                        <i class="fas fa-heart"></i>
-                        <span>Beğen</span>
-                    </button>
-                    <button class="blog-modal-share" onclick="shareModalPost(${postId})">
-                        <i class="fas fa-share-alt"></i>
-                        <span>Paylaş</span>
-                    </button>
+                    <div class="blog-modal-content" id="blog-modal-content">
+                        ${postContent}
+                    </div>
+                    <div class="blog-modal-actions">
+                        <button class="blog-modal-like" onclick="toggleModalLike(${postId})" id="modal-like-${postId}">
+                            <i class="fas fa-heart"></i>
+                            <span>Beğen</span>
+                        </button>
+                        <button class="blog-modal-share" onclick="shareModalPost(${postId})">
+                            <i class="fas fa-share-alt"></i>
+                            <span>Paylaş</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
-    
-    // Add modal to body
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Show modal with animation
-    setTimeout(() => {
-        const modalOverlay = document.getElementById('blog-modal-overlay');
-        modalOverlay.classList.add('active');
+        `;
         
-        // Close modal when clicking outside
-        modalOverlay.addEventListener('click', function(e) {
-            if (e.target === modalOverlay) {
-                closeBlogModal();
-            }
-        });
-    }, 10);
-    
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Show modal with animation
+        setTimeout(() => {
+            const modalOverlay = document.getElementById('blog-modal-overlay');
+            modalOverlay.classList.add('active');
+            
+            // Close modal when clicking outside
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === modalOverlay) {
+                    closeBlogModal();
+                }
+            });
+        }, 10);
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+        
+    } catch (error) {
+        console.error('Error loading blog post:', error);
+        alert('Blog yazısı yüklenirken bir hata oluştu.');
+    }
 }
 
 function closeBlogModal() {
