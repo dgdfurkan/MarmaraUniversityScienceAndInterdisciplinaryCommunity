@@ -1302,39 +1302,16 @@ function addEditorListeners(editorId) {
         editor.removeEventListener('keyup', syncEditorContent);
         editor.removeEventListener('blur', syncEditorContent);
         
-        // Add input event listener - MULTIPLE EVENTS WITH CAPTURE
+        // Add input event listener - OPTIMIZED
         editor.addEventListener('input', () => {
             console.log('INPUT EVENT TRIGGERED for:', editorId);
             syncEditorContent();
-        }, true);
-        
-        editor.addEventListener('keydown', (e) => {
-            console.log('KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
-            syncEditorContent();
-        }, true);
-        
-        editor.addEventListener('keypress', (e) => {
-            console.log('KEYPRESS EVENT TRIGGERED for:', editorId, 'Key:', e.key);
-            syncEditorContent();
-        }, true);
-        
-        editor.addEventListener('keyup', (e) => {
-            console.log('KEYUP EVENT TRIGGERED for:', editorId, 'Key:', e.key);
-            syncEditorContent();
-        }, true);
-        
-        // AGGRESSIVE: Add to window as well
-        window.addEventListener('keydown', (e) => {
-            if (document.activeElement === editor) {
-                console.log('WINDOW KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
-                syncEditorContent();
-            }
         });
         
-        // AGGRESSIVE: Add to document as well
-        document.addEventListener('keydown', (e) => {
-            if (document.activeElement === editor) {
-                console.log('DOCUMENT KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
+        // Only add keyup for special keys
+        editor.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete') {
+                console.log('KEYUP EVENT TRIGGERED for:', editorId, 'Key:', e.key);
                 syncEditorContent();
             }
         });
