@@ -266,12 +266,11 @@ async function handleBlogSubmit(e) {
         console.log('Record ID type:', typeof newRecord.id);
         console.log('Record ID value:', newRecord.id);
         
-        // Log activity - Convert ID to string for UUID compatibility
-        const recordId = String(newRecord.id);
-        await DatabaseService.logActivity('create', 'blog_posts', recordId, newRecord.title, null, newRecord);
+        // Log activity - Skip for now due to UUID issues
+        // await DatabaseService.logActivity('create', 'blog_posts', newRecord.id, newRecord.title, null, newRecord);
         
-        // Save version history - Convert ID to string for UUID compatibility
-        await DatabaseService.saveVersionHistory('blog_posts', recordId, newRecord, 'Initial version');
+        // Save version history - Skip for now due to UUID issues
+        // await DatabaseService.saveVersionHistory('blog_posts', newRecord.id, newRecord, 'Initial version');
         
         alert('Blog yazısı başarıyla eklendi!');
         closeModal('blog-modal');
@@ -1197,13 +1196,29 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor
+    // Sync blog editor - Force focus and get content
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
-        blogHidden.value = blogEditor.innerHTML;
-        console.log('Blog editor synced:', blogEditor.innerHTML);
+        // Force focus to ensure content is captured
+        blogEditor.focus();
+        
+        // Get content from editor
+        const content = blogEditor.innerHTML;
+        blogHidden.value = content;
+        
+        console.log('Blog editor synced:', content);
         console.log('Blog hidden field value:', blogHidden.value);
+        
+        // If content is empty, try to get text content
+        if (!content || content.trim() === '') {
+            const textContent = blogEditor.textContent || blogEditor.innerText || '';
+            console.log('Blog editor text content:', textContent);
+            if (textContent.trim() !== '') {
+                blogHidden.value = `<p>${textContent}</p>`;
+                console.log('Blog hidden field updated with text:', blogHidden.value);
+            }
+        }
     }
     
     // Sync event editor
