@@ -416,6 +416,28 @@
                     <textarea name="content" rows="8" required></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Fotoğraf</label>
+                    <div class="image-upload-section">
+                        <div class="image-option">
+                            <label>
+                                <input type="radio" name="image_type" value="url" checked>
+                                Fotoğraf Linki
+                            </label>
+                            <input type="url" name="image_url" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="image-option">
+                            <label>
+                                <input type="radio" name="image_type" value="file">
+                                Dosyadan Yükle
+                            </label>
+                            <input type="file" name="image_file" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-secondary" onclick="document.querySelector('input[name=image_file]').click()">
+                                <i class="fas fa-upload"></i> Dosya Seç
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>Özet</label>
                     <textarea name="excerpt" rows="3" required></textarea>
                 </div>
@@ -478,15 +500,26 @@
                     <input type="number" name="max_participants" min="1">
                 </div>
                 <div class="form-group">
-                    <label>Kayıt Gerekli mi?</label>
-                    <select name="registration_required">
-                        <option value="yes">Evet</option>
-                        <option value="no">Hayır</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Resim</label>
-                    <input type="file" name="image" accept="image/*">
+                    <label>Fotoğraf</label>
+                    <div class="image-upload-section">
+                        <div class="image-option">
+                            <label>
+                                <input type="radio" name="image_type" value="url" checked>
+                                Fotoğraf Linki
+                            </label>
+                            <input type="url" name="image_url" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="image-option">
+                            <label>
+                                <input type="radio" name="image_type" value="file">
+                                Dosyadan Yükle
+                            </label>
+                            <input type="file" name="image_file" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-secondary" onclick="document.querySelector('input[name=image_file]').click()">
+                                <i class="fas fa-upload"></i> Dosya Seç
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('event-modal')">İptal</button>

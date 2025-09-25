@@ -136,12 +136,34 @@ async function handleAnnouncementSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
+    // Handle image upload
+    let imageUrl = null;
+    let imageFile = null;
+    
+    if (data.image_type === 'url' && data.image_url) {
+        imageUrl = data.image_url;
+    } else if (data.image_type === 'file' && data.image_file) {
+        try {
+            const file = e.target.image_file.files[0];
+            if (file) {
+                const uploadResult = await DatabaseService.uploadMedia(file);
+                imageFile = uploadResult.fullPath;
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Fotoğraf yüklenirken bir hata oluştu.');
+            return;
+        }
+    }
+    
     // Clean data - remove empty fields and image if not needed
     const cleanData = {
         title: data.title,
         content: data.content,
         category: data.category,
-        status: data.status || 'active'
+        status: data.status || 'active',
+        image_url: imageUrl,
+        image_file: imageFile
     };
     
     try {
@@ -160,13 +182,35 @@ async function handleBlogSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
+    // Handle image upload
+    let imageUrl = null;
+    let imageFile = null;
+    
+    if (data.image_type === 'url' && data.image_url) {
+        imageUrl = data.image_url;
+    } else if (data.image_type === 'file' && data.image_file) {
+        try {
+            const file = e.target.image_file.files[0];
+            if (file) {
+                const uploadResult = await DatabaseService.uploadMedia(file);
+                imageFile = uploadResult.fullPath;
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Fotoğraf yüklenirken bir hata oluştu.');
+            return;
+        }
+    }
+    
     // Clean data - remove empty fields and image if not needed
     const cleanData = {
         title: data.title,
         content: data.content,
         excerpt: data.excerpt,
         category: data.category,
-        status: data.status || 'published'
+        status: data.status || 'published',
+        image_url: imageUrl,
+        image_file: imageFile
     };
     
     try {
@@ -185,6 +229,26 @@ async function handleEventSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
+    // Handle image upload
+    let imageUrl = null;
+    let imageFile = null;
+    
+    if (data.image_type === 'url' && data.image_url) {
+        imageUrl = data.image_url;
+    } else if (data.image_type === 'file' && data.image_file) {
+        try {
+            const file = e.target.image_file.files[0];
+            if (file) {
+                const uploadResult = await DatabaseService.uploadMedia(file);
+                imageFile = uploadResult.fullPath;
+            }
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Fotoğraf yüklenirken bir hata oluştu.');
+            return;
+        }
+    }
+    
     // Clean data - remove empty fields and image if not needed
     const cleanData = {
         title: data.title,
@@ -195,7 +259,9 @@ async function handleEventSubmit(e) {
         price: parseFloat(data.price) || 0,
         capacity: parseInt(data.capacity) || 0,
         registration_required: data.registration_required === 'on',
-        status: data.status || 'active'
+        status: data.status || 'active',
+        image_url: imageUrl,
+        image_file: imageFile
     };
     
     try {
