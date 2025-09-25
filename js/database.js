@@ -580,3 +580,174 @@ async function testSupabaseConnection() {
 document.addEventListener('DOMContentLoaded', () => {
     testSupabaseConnection();
 });
+
+// Activity Tracking Functions
+DatabaseService.logActivity = async function(actionType, tableName, recordId, recordTitle, oldData = null, newData = null) {
+    try {
+        const { error } = await supabase
+            .from('activity_logs')
+            .insert({
+                action_type: actionType,
+                table_name: tableName,
+                record_id: recordId,
+                record_title: recordTitle,
+                old_data: oldData,
+                new_data: newData,
+                admin_user: 'admin'
+            });
+        
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error logging activity:', error);
+    }
+};
+
+DatabaseService.saveVersionHistory = async function(tableName, recordId, data, changeSummary = null) {
+    try {
+        // Get current version number
+        const { data: versions, error: countError } = await supabase
+            .from('version_history')
+            .select('version_number')
+            .eq('table_name', tableName)
+            .eq('record_id', recordId)
+            .order('version_number', { ascending: false })
+            .limit(1);
+        
+        if (countError) throw countError;
+        
+        const nextVersion = versions && versions.length > 0 ? versions[0].version_number + 1 : 1;
+        
+        const { error } = await supabase
+            .from('version_history')
+            .insert({
+                table_name: tableName,
+                record_id: recordId,
+                version_number: nextVersion,
+                data: data,
+                change_summary: changeSummary
+            });
+        
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error saving version history:', error);
+    }
+};
+
+DatabaseService.getVersionHistory = async function(tableName, recordId) {
+    try {
+        const { data, error } = await supabase
+            .from('version_history')
+            .select('*')
+            .eq('table_name', tableName)
+            .eq('record_id', recordId)
+            .order('version_number', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching version history:', error);
+        return [];
+    }
+};
+
+DatabaseService.restoreVersion = async function(tableName, recordId, versionNumber) {
+    try {
+        // Get the version data
+        const { data: versionData, error: fetchError } = await supabase
+            .from('version_history')
+            .select('data')
+            .eq('table_name', tableName)
+            .eq('record_id', recordId)
+            .eq('version_number', versionNumber)
+            .single();
+        
+        if (fetchError) throw fetchError;
+        
+        // Update the record with version data
+        const { error: updateError } = await supabase
+            .from(tableName)
+            .update(versionData.data)
+            .eq('id', recordId);
+        
+        if (updateError) throw updateError;
+        
+        // Log the restore activity
+        await this.logActivity('restore', tableName, recordId, versionData.data.title || 'Unknown', null, versionData.data);
+        
+        return true;
+    } catch (error) {
+        console.error('Error restoring version:', error);
+        return false;
+    }
+};
+
+DatabaseService.saveDraft = async function(tableName, recordId, title, data) {
+    try {
+        const { error } = await supabase
+            .from('drafts')
+            .insert({
+                table_name: tableName,
+                record_id: recordId,
+                title: title,
+                data: data,
+                admin_user: 'admin'
+            });
+        
+        if (error) throw error;
+        
+        // Log draft save activity
+        await this.logActivity('draft', tableName, recordId || 'new', title, null, data);
+        
+        return true;
+    } catch (error) {
+        console.error('Error saving draft:', error);
+        return false;
+    }
+};
+
+DatabaseService.getDrafts = async function(tableName) {
+    try {
+        const { data, error } = await supabase
+            .from('drafts')
+            .select('*')
+            .eq('table_name', tableName)
+            .order('updated_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching drafts:', error);
+        return [];
+    }
+};
+
+DatabaseService.deleteDraft = async function(draftId) {
+    try {
+        const { error } = await supabase
+            .from('drafts')
+            .delete()
+            .eq('id', draftId);
+        
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Error deleting draft:', error);
+        return false;
+    }
+};
+
+DatabaseService.getRecentActivities = async function(limit = 10) {
+    try {
+        const { data, error } = await supabase
+            .from('activity_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching recent activities:', error);
+        return [];
+    }
+};

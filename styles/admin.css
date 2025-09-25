@@ -304,6 +304,38 @@ body {
     color: #6b7280;
 }
 
+/* Activity type styles */
+.activity-item.create {
+    border-left: 4px solid #10b981;
+}
+
+.activity-item.update {
+    border-left: 4px solid #3b82f6;
+}
+
+.activity-item.delete {
+    border-left: 4px solid #ef4444;
+}
+
+.activity-item.draft {
+    border-left: 4px solid #f59e0b;
+}
+
+.activity-item.restore {
+    border-left: 4px solid #8b5cf6;
+}
+
+.activity-item.info {
+    border-left: 4px solid #6b7280;
+}
+
+.no-activities {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 1rem;
+}
+
 /* Quick Actions */
 .quick-actions {
     display: grid;

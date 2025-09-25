@@ -177,10 +177,19 @@ async function handleAnnouncementSubmit(e) {
     }
     
     try {
-        await DatabaseService.createAnnouncement(cleanData);
+        const result = await DatabaseService.createAnnouncement(cleanData);
+        const newRecord = result[0];
+        
+        // Log activity
+        await DatabaseService.logActivity('create', 'announcements', newRecord.id, newRecord.title, null, newRecord);
+        
+        // Save version history
+        await DatabaseService.saveVersionHistory('announcements', newRecord.id, newRecord, 'Initial version');
+        
         alert('Duyuru başarıyla eklendi!');
         closeModal('announcement-modal');
         loadAnnouncements();
+        loadRecentActivities();
         
         // Clear editor
         const announcementEditor = document.getElementById('announcement-content-editor');
@@ -242,10 +251,19 @@ async function handleBlogSubmit(e) {
     }
     
     try {
-        await DatabaseService.createBlogPost(cleanData);
+        const result = await DatabaseService.createBlogPost(cleanData);
+        const newRecord = result[0];
+        
+        // Log activity
+        await DatabaseService.logActivity('create', 'blog_posts', newRecord.id, newRecord.title, null, newRecord);
+        
+        // Save version history
+        await DatabaseService.saveVersionHistory('blog_posts', newRecord.id, newRecord, 'Initial version');
+        
         alert('Blog yazısı başarıyla eklendi!');
         closeModal('blog-modal');
         loadBlogPosts();
+        loadRecentActivities();
         
         // Clear editor
         const blogEditor = document.getElementById('blog-content-editor');
@@ -312,10 +330,19 @@ async function handleEventSubmit(e) {
     }
     
     try {
-        await DatabaseService.createEvent(cleanData);
+        const result = await DatabaseService.createEvent(cleanData);
+        const newRecord = result[0];
+        
+        // Log activity
+        await DatabaseService.logActivity('create', 'events', newRecord.id, newRecord.title, null, newRecord);
+        
+        // Save version history
+        await DatabaseService.saveVersionHistory('events', newRecord.id, newRecord, 'Initial version');
+        
         alert('Etkinlik başarıyla eklendi!');
         closeModal('event-modal');
         loadEvents();
+        loadRecentActivities();
         
         // Clear editor
         const eventEditor = document.getElementById('event-content-editor');
@@ -868,7 +895,7 @@ async function loadDashboardStats() {
         document.getElementById('registrations-count').textContent = registrations.length;
 
         // Load recent activities
-        loadRecentActivities(announcements, blogPosts, events, registrations);
+        loadRecentActivities();
 
     } catch (error) {
         console.error('Error loading dashboard stats:', error);
@@ -881,67 +908,83 @@ async function loadDashboardStats() {
 }
 
 // Load recent activities
-function loadRecentActivities(announcements, blogPosts, events, registrations) {
+async function loadRecentActivities() {
     const activitiesContainer = document.getElementById('recent-activities');
     if (!activitiesContainer) return;
 
-    const activities = [];
+    try {
+        const activities = await DatabaseService.getRecentActivities(15);
+        
+        if (activities.length === 0) {
+            activitiesContainer.innerHTML = '<p class="no-activities">Henüz aktivite bulunmuyor.</p>';
+            return;
+        }
 
-    // Add recent announcements
-    announcements.slice(0, 3).forEach(announcement => {
-        activities.push({
-            type: 'announcement',
-            message: `Yeni duyuru eklendi: "${announcement.title}"`,
-            time: getTimeAgo(announcement.created_at),
-            icon: 'fas fa-bullhorn'
-        });
-    });
+        activitiesContainer.innerHTML = activities.map(activity => {
+            const timeAgo = getTimeAgo(activity.created_at);
+            let icon = 'fas fa-plus';
+            let message = '';
+            let actionClass = '';
 
-    // Add recent blog posts
-    blogPosts.slice(0, 3).forEach(post => {
-        activities.push({
-            type: 'blog',
-            message: `Blog yazısı eklendi: "${post.title}"`,
-            time: getTimeAgo(post.created_at),
-            icon: 'fas fa-blog'
-        });
-    });
+            switch(activity.action_type) {
+                case 'create':
+                    icon = 'fas fa-plus';
+                    message = `Yeni ${getTableDisplayName(activity.table_name)} eklendi: "${activity.record_title}"`;
+                    actionClass = 'create';
+                    break;
+                case 'update':
+                    icon = 'fas fa-edit';
+                    message = `${getTableDisplayName(activity.table_name)} güncellendi: "${activity.record_title}"`;
+                    actionClass = 'update';
+                    break;
+                case 'delete':
+                    icon = 'fas fa-trash';
+                    message = `${getTableDisplayName(activity.table_name)} silindi: "${activity.record_title}"`;
+                    actionClass = 'delete';
+                    break;
+                case 'draft':
+                    icon = 'fas fa-save';
+                    message = `Taslak kaydedildi: "${activity.record_title}"`;
+                    actionClass = 'draft';
+                    break;
+                case 'restore':
+                    icon = 'fas fa-undo';
+                    message = `Versiyon geri yüklendi: "${activity.record_title}"`;
+                    actionClass = 'restore';
+                    break;
+                default:
+                    icon = 'fas fa-info';
+                    message = `Aktivite: "${activity.record_title}"`;
+                    actionClass = 'info';
+            }
 
-    // Add recent events
-    events.slice(0, 3).forEach(event => {
-        activities.push({
-            type: 'event',
-            message: `Yeni etkinlik eklendi: "${event.title}"`,
-            time: getTimeAgo(event.created_at),
-            icon: 'fas fa-calendar'
-        });
-    });
+            return `
+                <div class="activity-item ${actionClass}">
+                    <div class="activity-icon">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p>${message}</p>
+                        <span class="activity-time">${timeAgo}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error loading recent activities:', error);
+        activitiesContainer.innerHTML = '<p class="no-activities">Aktiviteler yüklenirken bir hata oluştu.</p>';
+    }
+}
 
-    // Add recent registrations
-    registrations.slice(0, 3).forEach(registration => {
-        activities.push({
-            type: 'registration',
-            message: `Yeni kayıt alındı: ${registration.first_name} ${registration.last_name}`,
-            time: getTimeAgo(registration.created_at),
-            icon: 'fas fa-user-plus'
-        });
-    });
-
-    // Sort by date (newest first)
-    activities.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-    // Display activities
-    activitiesContainer.innerHTML = activities.slice(0, 5).map(activity => `
-        <div class="activity-item">
-            <div class="activity-icon">
-                <i class="${activity.icon}"></i>
-            </div>
-            <div class="activity-content">
-                <p>${activity.message}</p>
-                <span class="activity-time">${activity.time}</span>
-            </div>
-        </div>
-    `).join('');
+function getTableDisplayName(tableName) {
+    switch(tableName) {
+        case 'announcements': return 'duyuru';
+        case 'blog_posts': return 'blog yazısı';
+        case 'events': return 'etkinlik';
+        case 'registrations': return 'kayıt';
+        default: return tableName;
+    }
 }
 
 // Helper function to get time ago
