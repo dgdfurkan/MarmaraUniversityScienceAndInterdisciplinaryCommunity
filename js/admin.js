@@ -87,6 +87,13 @@ function openModal(modalId) {
             setTimeout(() => {
                 addEditorListeners('blog-content-editor');
                 console.log('Blog modal opened, listeners added');
+                
+                // Test: Editor'a odaklan ve test yazısı ekle
+                const editor = document.getElementById('blog-content-editor');
+                if (editor) {
+                    editor.focus();
+                    console.log('Blog editor focused for testing');
+                }
             }, 100);
         } else if (modalId === 'announcement-modal') {
             setTimeout(() => {
@@ -1293,9 +1300,19 @@ function addEditorListeners(editorId) {
         editor.removeEventListener('keyup', syncEditorContent);
         editor.removeEventListener('blur', syncEditorContent);
         
-        // Add input event listener
+        // Add input event listener - MULTIPLE EVENTS
         editor.addEventListener('input', () => {
             console.log('INPUT EVENT TRIGGERED for:', editorId);
+            syncEditorContent();
+        });
+        
+        editor.addEventListener('keydown', () => {
+            console.log('KEYDOWN EVENT TRIGGERED for:', editorId);
+            syncEditorContent();
+        });
+        
+        editor.addEventListener('keypress', () => {
+            console.log('KEYPRESS EVENT TRIGGERED for:', editorId);
             syncEditorContent();
         });
         
