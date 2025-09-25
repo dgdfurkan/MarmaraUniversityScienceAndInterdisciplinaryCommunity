@@ -324,7 +324,7 @@ async function readFullBlog(postId) {
                         </div>
                     </div>
                     <div class="blog-modal-content" id="blog-modal-content">
-                        ${postContent}
+                        ${formatBlogContent(postContent)}
                     </div>
                     <div class="blog-modal-actions">
                         <button class="blog-modal-like" onclick="toggleModalLike(${postId})" id="modal-like-${postId}">
@@ -411,6 +411,16 @@ function shareModalPost(postId) {
 function openCommentModal(postId) {
     // TODO: Implement comment modal
     alert('Yorum sistemi yakında eklenecek!');
+}
+
+function formatBlogContent(content) {
+    // Split content by double line breaks to preserve paragraphs
+    const paragraphs = content.split('\n\n').filter(p => p.trim() !== '');
+    
+    // Wrap each paragraph in <p> tags
+    return paragraphs.map(paragraph => 
+        `<p>${paragraph.trim()}</p>`
+    ).join('');
 }
 
 function scrollToTop() {
