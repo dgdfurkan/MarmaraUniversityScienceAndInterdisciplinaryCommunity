@@ -307,56 +307,39 @@ async function loadRegistrations() {
     }
 }
 
-function loadMedia() {
+async function loadMedia() {
     const mediaGrid = document.getElementById('media-grid');
     if (!mediaGrid) return;
     
-    const mediaItems = [
-        {
-            id: 1,
-            name: 'bilim-senligi-2024.jpg',
-            type: 'image',
-            size: '2.5 MB',
-            date: '2024-01-15'
-        },
-        {
-            id: 2,
-            name: 'atolye-video.mp4',
-            type: 'video',
-            size: '15.2 MB',
-            date: '2024-01-10'
-        },
-        {
-            id: 3,
-            name: 'konferans-foto.jpg',
-            type: 'image',
-            size: '1.8 MB',
-            date: '2024-01-05'
-        }
-    ];
-    
-    mediaGrid.innerHTML = mediaItems.map(item => `
-        <div class="media-item">
-            <div class="media-preview">
-                ${item.type === 'image' ? 
-                    '<i class="fas fa-image" style="font-size: 3rem; color: #6b7280; display: flex; align-items: center; justify-content: center; height: 150px;"></i>' :
-                    '<i class="fas fa-video" style="font-size: 3rem; color: #6b7280; display: flex; align-items: center; justify-content: center; height: 150px;"></i>'
-                }
-            </div>
-            <div class="media-item-content">
-                <h4>${item.name}</h4>
-                <p>${item.size} • ${new Date(item.date).toLocaleDateString('tr-TR')}</p>
-                <div class="media-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="downloadMedia(${item.id})">
-                        <i class="fas fa-download"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteMedia(${item.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+    try {
+        const mediaItems = await DatabaseService.getMedia();
+        
+        mediaGrid.innerHTML = mediaItems.map(item => `
+            <div class="media-item">
+                <div class="media-preview">
+                    ${item.file_type.startsWith('image/') ? 
+                        `<img src="${item.file_path}" alt="${item.original_name}" style="width: 100%; height: 150px; object-fit: cover;">` :
+                        `<i class="fas fa-file" style="font-size: 3rem; color: #6b7280; display: flex; align-items: center; justify-content: center; height: 150px;"></i>`
+                    }
+                </div>
+                <div class="media-item-content">
+                    <h4>${item.original_name}</h4>
+                    <p>${(item.file_size / 1024).toFixed(1)} KB • ${new Date(item.created_at).toLocaleDateString('tr-TR')}</p>
+                    <div class="media-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="downloadMedia('${item.id}')">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteMedia('${item.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    } catch (error) {
+        console.error('Error loading media:', error);
+        mediaGrid.innerHTML = '<p>Medya dosyaları yüklenirken bir hata oluştu.</p>';
+    }
 }
 
 // Helper Functions
@@ -397,10 +380,10 @@ function getEventTypeName(type) {
 // Action Functions
 let currentEditId = null;
 
-function editAnnouncement(id) {
+async function editAnnouncement(id) {
     currentEditId = id;
     // Get announcement data and populate form
-    const announcement = getAnnouncementById(id);
+    const announcement = await getAnnouncementById(id);
     if (announcement) {
         populateAnnouncementForm(announcement);
         openModal('announcement-modal');
@@ -415,11 +398,10 @@ function populateAnnouncementForm(announcement) {
     form.querySelector('[name="status"]').value = announcement.status || 'active';
 }
 
-function deleteAnnouncement(id) {
+async function deleteAnnouncement(id) {
     if (confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) {
         try {
-            // In real app, call API to delete
-            console.log('Delete announcement:', id);
+            await DatabaseService.deleteAnnouncement(id);
             alert('Duyuru silindi!');
             loadAnnouncements();
         } catch (error) {
@@ -429,9 +411,9 @@ function deleteAnnouncement(id) {
     }
 }
 
-function editBlogPost(id) {
+async function editBlogPost(id) {
     currentEditId = id;
-    const blogPost = getBlogPostById(id);
+    const blogPost = await getBlogPostById(id);
     if (blogPost) {
         populateBlogForm(blogPost);
         openModal('blog-modal');
@@ -447,10 +429,10 @@ function populateBlogForm(blogPost) {
     form.querySelector('[name="status"]').value = blogPost.status || 'published';
 }
 
-function deleteBlogPost(id) {
+async function deleteBlogPost(id) {
     if (confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
         try {
-            console.log('Delete blog post:', id);
+            await DatabaseService.deleteBlogPost(id);
             alert('Blog yazısı silindi!');
             loadBlogPosts();
         } catch (error) {
@@ -460,9 +442,9 @@ function deleteBlogPost(id) {
     }
 }
 
-function editEvent(id) {
+async function editEvent(id) {
     currentEditId = id;
-    const event = getEventById(id);
+    const event = await getEventById(id);
     if (event) {
         populateEventForm(event);
         openModal('event-modal');
@@ -486,10 +468,10 @@ function populateEventForm(event) {
     }
 }
 
-function deleteEvent(id) {
+async function deleteEvent(id) {
     if (confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
         try {
-            console.log('Delete event:', id);
+            await DatabaseService.deleteEvent(id);
             alert('Etkinlik silindi!');
             loadEvents();
         } catch (error) {
@@ -499,8 +481,8 @@ function deleteEvent(id) {
     }
 }
 
-function viewRegistration(id) {
-    const registration = getRegistrationById(id);
+async function viewRegistration(id) {
+    const registration = await getRegistrationById(id);
     if (registration) {
         showRegistrationDetails(registration);
     }
@@ -557,10 +539,10 @@ function showRegistrationDetails(registration) {
     document.body.appendChild(modal);
 }
 
-function deleteRegistration(id) {
+async function deleteRegistration(id) {
     if (confirm('Bu kaydı silmek istediğinizden emin misiniz?')) {
         try {
-            console.log('Delete registration:', id);
+            await DatabaseService.deleteRegistration(id);
             alert('Kayıt silindi!');
             loadRegistrations();
         } catch (error) {
@@ -570,10 +552,10 @@ function deleteRegistration(id) {
     }
 }
 
-function downloadMedia(id) {
-    const media = getMediaById(id);
+async function downloadMedia(id) {
+    const media = await getMediaById(id);
     if (media) {
-        // Create download link
+        // Create download link for base64 data
         const link = document.createElement('a');
         link.href = media.file_path;
         link.download = media.original_name;
@@ -581,10 +563,10 @@ function downloadMedia(id) {
     }
 }
 
-function deleteMedia(id) {
+async function deleteMedia(id) {
     if (confirm('Bu medya dosyasını silmek istediğinizden emin misiniz?')) {
         try {
-            console.log('Delete media:', id);
+            await DatabaseService.deleteMedia(id);
             alert('Medya dosyası silindi!');
             loadMedia();
         } catch (error) {
@@ -594,8 +576,8 @@ function deleteMedia(id) {
     }
 }
 
-function exportRegistration(id) {
-    const registration = getRegistrationById(id);
+async function exportRegistration(id) {
+    const registration = await getRegistrationById(id);
     if (registration) {
         // Create PDF content
         const content = `
@@ -620,51 +602,70 @@ function exportRegistration(id) {
 }
 
 // Helper functions to get data by ID
-function getAnnouncementById(id) {
-    // In real app, this would fetch from database
-    return { id, title: 'Test Duyuru', category: 'genel', content: 'Test içerik', status: 'active' };
+async function getAnnouncementById(id) {
+    try {
+        const announcements = await DatabaseService.getAnnouncements();
+        return announcements.find(a => a.id == id);
+    } catch (error) {
+        console.error('Error getting announcement:', error);
+        return null;
+    }
 }
 
-function getBlogPostById(id) {
-    return { id, title: 'Test Blog', category: 'bilim', content: 'Test içerik', excerpt: 'Test özet', status: 'published' };
+async function getBlogPostById(id) {
+    try {
+        const blogPosts = await DatabaseService.getBlogPosts();
+        return blogPosts.find(p => p.id == id);
+    } catch (error) {
+        console.error('Error getting blog post:', error);
+        return null;
+    }
 }
 
-function getEventById(id) {
-    return { id, title: 'Test Etkinlik', type: 'konferans', date: new Date().toISOString(), location: 'Test Konum', description: 'Test açıklama', capacity: 50, registration_required: true };
+async function getEventById(id) {
+    try {
+        const events = await DatabaseService.getEvents();
+        return events.find(e => e.id == id);
+    } catch (error) {
+        console.error('Error getting event:', error);
+        return null;
+    }
 }
 
-function getRegistrationById(id) {
-    return {
-        id,
-        first_name: 'Test',
-        last_name: 'Kullanıcı',
-        email: 'test@example.com',
-        phone: '0555 123 45 67',
-        university: 'Marmara Üniversitesi',
-        department: 'Biyomühendislik',
-        student_id: '123456789',
-        grade: '3',
-        experience: 'little',
-        motivation: 'Test motivasyon',
-        dietary: '',
-        accessibility: '',
-        email_notifications: true,
-        sms_notifications: false,
-        newsletter: true,
-        created_at: new Date().toISOString()
-    };
+async function getRegistrationById(id) {
+    try {
+        const registrations = await DatabaseService.getRegistrations();
+        return registrations.find(r => r.id == id);
+    } catch (error) {
+        console.error('Error getting registration:', error);
+        return null;
+    }
 }
 
-function getMediaById(id) {
-    return { id, filename: 'test.jpg', original_name: 'test.jpg', file_path: '/path/to/file', file_type: 'image' };
+async function getMediaById(id) {
+    try {
+        const media = await DatabaseService.getMedia();
+        return media.find(m => m.id == id);
+    } catch (error) {
+        console.error('Error getting media:', error);
+        return null;
+    }
 }
 
 // Media Upload
-document.getElementById('media-upload').addEventListener('change', function(e) {
+document.getElementById('media-upload').addEventListener('change', async function(e) {
     const files = e.target.files;
     if (files.length > 0) {
-        console.log('Files selected:', files);
-        alert(`${files.length} dosya seçildi. Yükleme özelliği yakında eklenecek!`);
+        try {
+            for (let file of files) {
+                await DatabaseService.uploadMedia(file);
+            }
+            alert(`${files.length} dosya başarıyla yüklendi!`);
+            loadMedia();
+        } catch (error) {
+            console.error('Error uploading media:', error);
+            alert('Dosya yüklenirken bir hata oluştu.');
+        }
     }
 });
 
