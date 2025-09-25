@@ -1118,39 +1118,120 @@ function formatText(command) {
         }
     }
     
+    // Modern Selection API approach
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    
     switch(command) {
         case 'bold':
-            document.execCommand('bold', false, null);
+            // Wrap selection in <strong> tag
+            const strong = document.createElement('strong');
+            try {
+                range.surroundContents(strong);
+            } catch (e) {
+                // If can't surround, insert at cursor
+                strong.textContent = selection.toString();
+                range.deleteContents();
+                range.insertNode(strong);
+            }
             break;
+            
         case 'italic':
-            document.execCommand('italic', false, null);
+            // Wrap selection in <em> tag
+            const em = document.createElement('em');
+            try {
+                range.surroundContents(em);
+            } catch (e) {
+                em.textContent = selection.toString();
+                range.deleteContents();
+                range.insertNode(em);
+            }
             break;
+            
         case 'underline':
-            document.execCommand('underline', false, null);
+            // Wrap selection in <u> tag
+            const u = document.createElement('u');
+            try {
+                range.surroundContents(u);
+            } catch (e) {
+                u.textContent = selection.toString();
+                range.deleteContents();
+                range.insertNode(u);
+            }
             break;
+            
         case 'h1':
-            document.execCommand('formatBlock', false, 'h1');
+            // Wrap selection in <h1> tag
+            const h1 = document.createElement('h1');
+            try {
+                range.surroundContents(h1);
+            } catch (e) {
+                h1.textContent = selection.toString();
+                range.deleteContents();
+                range.insertNode(h1);
+            }
             break;
+            
         case 'h2':
-            document.execCommand('formatBlock', false, 'h2');
+            // Wrap selection in <h2> tag
+            const h2 = document.createElement('h2');
+            try {
+                range.surroundContents(h2);
+            } catch (e) {
+                h2.textContent = selection.toString();
+                range.deleteContents();
+                range.insertNode(h2);
+            }
             break;
+            
         case 'ul':
-            document.execCommand('insertUnorderedList', false, null);
+            // Create unordered list
+            const ul = document.createElement('ul');
+            const li = document.createElement('li');
+            li.textContent = selection.toString() || 'List item';
+            ul.appendChild(li);
+            range.deleteContents();
+            range.insertNode(ul);
             break;
+            
         case 'ol':
-            document.execCommand('insertOrderedList', false, null);
+            // Create ordered list
+            const ol = document.createElement('ol');
+            const oli = document.createElement('li');
+            oli.textContent = selection.toString() || 'List item';
+            ol.appendChild(oli);
+            range.deleteContents();
+            range.insertNode(ol);
             break;
+            
         case 'quote':
-            document.execCommand('formatBlock', false, 'blockquote');
+            // Wrap selection in <blockquote> tag
+            const blockquote = document.createElement('blockquote');
+            try {
+                range.surroundContents(blockquote);
+            } catch (e) {
+                blockquote.textContent = selection.toString();
+                range.deleteContents();
+                range.insertNode(blockquote);
+            }
             break;
+            
         case 'link':
             const url = prompt('Link URL\'sini girin:');
             if (url) {
-                document.execCommand('createLink', false, url);
+                const a = document.createElement('a');
+                a.href = url;
+                a.textContent = selection.toString() || url;
+                range.deleteContents();
+                range.insertNode(a);
             }
             break;
     }
     
+    // Clear selection and update toolbar
+    selection.removeAllRanges();
     updateToolbarButtons();
 }
 
@@ -1168,7 +1249,28 @@ function changeTextColor(color) {
                 return;
             }
         }
-        document.execCommand('foreColor', false, color);
+        
+        // Modern Selection API approach
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return;
+        
+        const range = selection.getRangeAt(0);
+        
+        // Wrap selection in <span> with color style
+        const span = document.createElement('span');
+        span.style.color = color;
+        
+        try {
+            range.surroundContents(span);
+        } catch (e) {
+            // If can't surround, insert at cursor
+            span.textContent = selection.toString();
+            range.deleteContents();
+            range.insertNode(span);
+        }
+        
+        // Clear selection
+        selection.removeAllRanges();
     }
 }
 
@@ -1245,15 +1347,37 @@ function updateToolbarButtons() {
         btn.classList.remove('active');
     });
     
-    // Check current formatting
-    if (document.queryCommandState('bold')) {
-        document.querySelector('[onclick="formatText(\'bold\')"]').classList.add('active');
-    }
-    if (document.queryCommandState('italic')) {
-        document.querySelector('[onclick="formatText(\'italic\')"]').classList.add('active');
-    }
-    if (document.queryCommandState('underline')) {
-        document.querySelector('[onclick="formatText(\'underline\')"]').classList.add('active');
+    // Check current formatting - Modern Selection API
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        
+        // Check if we're in a contenteditable element
+        const editor = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+        
+        if (editor && editor.closest('.editor-content')) {
+            // Check bold formatting
+            const boldBtn = document.querySelector('[onclick="formatText(\'bold\')"]');
+            if (boldBtn) {
+                const isBold = editor.closest('strong') || editor.closest('b');
+                boldBtn.classList.toggle('active', !!isBold);
+            }
+            
+            // Check italic formatting  
+            const italicBtn = document.querySelector('[onclick="formatText(\'italic\')"]');
+            if (italicBtn) {
+                const isItalic = editor.closest('em') || editor.closest('i');
+                italicBtn.classList.toggle('active', !!isItalic);
+            }
+            
+            // Check underline formatting
+            const underlineBtn = document.querySelector('[onclick="formatText(\'underline\')"]');
+            if (underlineBtn) {
+                const isUnderline = editor.closest('u');
+                underlineBtn.classList.toggle('active', !!isUnderline);
+            }
+        }
     }
 }
 
