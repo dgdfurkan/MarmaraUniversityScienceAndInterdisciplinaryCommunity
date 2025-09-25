@@ -1,46 +1,23 @@
-// Local Storage Database Service
-// Supabase yerine localStorage kullanarak basit bir veritabanı sistemi
+// Supabase Configuration
+const SUPABASE_URL = 'https://dlbrjkhllmkkuregvkcy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsYnJqa2hsbG1ra3VyZWd2a2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3NTA2MjAsImV4cCI6MjA3NDMyNjYyMH0.iVDpxgRlzX0Opr0ZZ8epK6l9HNheab4lmi457tjo7hw';
 
+// Initialize Supabase client
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Database functions
 class DatabaseService {
-    // Storage keys
-    static STORAGE_KEYS = {
-        ANNOUNCEMENTS: 'music_announcements',
-        BLOG_POSTS: 'music_blog_posts',
-        EVENTS: 'music_events',
-        REGISTRATIONS: 'music_registrations',
-        MEDIA: 'music_media'
-    };
-
-    // Helper methods
-    static getStorageData(key) {
-        try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : [];
-        } catch (error) {
-            console.error(`Error reading ${key}:`, error);
-            return [];
-        }
-    }
-
-    static setStorageData(key, data) {
-        try {
-            localStorage.setItem(key, JSON.stringify(data));
-            return true;
-        } catch (error) {
-            console.error(`Error saving ${key}:`, error);
-            return false;
-        }
-    }
-
-    static generateId() {
-        return Date.now() + Math.random().toString(36).substr(2, 9);
-    }
-
     // Announcements
     static async getAnnouncements() {
         try {
-            const announcements = this.getStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS);
-            return announcements.filter(announcement => announcement.status === 'active');
+            const { data, error } = await supabase
+                .from('announcements')
+                .select('*')
+                .eq('status', 'active')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return data || [];
         } catch (error) {
             console.error('Error fetching announcements:', error);
             return [];
@@ -49,19 +26,14 @@ class DatabaseService {
 
     static async createAnnouncement(announcementData) {
         try {
-            const announcements = this.getStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS);
-            const newAnnouncement = {
-                id: this.generateId(),
-                ...announcementData,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
+            const { data, error } = await supabase
+                .from('announcements')
+                .insert([announcementData])
+                .select();
             
-            announcements.push(newAnnouncement);
-            this.setStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS, announcements);
-            
-            console.log('Announcement created:', newAnnouncement);
-            return [newAnnouncement];
+            if (error) throw error;
+            console.log('Announcement created:', data);
+            return data;
         } catch (error) {
             console.error('Error creating announcement:', error);
             throw error;
@@ -70,19 +42,14 @@ class DatabaseService {
 
     static async updateAnnouncement(id, updateData) {
         try {
-            const announcements = this.getStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS);
-            const index = announcements.findIndex(a => a.id == id);
+            const { data, error } = await supabase
+                .from('announcements')
+                .update(updateData)
+                .eq('id', id)
+                .select();
             
-            if (index !== -1) {
-                announcements[index] = {
-                    ...announcements[index],
-                    ...updateData,
-                    updated_at: new Date().toISOString()
-                };
-                this.setStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS, announcements);
-                return [announcements[index]];
-            }
-            return [];
+            if (error) throw error;
+            return data;
         } catch (error) {
             console.error('Error updating announcement:', error);
             throw error;
@@ -91,9 +58,12 @@ class DatabaseService {
 
     static async deleteAnnouncement(id) {
         try {
-            const announcements = this.getStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS);
-            const filtered = announcements.filter(a => a.id != id);
-            this.setStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS, filtered);
+            const { error } = await supabase
+                .from('announcements')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error deleting announcement:', error);
@@ -104,8 +74,14 @@ class DatabaseService {
     // Blog Posts
     static async getBlogPosts() {
         try {
-            const blogPosts = this.getStorageData(this.STORAGE_KEYS.BLOG_POSTS);
-            return blogPosts.filter(post => post.status === 'published');
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .select('*')
+                .eq('status', 'published')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return data || [];
         } catch (error) {
             console.error('Error fetching blog posts:', error);
             return [];
@@ -114,19 +90,14 @@ class DatabaseService {
 
     static async createBlogPost(blogData) {
         try {
-            const blogPosts = this.getStorageData(this.STORAGE_KEYS.BLOG_POSTS);
-            const newPost = {
-                id: this.generateId(),
-                ...blogData,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .insert([blogData])
+                .select();
             
-            blogPosts.push(newPost);
-            this.setStorageData(this.STORAGE_KEYS.BLOG_POSTS, blogPosts);
-            
-            console.log('Blog post created:', newPost);
-            return [newPost];
+            if (error) throw error;
+            console.log('Blog post created:', data);
+            return data;
         } catch (error) {
             console.error('Error creating blog post:', error);
             throw error;
@@ -135,19 +106,14 @@ class DatabaseService {
 
     static async updateBlogPost(id, updateData) {
         try {
-            const blogPosts = this.getStorageData(this.STORAGE_KEYS.BLOG_POSTS);
-            const index = blogPosts.findIndex(p => p.id == id);
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .update(updateData)
+                .eq('id', id)
+                .select();
             
-            if (index !== -1) {
-                blogPosts[index] = {
-                    ...blogPosts[index],
-                    ...updateData,
-                    updated_at: new Date().toISOString()
-                };
-                this.setStorageData(this.STORAGE_KEYS.BLOG_POSTS, blogPosts);
-                return [blogPosts[index]];
-            }
-            return [];
+            if (error) throw error;
+            return data;
         } catch (error) {
             console.error('Error updating blog post:', error);
             throw error;
@@ -156,9 +122,12 @@ class DatabaseService {
 
     static async deleteBlogPost(id) {
         try {
-            const blogPosts = this.getStorageData(this.STORAGE_KEYS.BLOG_POSTS);
-            const filtered = blogPosts.filter(p => p.id != id);
-            this.setStorageData(this.STORAGE_KEYS.BLOG_POSTS, filtered);
+            const { error } = await supabase
+                .from('blog_posts')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error deleting blog post:', error);
@@ -169,9 +138,15 @@ class DatabaseService {
     // Events
     static async getEvents() {
         try {
-            const events = this.getStorageData(this.STORAGE_KEYS.EVENTS);
-            const now = new Date().toISOString();
-            return events.filter(event => event.date >= now && event.status === 'active');
+            const { data, error } = await supabase
+                .from('events')
+                .select('*')
+                .gte('date', new Date().toISOString())
+                .eq('status', 'active')
+                .order('date', { ascending: true });
+            
+            if (error) throw error;
+            return data || [];
         } catch (error) {
             console.error('Error fetching events:', error);
             return [];
@@ -180,20 +155,14 @@ class DatabaseService {
 
     static async createEvent(eventData) {
         try {
-            const events = this.getStorageData(this.STORAGE_KEYS.EVENTS);
-            const newEvent = {
-                id: this.generateId(),
-                ...eventData,
-                registered: 0,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
+            const { data, error } = await supabase
+                .from('events')
+                .insert([eventData])
+                .select();
             
-            events.push(newEvent);
-            this.setStorageData(this.STORAGE_KEYS.EVENTS, events);
-            
-            console.log('Event created:', newEvent);
-            return [newEvent];
+            if (error) throw error;
+            console.log('Event created:', data);
+            return data;
         } catch (error) {
             console.error('Error creating event:', error);
             throw error;
@@ -202,19 +171,14 @@ class DatabaseService {
 
     static async updateEvent(id, updateData) {
         try {
-            const events = this.getStorageData(this.STORAGE_KEYS.EVENTS);
-            const index = events.findIndex(e => e.id == id);
+            const { data, error } = await supabase
+                .from('events')
+                .update(updateData)
+                .eq('id', id)
+                .select();
             
-            if (index !== -1) {
-                events[index] = {
-                    ...events[index],
-                    ...updateData,
-                    updated_at: new Date().toISOString()
-                };
-                this.setStorageData(this.STORAGE_KEYS.EVENTS, events);
-                return [events[index]];
-            }
-            return [];
+            if (error) throw error;
+            return data;
         } catch (error) {
             console.error('Error updating event:', error);
             throw error;
@@ -223,9 +187,12 @@ class DatabaseService {
 
     static async deleteEvent(id) {
         try {
-            const events = this.getStorageData(this.STORAGE_KEYS.EVENTS);
-            const filtered = events.filter(e => e.id != id);
-            this.setStorageData(this.STORAGE_KEYS.EVENTS, filtered);
+            const { error } = await supabase
+                .from('events')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error deleting event:', error);
@@ -236,28 +203,14 @@ class DatabaseService {
     // Registrations
     static async createRegistration(registrationData) {
         try {
-            const registrations = this.getStorageData(this.STORAGE_KEYS.REGISTRATIONS);
-            const newRegistration = {
-                id: this.generateId(),
-                ...registrationData,
-                created_at: new Date().toISOString()
-            };
+            const { data, error } = await supabase
+                .from('registrations')
+                .insert([registrationData])
+                .select();
             
-            registrations.push(newRegistration);
-            this.setStorageData(this.STORAGE_KEYS.REGISTRATIONS, registrations);
-            
-            // Update event registration count
-            if (registrationData.eventId) {
-                const events = this.getStorageData(this.STORAGE_KEYS.EVENTS);
-                const eventIndex = events.findIndex(e => e.id == registrationData.eventId);
-                if (eventIndex !== -1) {
-                    events[eventIndex].registered = (events[eventIndex].registered || 0) + 1;
-                    this.setStorageData(this.STORAGE_KEYS.EVENTS, events);
-                }
-            }
-            
-            console.log('Registration created:', newRegistration);
-            return [newRegistration];
+            if (error) throw error;
+            console.log('Registration created:', data);
+            return data;
         } catch (error) {
             console.error('Error creating registration:', error);
             throw error;
@@ -266,11 +219,19 @@ class DatabaseService {
 
     static async getRegistrations(eventId = null) {
         try {
-            const registrations = this.getStorageData(this.STORAGE_KEYS.REGISTRATIONS);
+            let query = supabase
+                .from('registrations')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
             if (eventId) {
-                return registrations.filter(r => r.eventId == eventId);
+                query = query.eq('event_id', eventId);
             }
-            return registrations;
+            
+            const { data, error } = await query;
+            
+            if (error) throw error;
+            return data || [];
         } catch (error) {
             console.error('Error fetching registrations:', error);
             return [];
@@ -279,21 +240,12 @@ class DatabaseService {
 
     static async deleteRegistration(id) {
         try {
-            const registrations = this.getStorageData(this.STORAGE_KEYS.REGISTRATIONS);
-            const registration = registrations.find(r => r.id == id);
-            const filtered = registrations.filter(r => r.id != id);
-            this.setStorageData(this.STORAGE_KEYS.REGISTRATIONS, filtered);
+            const { error } = await supabase
+                .from('registrations')
+                .delete()
+                .eq('id', id);
             
-            // Update event registration count
-            if (registration && registration.eventId) {
-                const events = this.getStorageData(this.STORAGE_KEYS.EVENTS);
-                const eventIndex = events.findIndex(e => e.id == registration.eventId);
-                if (eventIndex !== -1) {
-                    events[eventIndex].registered = Math.max(0, (events[eventIndex].registered || 0) - 1);
-                    this.setStorageData(this.STORAGE_KEYS.EVENTS, events);
-                }
-            }
-            
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error deleting registration:', error);
@@ -304,26 +256,24 @@ class DatabaseService {
     // Media
     static async uploadMedia(file) {
         try {
-            // Convert file to base64 for storage
-            const base64 = await this.fileToBase64(file);
-            const mediaItem = {
-                id: this.generateId(),
-                filename: file.name,
-                original_name: file.name,
-                file_type: file.type,
-                file_size: file.size,
-                file_path: base64,
-                created_at: new Date().toISOString()
-            };
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
             
-            const media = this.getStorageData(this.STORAGE_KEYS.MEDIA);
-            media.push(mediaItem);
-            this.setStorageData(this.STORAGE_KEYS.MEDIA, media);
+            const { data, error } = await supabase.storage
+                .from('media')
+                .upload(fileName, file);
             
-            console.log('Media uploaded:', mediaItem);
+            if (error) throw error;
+            
+            // Get public URL
+            const { data: urlData } = supabase.storage
+                .from('media')
+                .getPublicUrl(fileName);
+            
+            console.log('Media uploaded:', data);
             return {
-                path: mediaItem.file_path,
-                fullPath: mediaItem.file_path
+                path: data.path,
+                fullPath: urlData.publicUrl
             };
         } catch (error) {
             console.error('Error uploading media:', error);
@@ -333,98 +283,32 @@ class DatabaseService {
 
     static async getMedia() {
         try {
-            return this.getStorageData(this.STORAGE_KEYS.MEDIA);
+            const { data, error } = await supabase.storage
+                .from('media')
+                .list();
+            
+            if (error) throw error;
+            return data || [];
         } catch (error) {
             console.error('Error fetching media:', error);
             return [];
         }
     }
 
-    static async deleteMedia(id) {
+    static async deleteMedia(fileName) {
         try {
-            const media = this.getStorageData(this.STORAGE_KEYS.MEDIA);
-            const filtered = media.filter(m => m.id != id);
-            this.setStorageData(this.STORAGE_KEYS.MEDIA, filtered);
+            const { error } = await supabase.storage
+                .from('media')
+                .remove([fileName]);
+            
+            if (error) throw error;
             return true;
         } catch (error) {
             console.error('Error deleting media:', error);
             throw error;
         }
     }
-
-    // Helper function to convert file to base64
-    static fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    // Initialize with sample data if empty
-    static initializeSampleData() {
-        const announcements = this.getStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS);
-        if (announcements.length === 0) {
-            const sampleAnnouncements = [
-                {
-                    id: this.generateId(),
-                    title: 'MUSIC Topluluğu Hoş Geldiniz!',
-                    content: 'Marmara Üniversitesi Bilim ve Disiplinlerarası Topluluğu\'na hoş geldiniz. Bilimi her yaştan insana sevdiriyoruz.',
-                    category: 'genel',
-                    status: 'active',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }
-            ];
-            this.setStorageData(this.STORAGE_KEYS.ANNOUNCEMENTS, sampleAnnouncements);
-        }
-
-        const blogPosts = this.getStorageData(this.STORAGE_KEYS.BLOG_POSTS);
-        if (blogPosts.length === 0) {
-            const sampleBlogPosts = [
-                {
-                    id: this.generateId(),
-                    title: 'Bilim Şenliği 2024 Başlıyor!',
-                    content: 'Bu yılki bilim şenliğimizde birbirinden ilginç deneyler ve gösteriler sizi bekliyor. Detaylı içerik burada...',
-                    excerpt: 'Bu yılki bilim şenliğimizde birbirinden ilginç deneyler ve gösteriler sizi bekliyor.',
-                    category: 'etkinlik',
-                    status: 'published',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }
-            ];
-            this.setStorageData(this.STORAGE_KEYS.BLOG_POSTS, sampleBlogPosts);
-        }
-
-        const events = this.getStorageData(this.STORAGE_KEYS.EVENTS);
-        if (events.length === 0) {
-            const sampleEvents = [
-                {
-                    id: this.generateId(),
-                    title: 'Bilim Şenliği 2024',
-                    type: 'bilim-senligi',
-                    date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-                    location: 'Marmara Üniversitesi Göztepe Kampüsü',
-                    description: 'Ortaokul ve lise öğrencilerine yönelik eğlenceli bilim deneyleri ve gösteriler.',
-                    price: 0,
-                    capacity: 100,
-                    registered: 0,
-                    registration_required: true,
-                    status: 'active',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }
-            ];
-            this.setStorageData(this.STORAGE_KEYS.EVENTS, sampleEvents);
-        }
-    }
 }
-
-// Initialize sample data when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    DatabaseService.initializeSampleData();
-});
 
 // Export for use in other files
 window.DatabaseService = DatabaseService;

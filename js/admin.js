@@ -317,19 +317,19 @@ async function loadMedia() {
         mediaGrid.innerHTML = mediaItems.map(item => `
             <div class="media-item">
                 <div class="media-preview">
-                    ${item.file_type.startsWith('image/') ? 
-                        `<img src="${item.file_path}" alt="${item.original_name}" style="width: 100%; height: 150px; object-fit: cover;">` :
+                    ${item.name.includes('.jpg') || item.name.includes('.jpeg') || item.name.includes('.png') || item.name.includes('.gif') ? 
+                        `<img src="${supabase.storage.from('media').getPublicUrl(item.name).data.publicUrl}" alt="${item.name}" style="width: 100%; height: 150px; object-fit: cover;">` :
                         `<i class="fas fa-file" style="font-size: 3rem; color: #6b7280; display: flex; align-items: center; justify-content: center; height: 150px;"></i>`
                     }
                 </div>
                 <div class="media-item-content">
-                    <h4>${item.original_name}</h4>
-                    <p>${(item.file_size / 1024).toFixed(1)} KB • ${new Date(item.created_at).toLocaleDateString('tr-TR')}</p>
+                    <h4>${item.name}</h4>
+                    <p>${(item.metadata?.size / 1024).toFixed(1) || '0'} KB • ${new Date(item.created_at).toLocaleDateString('tr-TR')}</p>
                     <div class="media-actions">
-                        <button class="btn btn-sm btn-secondary" onclick="downloadMedia('${item.id}')">
+                        <button class="btn btn-sm btn-secondary" onclick="downloadMedia('${item.name}')">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteMedia('${item.id}')">
+                        <button class="btn btn-sm btn-danger" onclick="deleteMedia('${item.name}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -552,21 +552,21 @@ async function deleteRegistration(id) {
     }
 }
 
-async function downloadMedia(id) {
-    const media = await getMediaById(id);
+async function downloadMedia(fileName) {
+    const media = await getMediaById(fileName);
     if (media) {
-        // Create download link for base64 data
+        // Create download link
         const link = document.createElement('a');
-        link.href = media.file_path;
-        link.download = media.original_name;
+        link.href = media.url;
+        link.download = fileName;
         link.click();
     }
 }
 
-async function deleteMedia(id) {
+async function deleteMedia(fileName) {
     if (confirm('Bu medya dosyasını silmek istediğinizden emin misiniz?')) {
         try {
-            await DatabaseService.deleteMedia(id);
+            await DatabaseService.deleteMedia(fileName);
             alert('Medya dosyası silindi!');
             loadMedia();
         } catch (error) {
@@ -604,8 +604,14 @@ async function exportRegistration(id) {
 // Helper functions to get data by ID
 async function getAnnouncementById(id) {
     try {
-        const announcements = await DatabaseService.getAnnouncements();
-        return announcements.find(a => a.id == id);
+        const { data, error } = await supabase
+            .from('announcements')
+            .select('*')
+            .eq('id', id)
+            .single();
+        
+        if (error) throw error;
+        return data;
     } catch (error) {
         console.error('Error getting announcement:', error);
         return null;
@@ -614,8 +620,14 @@ async function getAnnouncementById(id) {
 
 async function getBlogPostById(id) {
     try {
-        const blogPosts = await DatabaseService.getBlogPosts();
-        return blogPosts.find(p => p.id == id);
+        const { data, error } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('id', id)
+            .single();
+        
+        if (error) throw error;
+        return data;
     } catch (error) {
         console.error('Error getting blog post:', error);
         return null;
@@ -624,8 +636,14 @@ async function getBlogPostById(id) {
 
 async function getEventById(id) {
     try {
-        const events = await DatabaseService.getEvents();
-        return events.find(e => e.id == id);
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', id)
+            .single();
+        
+        if (error) throw error;
+        return data;
     } catch (error) {
         console.error('Error getting event:', error);
         return null;
@@ -634,18 +652,30 @@ async function getEventById(id) {
 
 async function getRegistrationById(id) {
     try {
-        const registrations = await DatabaseService.getRegistrations();
-        return registrations.find(r => r.id == id);
+        const { data, error } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('id', id)
+            .single();
+        
+        if (error) throw error;
+        return data;
     } catch (error) {
         console.error('Error getting registration:', error);
         return null;
     }
 }
 
-async function getMediaById(id) {
+async function getMediaById(fileName) {
     try {
-        const media = await DatabaseService.getMedia();
-        return media.find(m => m.id == id);
+        const { data: urlData } = supabase.storage
+            .from('media')
+            .getPublicUrl(fileName);
+        
+        return {
+            fileName: fileName,
+            url: urlData.publicUrl
+        };
     } catch (error) {
         console.error('Error getting media:', error);
         return null;
