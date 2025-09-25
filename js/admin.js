@@ -185,6 +185,10 @@ async function handleAnnouncementSubmit(e) {
 
 async function handleBlogSubmit(e) {
     e.preventDefault();
+    
+    // Sync editor content before submitting
+    syncEditorContent();
+    
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
@@ -211,7 +215,7 @@ async function handleBlogSubmit(e) {
     // Clean data - remove empty fields and image if not needed
     const cleanData = {
         title: data.title,
-        content: data.content,
+        content: data.content, // This now contains HTML from rich text editor
         excerpt: data.excerpt,
         category: data.category,
         status: data.status || 'published'
@@ -230,6 +234,11 @@ async function handleBlogSubmit(e) {
         alert('Blog yazısı başarıyla eklendi!');
         closeModal('blog-modal');
         loadBlogPosts();
+        
+        // Clear editor
+        document.getElementById('blog-content-editor').innerHTML = '';
+        syncEditorContent();
+        
     } catch (error) {
         console.error('Error creating blog post:', error);
         alert('Blog yazısı eklenirken bir hata oluştu: ' + error.message);
@@ -935,4 +944,100 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEvents();
     loadRegistrations();
     loadMedia();
+});
+
+// Rich Text Editor Functions
+function formatText(command) {
+    document.execCommand(command, false, null);
+    updateToolbarButtons();
+}
+
+function changeTextColor(color) {
+    if (color) {
+        document.execCommand('foreColor', false, color);
+    }
+}
+
+function insertImage() {
+    const url = prompt('Resim URL\'sini girin:');
+    if (url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        img.style.borderRadius = '8px';
+        img.style.margin = '1rem 0';
+        
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            range.insertNode(img);
+        } else {
+            document.getElementById('blog-content-editor').appendChild(img);
+        }
+    }
+}
+
+function insertVideo() {
+    const url = prompt('Video URL\'sini girin (YouTube, Vimeo, vb.):');
+    if (url) {
+        const video = document.createElement('video');
+        video.src = url;
+        video.controls = true;
+        video.style.maxWidth = '100%';
+        video.style.height = 'auto';
+        video.style.borderRadius = '8px';
+        video.style.margin = '1rem 0';
+        
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            range.insertNode(video);
+        } else {
+            document.getElementById('blog-content-editor').appendChild(video);
+        }
+    }
+}
+
+function updateToolbarButtons() {
+    const buttons = document.querySelectorAll('.toolbar-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Check current formatting
+    if (document.queryCommandState('bold')) {
+        document.querySelector('[onclick="formatText(\'bold\')"]').classList.add('active');
+    }
+    if (document.queryCommandState('italic')) {
+        document.querySelector('[onclick="formatText(\'italic\')"]').classList.add('active');
+    }
+    if (document.queryCommandState('underline')) {
+        document.querySelector('[onclick="formatText(\'underline\')"]').classList.add('active');
+    }
+}
+
+// Update toolbar when selection changes
+document.addEventListener('selectionchange', updateToolbarButtons);
+
+// Sync editor content with hidden textarea
+function syncEditorContent() {
+    const editor = document.getElementById('blog-content-editor');
+    const hiddenTextarea = document.getElementById('blog-content-hidden');
+    if (editor && hiddenTextarea) {
+        hiddenTextarea.value = editor.innerHTML;
+    }
+}
+
+// Add event listener to editor
+document.addEventListener('DOMContentLoaded', () => {
+    const editor = document.getElementById('blog-content-editor');
+    if (editor) {
+        editor.addEventListener('input', syncEditorContent);
+        editor.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+    }
 });
