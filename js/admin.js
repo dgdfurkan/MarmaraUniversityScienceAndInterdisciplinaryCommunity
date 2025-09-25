@@ -136,14 +136,22 @@ async function handleAnnouncementSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
+    // Clean data - remove empty fields and image if not needed
+    const cleanData = {
+        title: data.title,
+        content: data.content,
+        category: data.category,
+        status: data.status || 'active'
+    };
+    
     try {
-        await DatabaseService.createAnnouncement(data);
+        await DatabaseService.createAnnouncement(cleanData);
         alert('Duyuru başarıyla eklendi!');
         closeModal('announcement-modal');
         loadAnnouncements();
     } catch (error) {
         console.error('Error creating announcement:', error);
-        alert('Duyuru eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+        alert('Duyuru eklenirken bir hata oluştu: ' + error.message);
     }
 }
 
@@ -152,14 +160,23 @@ async function handleBlogSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
+    // Clean data - remove empty fields and image if not needed
+    const cleanData = {
+        title: data.title,
+        content: data.content,
+        excerpt: data.excerpt,
+        category: data.category,
+        status: data.status || 'published'
+    };
+    
     try {
-        await DatabaseService.createBlogPost(data);
+        await DatabaseService.createBlogPost(cleanData);
         alert('Blog yazısı başarıyla eklendi!');
         closeModal('blog-modal');
         loadBlogPosts();
     } catch (error) {
         console.error('Error creating blog post:', error);
-        alert('Blog yazısı eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+        alert('Blog yazısı eklenirken bir hata oluştu: ' + error.message);
     }
 }
 
@@ -168,14 +185,27 @@ async function handleEventSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
     
+    // Clean data - remove empty fields and image if not needed
+    const cleanData = {
+        title: data.title,
+        type: data.type,
+        date: data.date,
+        location: data.location,
+        description: data.description,
+        price: parseFloat(data.price) || 0,
+        capacity: parseInt(data.capacity) || 0,
+        registration_required: data.registration_required === 'on',
+        status: data.status || 'active'
+    };
+    
     try {
-        await DatabaseService.createEvent(data);
+        await DatabaseService.createEvent(cleanData);
         alert('Etkinlik başarıyla eklendi!');
         closeModal('event-modal');
         loadEvents();
     } catch (error) {
         console.error('Error creating event:', error);
-        alert('Etkinlik eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+        alert('Etkinlik eklenirken bir hata oluştu: ' + error.message);
     }
 }
 
