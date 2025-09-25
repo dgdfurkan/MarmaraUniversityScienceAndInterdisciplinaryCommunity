@@ -94,12 +94,8 @@ function openModal(modalId) {
                     editor.focus();
                     console.log('Blog editor focused for testing');
                     
-                    // DEBUG TEST: Editor'a test yazısı ekle
-                    setTimeout(() => {
-                        editor.innerHTML = '<p>TEST YAZISI</p>';
-                        console.log('🔥 DEBUG: Test yazısı eklendi:', editor.innerHTML);
-                        syncEditorContent();
-                    }, 500);
+                    // DEBUG: Editor hazır, test yazısı KALDIRıLDı
+                    console.log('🔥 DEBUG: Editor hazır, yazmaya başlayabilirsiniz');
                 }
             }, 100);
         } else if (modalId === 'announcement-modal') {
@@ -257,15 +253,21 @@ async function handleBlogSubmit(e) {
   const blogEditor = document.getElementById('blog-content-editor');
   const contentHTML = blogEditor ? blogEditor.innerHTML : '';
 
-  // Debug için konsola yazdırarak içeriğin dolu olduğunu teyit et.
-  console.log('✅ Form gönderiliyor. Yakalanan Blog İçeriği:', contentHTML);
-  console.log('İçerik Uzunluğu:', contentHTML.length);
+  // AGRESIF DEBUG - Form gönderilmeden önce ne var?
+  console.log('🚀🚀🚀 FORM GÖNDERİLİYOR!');
+  console.log('🚀🚀🚀 Editor Element:', blogEditor);
+  console.log('🚀🚀🚀 innerHTML:', contentHTML);
+  console.log('🚀🚀🚀 textContent:', blogEditor ? blogEditor.textContent : 'NULL');
+  console.log('🚀🚀🚀 innerText:', blogEditor ? blogEditor.innerText : 'NULL');
+  console.log('🚀🚀🚀 İçerik Uzunluğu:', contentHTML.length);
 
-  // İçerik boşsa kullanıcıyı uyar ve işlemi durdur.
+  // GEÇICI: Boş kontrol kapatıldı - debug için
+  /*
   if (!contentHTML || contentHTML.trim() === '<p><br></p>' || contentHTML.trim() === '') {
       alert('Blog içeriği boş olamaz. Lütfen içerik ekleyin.');
-      return; // Fonksiyonu burada sonlandır.
+      return; 
   }
+  */
 
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData);
@@ -1318,11 +1320,12 @@ function addEditorListeners(editorId) {
         editor.removeEventListener('keyup', syncEditorContent);
         editor.removeEventListener('blur', syncEditorContent);
         
-        // Add input event listener - DEBUG VERSION
+        // Add input event listener - AGRESIF DEBUG VERSION
         editor.addEventListener('input', (e) => {
-            console.log('🔥 INPUT EVENT TRIGGERED for:', editorId);
-            console.log('🔥 Event target:', e.target);
-            console.log('🔥 Editor innerHTML:', editor.innerHTML);
+            console.log('🔥🔥🔥 INPUT EVENT TRIGGERED for:', editorId);
+            console.log('🔥🔥🔥 Editor innerHTML:', editor.innerHTML);
+            console.log('🔥🔥🔥 Editor textContent:', editor.textContent);
+            console.log('🔥🔥🔥 Editor innerText:', editor.innerText);
             syncEditorContent();
         });
         
