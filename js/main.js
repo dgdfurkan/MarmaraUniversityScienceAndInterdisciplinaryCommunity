@@ -419,10 +419,13 @@ function openCommentModal(postId) {
 }
 
 function formatBlogContent(content) {
-    // Split content by double line breaks to preserve paragraphs
-    const paragraphs = content.split('\n\n').filter(p => p.trim() !== '');
+    // If content contains HTML tags, return it as is
+    if (content.includes('<') && content.includes('>')) {
+        return content;
+    }
     
-    // Wrap each paragraph in <p> tags
+    // Otherwise, format as plain text with paragraphs
+    const paragraphs = content.split('\n\n').filter(p => p.trim() !== '');
     return paragraphs.map(paragraph => 
         `<p>${paragraph.trim()}</p>`
     ).join('');
