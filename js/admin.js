@@ -1201,11 +1201,15 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - NORMAL sync
+    // Sync blog editor - TEST with manual content
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
         console.log('Syncing blog editor...');
+        
+        // TEST: Manually add content to test if editor works
+        console.log('Testing editor with manual content...');
+        blogEditor.innerHTML = '<p><strong>Test içerik</strong></p>';
         
         // Get content from editor
         const content = blogEditor.innerHTML;
