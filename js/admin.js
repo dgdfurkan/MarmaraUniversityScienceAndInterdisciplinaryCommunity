@@ -161,10 +161,16 @@ async function handleAnnouncementSubmit(e) {
         title: data.title,
         content: data.content,
         category: data.category,
-        status: data.status || 'active',
-        image_url: imageUrl,
-        image_file: imageFile
+        status: data.status || 'active'
     };
+    
+    // Add image data only if provided
+    if (imageUrl) {
+        cleanData.image_url = imageUrl;
+    }
+    if (imageFile) {
+        cleanData.image_file = imageFile;
+    }
     
     try {
         await DatabaseService.createAnnouncement(cleanData);
@@ -208,10 +214,16 @@ async function handleBlogSubmit(e) {
         content: data.content,
         excerpt: data.excerpt,
         category: data.category,
-        status: data.status || 'published',
-        image_url: imageUrl,
-        image_file: imageFile
+        status: data.status || 'published'
     };
+    
+    // Add image data only if provided
+    if (imageUrl) {
+        cleanData.image_url = imageUrl;
+    }
+    if (imageFile) {
+        cleanData.image_file = imageFile;
+    }
     
     try {
         await DatabaseService.createBlogPost(cleanData);
@@ -259,10 +271,16 @@ async function handleEventSubmit(e) {
         price: parseFloat(data.price) || 0,
         capacity: parseInt(data.capacity) || 0,
         registration_required: data.registration_required === 'on',
-        status: data.status || 'active',
-        image_url: imageUrl,
-        image_file: imageFile
+        status: data.status || 'active'
     };
+    
+    // Add image data only if provided
+    if (imageUrl) {
+        cleanData.image_url = imageUrl;
+    }
+    if (imageFile) {
+        cleanData.image_file = imageFile;
+    }
     
     try {
         await DatabaseService.createEvent(cleanData);
