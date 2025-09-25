@@ -397,13 +397,31 @@
                                 <option value="#8b5cf6">Mor</option>
                             </select>
                         </div>
-                        <div class="editor-content" contenteditable="true" id="blog-content-editor" placeholder="Blog içeriğinizi buraya yazın..."></div>
+                        <div class="editor-content" contenteditable="true" id="announcement-content-editor" placeholder="Duyuru içeriğinizi buraya yazın..."></div>
                     </div>
-                    <textarea name="content" id="blog-content-hidden" style="display: none;"></textarea>
+                    <textarea name="content" id="announcement-content-hidden" style="display: none;"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Resim</label>
-                    <input type="file" name="image" accept="image/*">
+                    <label>Fotoğraf</label>
+                    <div class="image-upload-section">
+                        <div class="image-option">
+                            <label>
+                                <input type="radio" name="image_type" value="url" checked>
+                                Fotoğraf Linki
+                            </label>
+                            <input type="url" name="image_url" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="image-option">
+                            <label>
+                                <input type="radio" name="image_type" value="file">
+                                Dosyadan Yükle
+                            </label>
+                            <input type="file" name="image_file" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-secondary" onclick="document.querySelector('input[name=image_file]').click()">
+                                <i class="fas fa-upload"></i> Dosya Seç
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Durum</label>
@@ -413,13 +431,14 @@
                     </select>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('blog-modal')">İptal</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('announcement-modal')">İptal</button>
                     <button type="submit" class="btn btn-primary">Kaydet</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Blog Modal -->
     <div id="blog-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -526,10 +545,6 @@
                     <textarea name="excerpt" rows="3" required></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Resim</label>
-                    <input type="file" name="image" accept="image/*">
-                </div>
-                <div class="form-group">
                     <label>Durum</label>
                     <select name="status">
                         <option value="published">Yayınlandı</option>
@@ -543,6 +558,7 @@
             </form>
         </div>
     </div>
+
 
     <div id="event-modal" class="modal">
         <div class="modal-content">
