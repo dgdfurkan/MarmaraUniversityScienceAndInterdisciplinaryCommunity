@@ -41,10 +41,32 @@ CREATE TABLE IF NOT EXISTS blog_comments (
 ALTER TABLE blog_interactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_comments ENABLE ROW LEVEL SECURITY;
 
--- Anonymous erişim izinleri
-CREATE POLICY "Allow anonymous read access" ON blog_interactions FOR SELECT USING (true);
-CREATE POLICY "Allow anonymous insert" ON blog_interactions FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anonymous read access" ON blog_comments FOR SELECT USING (true);
-CREATE POLICY "Allow anonymous insert" ON blog_comments FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anonymous update" ON blog_comments FOR UPDATE USING (true);
-CREATE POLICY "Allow anonymous delete" ON blog_comments FOR DELETE USING (true);
+-- RLS politikaları (eğer yoksa)
+DO $$ 
+BEGIN
+    -- Blog interactions policies
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous read access' AND tablename = 'blog_interactions') THEN
+        CREATE POLICY "Allow anonymous read access" ON blog_interactions FOR SELECT USING (true);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous insert' AND tablename = 'blog_interactions') THEN
+        CREATE POLICY "Allow anonymous insert" ON blog_interactions FOR INSERT WITH CHECK (true);
+    END IF;
+    
+    -- Blog comments policies
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous read access' AND tablename = 'blog_comments') THEN
+        CREATE POLICY "Allow anonymous read access" ON blog_comments FOR SELECT USING (true);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous insert' AND tablename = 'blog_comments') THEN
+        CREATE POLICY "Allow anonymous insert" ON blog_comments FOR INSERT WITH CHECK (true);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous update' AND tablename = 'blog_comments') THEN
+        CREATE POLICY "Allow anonymous update" ON blog_comments FOR UPDATE USING (true);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous delete' AND tablename = 'blog_comments') THEN
+        CREATE POLICY "Allow anonymous delete" ON blog_comments FOR DELETE USING (true);
+    END IF;
+END $$;
