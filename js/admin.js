@@ -1126,39 +1126,74 @@ function formatText(command) {
     
     switch(command) {
         case 'bold':
-            // Wrap selection in <strong> tag
-            const strong = document.createElement('strong');
-            try {
-                range.surroundContents(strong);
-            } catch (e) {
-                // If can't surround, insert at cursor
-                strong.textContent = selection.toString();
-                range.deleteContents();
-                range.insertNode(strong);
+            // Check if already bold, then remove formatting
+            const existingStrong = range.commonAncestorContainer.closest('strong') || 
+                                  range.commonAncestorContainer.closest('b');
+            if (existingStrong) {
+                // Remove bold formatting
+                const parent = existingStrong.parentNode;
+                while (existingStrong.firstChild) {
+                    parent.insertBefore(existingStrong.firstChild, existingStrong);
+                }
+                parent.removeChild(existingStrong);
+            } else {
+                // Add bold formatting
+                const strong = document.createElement('strong');
+                try {
+                    range.surroundContents(strong);
+                } catch (e) {
+                    // If can't surround, insert at cursor
+                    strong.textContent = selection.toString();
+                    range.deleteContents();
+                    range.insertNode(strong);
+                }
             }
             break;
             
         case 'italic':
-            // Wrap selection in <em> tag
-            const em = document.createElement('em');
-            try {
-                range.surroundContents(em);
-            } catch (e) {
-                em.textContent = selection.toString();
-                range.deleteContents();
-                range.insertNode(em);
+            // Check if already italic, then remove formatting
+            const existingEm = range.commonAncestorContainer.closest('em') || 
+                              range.commonAncestorContainer.closest('i');
+            if (existingEm) {
+                // Remove italic formatting
+                const parent = existingEm.parentNode;
+                while (existingEm.firstChild) {
+                    parent.insertBefore(existingEm.firstChild, existingEm);
+                }
+                parent.removeChild(existingEm);
+            } else {
+                // Add italic formatting
+                const em = document.createElement('em');
+                try {
+                    range.surroundContents(em);
+                } catch (e) {
+                    em.textContent = selection.toString();
+                    range.deleteContents();
+                    range.insertNode(em);
+                }
             }
             break;
             
         case 'underline':
-            // Wrap selection in <u> tag
-            const u = document.createElement('u');
-            try {
-                range.surroundContents(u);
-            } catch (e) {
-                u.textContent = selection.toString();
-                range.deleteContents();
-                range.insertNode(u);
+            // Check if already underlined, then remove formatting
+            const existingU = range.commonAncestorContainer.closest('u');
+            if (existingU) {
+                // Remove underline formatting
+                const parent = existingU.parentNode;
+                while (existingU.firstChild) {
+                    parent.insertBefore(existingU.firstChild, existingU);
+                }
+                parent.removeChild(existingU);
+            } else {
+                // Add underline formatting
+                const u = document.createElement('u');
+                try {
+                    range.surroundContents(u);
+                } catch (e) {
+                    u.textContent = selection.toString();
+                    range.deleteContents();
+                    range.insertNode(u);
+                }
             }
             break;
             
@@ -1342,7 +1377,17 @@ function insertVideo() {
 }
 
 function updateToolbarButtons() {
-    const buttons = document.querySelectorAll('.toolbar-btn');
+    // Get the currently focused editor
+    const activeEditor = document.activeElement;
+    if (!activeEditor || !activeEditor.classList.contains('editor-content')) {
+        return;
+    }
+    
+    // Remove active class from all buttons in this editor's toolbar
+    const toolbar = activeEditor.closest('.rich-text-editor')?.querySelector('.editor-toolbar');
+    if (!toolbar) return;
+    
+    const buttons = toolbar.querySelectorAll('.toolbar-btn');
     buttons.forEach(btn => {
         btn.classList.remove('active');
     });
@@ -1353,28 +1398,30 @@ function updateToolbarButtons() {
         const range = selection.getRangeAt(0);
         const container = range.commonAncestorContainer;
         
-        // Check if we're in a contenteditable element
+        // Check if we're in the current editor
         const editor = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
         
-        if (editor && editor.closest('.editor-content')) {
+        if (editor && editor.closest('.editor-content') === activeEditor) {
             // Check bold formatting
-            const boldBtn = document.querySelector('[onclick="formatText(\'bold\')"]');
+            const boldBtn = toolbar.querySelector('[onclick*="bold"]');
             if (boldBtn) {
-                const isBold = editor.closest('strong') || editor.closest('b');
+                const isBold = editor.closest('strong') || editor.closest('b') || 
+                              activeEditor.querySelector('strong') || activeEditor.querySelector('b');
                 boldBtn.classList.toggle('active', !!isBold);
             }
             
             // Check italic formatting  
-            const italicBtn = document.querySelector('[onclick="formatText(\'italic\')"]');
+            const italicBtn = toolbar.querySelector('[onclick*="italic"]');
             if (italicBtn) {
-                const isItalic = editor.closest('em') || editor.closest('i');
+                const isItalic = editor.closest('em') || editor.closest('i') ||
+                                activeEditor.querySelector('em') || activeEditor.querySelector('i');
                 italicBtn.classList.toggle('active', !!isItalic);
             }
             
             // Check underline formatting
-            const underlineBtn = document.querySelector('[onclick="formatText(\'underline\')"]');
+            const underlineBtn = toolbar.querySelector('[onclick*="underline"]');
             if (underlineBtn) {
-                const isUnderline = editor.closest('u');
+                const isUnderline = editor.closest('u') || activeEditor.querySelector('u');
                 underlineBtn.classList.toggle('active', !!isUnderline);
             }
         }
@@ -1493,12 +1540,22 @@ function addEditorListeners(editorId) {
         // Add focus event listener
         editor.addEventListener('focus', () => {
             console.log('Editor focused:', editorId);
+            updateToolbarButtons();
         });
         
         // Add blur event listener
         editor.addEventListener('blur', () => {
             console.log('Editor blurred:', editorId);
             syncEditorContent();
+        });
+        
+        // Add selection change listener for toolbar updates
+        editor.addEventListener('mouseup', () => {
+            setTimeout(updateToolbarButtons, 10);
+        });
+        
+        editor.addEventListener('keyup', () => {
+            setTimeout(updateToolbarButtons, 10);
         });
         
         // Add keyup event listener
