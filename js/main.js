@@ -68,6 +68,9 @@ async function loadBlogPosts() {
             // Get image source
             const imageSrc = post.image_file || post.image_url || 'https://via.placeholder.com/530x320/3b82f6/ffffff?text=MUSIC';
             
+            // Otomatik görüntülenme sayısını artır
+            incrementViewCount(post.id);
+            
             return `
                 <div class="blog-card-new">
                     <div class="blog-thumbnail">
@@ -85,7 +88,7 @@ async function loadBlogPosts() {
                     <div class="blog-date">${day}</div>
                     <div class="blog-month">${month}</div>
                     <div class="blog-actions">
-                        <div class="blog-action" onclick="incrementViewCount(${post.id})">
+                        <div class="blog-action">
                             <i class="fas fa-eye"></i>
                             <span>${post.view_count || 0}</span>
                         </div>
@@ -211,6 +214,7 @@ async function incrementViewCount(postId) {
 async function toggleLike(postId) {
     try {
         const result = await DatabaseService.toggleBlogLike(postId);
+        
         // Update the like count in UI
         const likeElement = document.querySelector(`[onclick="toggleLike(${postId})"] span`);
         if (likeElement) {
@@ -220,12 +224,12 @@ async function toggleLike(postId) {
             const icon = likeElement.previousElementSibling;
             if (result.action === 'liked') {
                 icon.style.color = '#ef4444'; // Red for liked
-                icon.classList.remove('fa-heart');
-                icon.classList.add('fa-heart');
             } else {
                 icon.style.color = '#6b7280'; // Gray for unliked
             }
         }
+        
+        console.log('Like toggled:', result.action, 'Count:', result.like_count);
     } catch (error) {
         console.error('Error toggling like:', error);
         if (error.message.includes('duplicate key')) {
@@ -239,6 +243,7 @@ async function toggleLike(postId) {
 async function sharePost(postId) {
     try {
         await DatabaseService.incrementBlogShare(postId);
+        
         // Update the share count in UI
         const shareElement = document.querySelector(`[onclick="sharePost(${postId})"] span`);
         if (shareElement) {
@@ -248,18 +253,33 @@ async function sharePost(postId) {
         
         // Show share options
         if (navigator.share) {
-            await navigator.share({
-                title: 'MUSIC Blog',
-                text: 'Bu blog yazısını kontrol edin!',
-                url: window.location.href
-            });
+            try {
+                await navigator.share({
+                    title: 'MUSIC Blog',
+                    text: 'Bu blog yazısını kontrol edin!',
+                    url: window.location.href
+                });
+            } catch (shareError) {
+                if (shareError.name === 'AbortError') {
+                    console.log('Share canceled by user');
+                    // Don't show error for user cancellation
+                } else {
+                    throw shareError;
+                }
+            }
         } else {
             // Fallback: copy to clipboard
-            await navigator.clipboard.writeText(window.location.href);
-            alert('Link kopyalandı!');
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                alert('Link kopyalandı!');
+            } catch (clipboardError) {
+                console.error('Clipboard error:', clipboardError);
+                alert('Paylaşım linki: ' + window.location.href);
+            }
         }
     } catch (error) {
         console.error('Error sharing post:', error);
+        alert('Paylaşım sırasında bir hata oluştu.');
     }
 }
 
