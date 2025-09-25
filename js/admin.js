@@ -1196,21 +1196,24 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - Force content capture
+    // Sync blog editor - Manual content injection test
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
-        // Force focus and wait a bit for content to be captured
-        blogEditor.focus();
+        // Test: Manually inject content to see if editor works
+        console.log('Testing editor functionality...');
         
-        // Wait for any pending content to be processed
+        // Try to manually add content
+        blogEditor.innerHTML = '<p><strong>Test içerik</strong></p>';
+        
+        // Wait a bit and check
         setTimeout(() => {
-            // Get all possible content types
             const innerHTML = blogEditor.innerHTML;
             const textContent = blogEditor.textContent || '';
             const innerText = blogEditor.innerText || '';
             const value = blogEditor.value || '';
             
+            console.log('After manual injection:');
             console.log('Blog editor innerHTML:', innerHTML);
             console.log('Blog editor textContent:', textContent);
             console.log('Blog editor innerText:', innerText);
@@ -1218,28 +1221,36 @@ function syncEditorContent() {
             
             // Check if editor has any content at all
             if (innerHTML.trim() === '' && textContent.trim() === '' && innerText.trim() === '' && value.trim() === '') {
-                console.log('WARNING: Blog editor is completely empty!');
+                console.log('ERROR: Editor is not working at all!');
                 console.log('Editor element:', blogEditor);
                 console.log('Editor children:', blogEditor.children);
                 console.log('Editor childNodes:', blogEditor.childNodes);
+                
+                // Try alternative approach - use textarea instead
+                console.log('Falling back to textarea approach...');
+                const textareaContent = prompt('Editor çalışmıyor. İçeriği manuel olarak girin:');
+                if (textareaContent) {
+                    blogHidden.value = `<p>${textareaContent}</p>`;
+                    console.log('Manual content set:', blogHidden.value);
+                }
+            } else {
+                // Editor works, use the content
+                let finalContent = '';
+                if (innerHTML && innerHTML.trim() !== '') {
+                    finalContent = innerHTML;
+                } else if (textContent && textContent.trim() !== '') {
+                    finalContent = `<p>${textContent}</p>`;
+                } else if (innerText && innerText.trim() !== '') {
+                    finalContent = `<p>${innerText}</p>`;
+                } else if (value && value.trim() !== '') {
+                    finalContent = `<p>${value}</p>`;
+                }
+                
+                blogHidden.value = finalContent;
+                console.log('Blog editor final content:', finalContent);
+                console.log('Blog hidden field value:', blogHidden.value);
             }
-            
-            // Use the first non-empty content
-            let finalContent = '';
-            if (innerHTML && innerHTML.trim() !== '') {
-                finalContent = innerHTML;
-            } else if (textContent && textContent.trim() !== '') {
-                finalContent = `<p>${textContent}</p>`;
-            } else if (innerText && innerText.trim() !== '') {
-                finalContent = `<p>${innerText}</p>`;
-            } else if (value && value.trim() !== '') {
-                finalContent = `<p>${value}</p>`;
-            }
-            
-            blogHidden.value = finalContent;
-            console.log('Blog editor final content:', finalContent);
-            console.log('Blog hidden field value:', blogHidden.value);
-        }, 100);
+        }, 200);
     }
     
     // Sync event editor
