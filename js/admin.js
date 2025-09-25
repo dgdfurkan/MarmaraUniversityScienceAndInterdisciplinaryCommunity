@@ -1201,26 +1201,18 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - BYPASS editor completely
+    // Sync blog editor - NORMAL sync
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
         console.log('Syncing blog editor...');
         
-        // BYPASS: Since editor is not working, use prompt for content
-        console.log('Editor is not working, using prompt for content...');
+        // Get content from editor
+        const content = blogEditor.innerHTML;
+        blogHidden.value = content;
         
-        const userContent = prompt('Rich Text Editor çalışmıyor. Blog içeriğinizi buraya yazın:');
-        if (userContent && userContent.trim() !== '') {
-            // Wrap content in HTML tags
-            const finalContent = `<p>${userContent}</p>`;
-            blogHidden.value = finalContent;
-            console.log('Manual content set:', finalContent);
-            console.log('Blog hidden field value:', blogHidden.value);
-        } else {
-            console.log('No content provided by user');
-            blogHidden.value = '';
-        }
+        console.log('Blog editor content:', content);
+        console.log('Blog hidden field value:', blogHidden.value);
     }
     
     // Sync event editor
@@ -1243,12 +1235,31 @@ document.addEventListener('DOMContentLoaded', () => {
     editors.forEach(editorId => {
         const editor = document.getElementById(editorId);
         if (editor) {
+            // Add input event listener
             editor.addEventListener('input', syncEditorContent);
+            
+            // Add paste event listener
             editor.addEventListener('paste', (e) => {
                 e.preventDefault();
                 const text = e.clipboardData.getData('text/plain');
                 document.execCommand('insertText', false, text);
             });
+            
+            // Add focus event listener
+            editor.addEventListener('focus', () => {
+                console.log('Editor focused:', editorId);
+            });
+            
+            // Add blur event listener
+            editor.addEventListener('blur', () => {
+                console.log('Editor blurred:', editorId);
+                syncEditorContent();
+            });
+            
+            // Add keyup event listener
+            editor.addEventListener('keyup', syncEditorContent);
+            
+            console.log('Event listeners added to:', editorId);
         }
     });
 });
