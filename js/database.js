@@ -308,6 +308,128 @@ class DatabaseService {
             throw error;
         }
     }
+
+    // Blog Interactions
+    static async incrementBlogView(postId) {
+        try {
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .update({ view_count: supabase.raw('view_count + 1') })
+                .eq('id', postId)
+                .select();
+            
+            if (error) throw error;
+            
+            // Log interaction
+            await supabase
+                .from('blog_interactions')
+                .insert([{
+                    blog_id: postId,
+                    user_ip: await this.getUserIP(),
+                    interaction_type: 'view'
+                }]);
+            
+            return data;
+        } catch (error) {
+            console.error('Error incrementing blog view:', error);
+            throw error;
+        }
+    }
+
+    static async toggleBlogLike(postId) {
+        try {
+            const userIP = await this.getUserIP();
+            
+            // Check if user already liked this post
+            const { data: existingLike, error: checkError } = await supabase
+                .from('blog_interactions')
+                .select('*')
+                .eq('blog_id', postId)
+                .eq('user_ip', userIP)
+                .eq('interaction_type', 'like')
+                .single();
+            
+            if (checkError && checkError.code !== 'PGRST116') {
+                throw checkError;
+            }
+            
+            if (existingLike) {
+                // Unlike: remove interaction and decrement count
+                await supabase
+                    .from('blog_interactions')
+                    .delete()
+                    .eq('id', existingLike.id);
+                
+                const { data, error } = await supabase
+                    .from('blog_posts')
+                    .update({ like_count: supabase.raw('like_count - 1') })
+                    .eq('id', postId)
+                    .select();
+                
+                if (error) throw error;
+                return data[0];
+            } else {
+                // Like: add interaction and increment count
+                await supabase
+                    .from('blog_interactions')
+                    .insert([{
+                        blog_id: postId,
+                        user_ip: userIP,
+                        interaction_type: 'like'
+                    }]);
+                
+                const { data, error } = await supabase
+                    .from('blog_posts')
+                    .update({ like_count: supabase.raw('like_count + 1') })
+                    .eq('id', postId)
+                    .select();
+                
+                if (error) throw error;
+                return data[0];
+            }
+        } catch (error) {
+            console.error('Error toggling blog like:', error);
+            throw error;
+        }
+    }
+
+    static async incrementBlogShare(postId) {
+        try {
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .update({ share_count: supabase.raw('share_count + 1') })
+                .eq('id', postId)
+                .select();
+            
+            if (error) throw error;
+            
+            // Log interaction
+            await supabase
+                .from('blog_interactions')
+                .insert([{
+                    blog_id: postId,
+                    user_ip: await this.getUserIP(),
+                    interaction_type: 'share'
+                }]);
+            
+            return data;
+        } catch (error) {
+            console.error('Error incrementing blog share:', error);
+            throw error;
+        }
+    }
+
+    // Helper function to get user IP
+    static async getUserIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            // Fallback to a random IP for development
+            return '127.0.0.1';
+        }
+    }
 }
 
 // Test Supabase connection and tables

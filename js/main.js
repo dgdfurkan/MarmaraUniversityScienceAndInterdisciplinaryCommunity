@@ -49,32 +49,69 @@ if (contactForm) {
 
 // Load blog posts dynamically
 async function loadBlogPosts() {
-    const blogGrid = document.getElementById('blog-posts');
-    if (!blogGrid) return;
+    const blogContainer = document.getElementById('blog-posts');
+    if (!blogContainer) return;
     
     try {
         const posts = await DatabaseService.getBlogPosts();
         
-        blogGrid.innerHTML = posts.map(post => `
-            <div class="blog-card">
-                <div class="blog-image">
-                    <i class="${getBlogIcon(post.category)}"></i>
-                </div>
-                <div class="blog-content">
-                    <div class="blog-meta">
-                        <span><i class="fas fa-calendar"></i> ${new Date(post.created_at).toLocaleDateString('tr-TR')}</span>
-                        <span><i class="fas fa-tag"></i> ${getCategoryName(post.category)}</span>
+        if (posts.length === 0) {
+            blogContainer.innerHTML = '<p class="no-posts">Henüz blog yazısı bulunmuyor. Yakında yeni yazılar eklenecek!</p>';
+            return;
+        }
+        
+        blogContainer.innerHTML = posts.map(post => {
+            const postDate = new Date(post.created_at);
+            const day = postDate.getDate();
+            const month = postDate.toLocaleDateString('tr-TR', { month: 'long' }).toUpperCase();
+            
+            // Get image source
+            const imageSrc = post.image_file || post.image_url || 'https://via.placeholder.com/530x320/3b82f6/ffffff?text=MUSIC';
+            
+            return `
+                <div class="blog-card-new">
+                    <div class="blog-thumbnail">
+                        <img src="${imageSrc}" alt="${post.title}">
                     </div>
-                    <h3>${post.title}</h3>
-                    <p>${post.excerpt}</p>
-                    <a href="#" class="blog-link">Devamını Oku <i class="fas fa-arrow-right"></i></a>
+                    <div class="blog-content-new">
+                        <h1>${post.title}</h1>
+                        <div class="blog-author">
+                            <img src="${post.author_avatar || 'https://via.placeholder.com/20x20/3b82f6/ffffff?text=M'}" alt="${post.author_name}">
+                            <h2>${post.author_name || 'MUSIC Ekibi'}</h2>
+                        </div>
+                        <div class="blog-separator"></div>
+                        <p>${post.excerpt || post.content.substring(0, 200) + '...'}</p>
+                    </div>
+                    <div class="blog-date">${day}</div>
+                    <div class="blog-month">${month}</div>
+                    <div class="blog-actions">
+                        <div class="blog-action" onclick="incrementViewCount(${post.id})">
+                            <i class="fas fa-eye"></i>
+                            <span>${post.view_count || 0}</span>
+                        </div>
+                        <div class="blog-action" onclick="toggleLike(${post.id})">
+                            <i class="fas fa-heart"></i>
+                            <span>${post.like_count || 0}</span>
+                        </div>
+                        <div class="blog-action" onclick="openCommentModal(${post.id})">
+                            <i class="fas fa-envelope"></i>
+                            <span>Yorum</span>
+                        </div>
+                        <div class="blog-action" onclick="sharePost(${post.id})">
+                            <i class="fas fa-share-alt"></i>
+                            <span>${post.share_count || 0}</span>
+                        </div>
+                    </div>
+                    <div class="blog-fab" onclick="scrollToTop()">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
     } catch (error) {
         console.error('Error loading blog posts:', error);
-        blogGrid.innerHTML = '<p>Blog yazıları yüklenirken bir hata oluştu.</p>';
+        blogContainer.innerHTML = '<p class="no-posts">Blog yazıları yüklenirken bir hata oluştu.</p>';
     }
 }
 
@@ -154,6 +191,70 @@ function getEventIcon(type) {
         'teknik-gezi': 'fas fa-bus'
     };
     return icons[type] || 'fas fa-calendar-alt';
+}
+
+// Blog interaction functions
+async function incrementViewCount(postId) {
+    try {
+        await DatabaseService.incrementBlogView(postId);
+        // Update the view count in UI
+        const viewElement = document.querySelector(`[onclick="incrementViewCount(${postId})"] span`);
+        if (viewElement) {
+            const currentCount = parseInt(viewElement.textContent) || 0;
+            viewElement.textContent = currentCount + 1;
+        }
+    } catch (error) {
+        console.error('Error incrementing view count:', error);
+    }
+}
+
+async function toggleLike(postId) {
+    try {
+        const result = await DatabaseService.toggleBlogLike(postId);
+        // Update the like count in UI
+        const likeElement = document.querySelector(`[onclick="toggleLike(${postId})"] span`);
+        if (likeElement) {
+            likeElement.textContent = result.like_count;
+        }
+    } catch (error) {
+        console.error('Error toggling like:', error);
+    }
+}
+
+async function sharePost(postId) {
+    try {
+        await DatabaseService.incrementBlogShare(postId);
+        // Update the share count in UI
+        const shareElement = document.querySelector(`[onclick="sharePost(${postId})"] span`);
+        if (shareElement) {
+            const currentCount = parseInt(shareElement.textContent) || 0;
+            shareElement.textContent = currentCount + 1;
+        }
+        
+        // Show share options
+        if (navigator.share) {
+            await navigator.share({
+                title: 'MUSIC Blog',
+                text: 'Bu blog yazısını kontrol edin!',
+                url: window.location.href
+            });
+        } else {
+            // Fallback: copy to clipboard
+            await navigator.clipboard.writeText(window.location.href);
+            alert('Link kopyalandı!');
+        }
+    } catch (error) {
+        console.error('Error sharing post:', error);
+    }
+}
+
+function openCommentModal(postId) {
+    // TODO: Implement comment modal
+    alert('Yorum sistemi yakında eklenecek!');
+}
+
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Load blog posts and events when page loads
