@@ -207,15 +207,8 @@ async function handleAnnouncementSubmit(e) {
 async function handleBlogSubmit(e) {
     e.preventDefault();
     
-    // Sync editor content before submitting - WAIT for it to complete
-    console.log('Before sync - Blog editor element:', document.getElementById('blog-content-editor'));
-    console.log('Before sync - Blog hidden element:', document.getElementById('blog-content-hidden'));
-    
-    // Wait for sync to complete
-    await new Promise(resolve => {
-        syncEditorContent();
-        setTimeout(resolve, 300); // Wait for sync to complete
-    });
+    // Sync editor content before submitting - SAME AS EVENTS
+    syncEditorContent();
     
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
@@ -1201,22 +1194,12 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - TEST with manual content
+    // Sync blog editor - SAME AS EVENTS
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
-        console.log('Syncing blog editor...');
-        
-        // TEST: Manually add content to test if editor works
-        console.log('Testing editor with manual content...');
-        blogEditor.innerHTML = '<p><strong>Test içerik</strong></p>';
-        
-        // Get content from editor
-        const content = blogEditor.innerHTML;
-        blogHidden.value = content;
-        
-        console.log('Blog editor content:', content);
-        console.log('Blog hidden field value:', blogHidden.value);
+        blogHidden.value = blogEditor.innerHTML;
+        console.log('Blog editor synced:', blogEditor.innerHTML);
     }
     
     // Sync event editor
