@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etkinlik Kayıt - MUSIC</title>
+    <link rel="stylesheet" href="styles/registration.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="registration-container">
+        <!-- Header -->
+        <header class="registration-header">
+            <div class="header-content">
+                <a href="index.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    Ana Sayfaya Dön
+                </a>
+                <h1>Etkinlik Kayıt Formu</h1>
+                <p>MUSIC etkinliklerine katılmak için formu doldurun</p>
+            </div>
+        </header>
+
+        <!-- Event Selection -->
+        <section class="event-selection">
+            <div class="container">
+                <h2>Etkinlik Seçin</h2>
+                <div class="events-grid" id="events-grid">
+                    <!-- Events will be loaded dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Registration Form -->
+        <section class="registration-form-section" id="registration-form-section" style="display: none;">
+            <div class="container">
+                <div class="form-container">
+                    <div class="selected-event-info" id="selected-event-info">
+                        <!-- Selected event info will be displayed here -->
+                    </div>
+                    
+                    <form id="registration-form" class="registration-form">
+                        <div class="form-section">
+                            <h3>Kişisel Bilgiler</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName">Ad *</label>
+                                    <input type="text" id="firstName" name="firstName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName">Soyad *</label>
+                                    <input type="text" id="lastName" name="lastName" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="email">E-posta *</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Telefon *</label>
+                                    <input type="tel" id="phone" name="phone" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="university">Üniversite</label>
+                                    <input type="text" id="university" name="university" placeholder="Marmara Üniversitesi">
+                                </div>
+                                <div class="form-group">
+                                    <label for="department">Bölüm</label>
+                                    <input type="text" id="department" name="department">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="studentId">Öğrenci No</label>
+                                    <input type="text" id="studentId" name="studentId">
+                                </div>
+                                <div class="form-group">
+                                    <label for="grade">Sınıf</label>
+                                    <select id="grade" name="grade">
+                                        <option value="">Seçiniz</option>
+                                        <option value="1">1. Sınıf</option>
+                                        <option value="2">2. Sınıf</option>
+                                        <option value="3">3. Sınıf</option>
+                                        <option value="4">4. Sınıf</option>
+                                        <option value="graduate">Mezun</option>
+                                        <option value="other">Diğer</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Ek Bilgiler</h3>
+                            <div class="form-group">
+                                <label for="experience">Bu tür etkinliklerde deneyiminiz var mı?</label>
+                                <select id="experience" name="experience">
+                                    <option value="">Seçiniz</option>
+                                    <option value="none">Hiç deneyimim yok</option>
+                                    <option value="little">Az deneyimim var</option>
+                                    <option value="moderate">Orta düzeyde deneyimim var</option>
+                                    <option value="extensive">Çok deneyimim var</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="motivation">Bu etkinliğe katılma motivasyonunuz nedir?</label>
+                                <textarea id="motivation" name="motivation" rows="4" placeholder="Etkinliğe katılma nedenlerinizi kısaca açıklayın..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="dietary">Özel beslenme gereksinimleriniz var mı?</label>
+                                <textarea id="dietary" name="dietary" rows="2" placeholder="Varsa belirtiniz..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="accessibility">Erişilebilirlik gereksinimleriniz var mı?</label>
+                                <textarea id="accessibility" name="accessibility" rows="2" placeholder="Varsa belirtiniz..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>İletişim Tercihleri</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="emailNotifications" checked>
+                                    <span class="checkmark"></span>
+                                    E-posta ile bildirimler almak istiyorum
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="smsNotifications">
+                                    <span class="checkmark"></span>
+                                    SMS ile bildirimler almak istiyorum
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="newsletter">
+                                    <span class="checkmark"></span>
+                                    MUSIC bültenine abone olmak istiyorum
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Gizlilik ve Onay</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="privacyPolicy" required>
+                                    <span class="checkmark"></span>
+                                    <a href="#" target="_blank">Gizlilik Politikası</a>'nı okudum ve kabul ediyorum *
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="termsConditions" required>
+                                    <span class="checkmark"></span>
+                                    <a href="#" target="_blank">Kullanım Şartları</a>'nı okudum ve kabul ediyorum *
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="photoConsent">
+                                    <span class="checkmark"></span>
+                                    Etkinlik sırasında çekilen fotoğraflarda yer almama izin veriyorum
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="goBackToEvents()">
+                                <i class="fas fa-arrow-left"></i>
+                                Geri Dön
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i>
+                                Kayıt Ol
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Success Message -->
+        <section class="success-section" id="success-section" style="display: none;">
+            <div class="container">
+                <div class="success-content">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2>Kayıt Başarılı!</h2>
+                    <p>Etkinliğe kaydınız başarıyla tamamlandı. Etkinlik detayları e-posta adresinize gönderilecektir.</p>
+                    <div class="success-actions">
+                        <a href="index.html" class="btn btn-primary">
+                            <i class="fas fa-home"></i>
+                            Ana Sayfaya Dön
+                        </a>
+                        <button class="btn btn-secondary" onclick="registerForAnother()">
+                            <i class="fas fa-plus"></i>
+                            Başka Etkinliğe Kayıt Ol
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/registration.js"></script>
+</body>
+</html>

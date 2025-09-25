@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - MUSIC</title>
+    <link rel="stylesheet" href="styles/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>MUSIC Admin</h2>
+                <p>Yönetim Paneli</p>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </li>
+                    <li class="nav-item" data-section="announcements">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Duyurular</span>
+                    </li>
+                    <li class="nav-item" data-section="blog">
+                        <i class="fas fa-blog"></i>
+                        <span>Blog Yazıları</span>
+                    </li>
+                    <li class="nav-item" data-section="events">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Etkinlikler</span>
+                    </li>
+                    <li class="nav-item" data-section="registrations">
+                        <i class="fas fa-users"></i>
+                        <span>Kayıtlar</span>
+                    </li>
+                    <li class="nav-item" data-section="media">
+                        <i class="fas fa-images"></i>
+                        <span>Medya</span>
+                    </li>
+                    <li class="nav-item" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Ayarlar</span>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="index.html" class="view-site">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>Siteyi Görüntüle</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Genel bakış ve istatistikler</p>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/40" alt="Admin" class="user-avatar">
+                        <span class="user-name">Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-sections">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="content-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>12</h3>
+                                <p>Aktif Duyuru</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-blog"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>8</h3>
+                                <p>Blog Yazısı</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>5</h3>
+                                <p>Yaklaşan Etkinlik</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>156</h3>
+                                <p>Toplam Kayıt</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <h3>Son Aktiviteler</h3>
+                            <div class="activity-list">
+                                <div class="activity-item">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <div>
+                                        <p>Yeni duyuru eklendi: "Bilim Şenliği 2024"</p>
+                                        <span>2 saat önce</span>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <div>
+                                        <p>5 yeni etkinlik kaydı alındı</p>
+                                        <span>4 saat önce</span>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <i class="fas fa-edit"></i>
+                                    <div>
+                                        <p>Blog yazısı güncellendi: "Biyoteknoloji Atölyesi"</p>
+                                        <span>1 gün önce</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <h3>Hızlı İşlemler</h3>
+                            <div class="quick-actions">
+                                <button class="quick-action-btn" onclick="showSection('announcements')">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Duyuru Ekle</span>
+                                </button>
+                                <button class="quick-action-btn" onclick="showSection('blog')">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Blog Yazısı Ekle</span>
+                                </button>
+                                <button class="quick-action-btn" onclick="showSection('events')">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Etkinlik Ekle</span>
+                                </button>
+                                <button class="quick-action-btn" onclick="showSection('media')">
+                                    <i class="fas fa-upload"></i>
+                                    <span>Medya Yükle</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Announcements Section -->
+                <section id="announcements" class="content-section">
+                    <div class="section-header">
+                        <h2>Duyuru Yönetimi</h2>
+                        <button class="btn btn-primary" onclick="openModal('announcement-modal')">
+                            <i class="fas fa-plus"></i>
+                            Yeni Duyuru
+                        </button>
+                    </div>
+                    <div class="content-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Başlık</th>
+                                    <th>Kategori</th>
+                                    <th>Tarih</th>
+                                    <th>Durum</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="announcements-table">
+                                <!-- Announcements will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Blog Section -->
+                <section id="blog" class="content-section">
+                    <div class="section-header">
+                        <h2>Blog Yönetimi</h2>
+                        <button class="btn btn-primary" onclick="openModal('blog-modal')">
+                            <i class="fas fa-plus"></i>
+                            Yeni Blog Yazısı
+                        </button>
+                    </div>
+                    <div class="content-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Başlık</th>
+                                    <th>Kategori</th>
+                                    <th>Tarih</th>
+                                    <th>Durum</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blog-table">
+                                <!-- Blog posts will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Events Section -->
+                <section id="events" class="content-section">
+                    <div class="section-header">
+                        <h2>Etkinlik Yönetimi</h2>
+                        <button class="btn btn-primary" onclick="openModal('event-modal')">
+                            <i class="fas fa-plus"></i>
+                            Yeni Etkinlik
+                        </button>
+                    </div>
+                    <div class="content-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Etkinlik Adı</th>
+                                    <th>Tür</th>
+                                    <th>Tarih</th>
+                                    <th>Kayıt Sayısı</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="events-table">
+                                <!-- Events will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Registrations Section -->
+                <section id="registrations" class="content-section">
+                    <div class="section-header">
+                        <h2>Kayıt Yönetimi</h2>
+                        <div class="header-actions">
+                            <select id="event-filter">
+                                <option value="">Tüm Etkinlikler</option>
+                                <option value="bilim-senligi">Bilim Şenliği</option>
+                                <option value="atolye">Atölye</option>
+                                <option value="konferans">Konferans</option>
+                            </select>
+                            <button class="btn btn-secondary">
+                                <i class="fas fa-download"></i>
+                                Excel İndir
+                            </button>
+                        </div>
+                    </div>
+                    <div class="content-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ad Soyad</th>
+                                    <th>E-posta</th>
+                                    <th>Telefon</th>
+                                    <th>Etkinlik</th>
+                                    <th>Tarih</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registrations-table">
+                                <!-- Registrations will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Media Section -->
+                <section id="media" class="content-section">
+                    <div class="section-header">
+                        <h2>Medya Yönetimi</h2>
+                        <button class="btn btn-primary" onclick="document.getElementById('media-upload').click()">
+                            <i class="fas fa-upload"></i>
+                            Medya Yükle
+                        </button>
+                        <input type="file" id="media-upload" multiple accept="image/*,video/*" style="display: none;">
+                    </div>
+                    <div class="media-grid" id="media-grid">
+                        <!-- Media items will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="content-section">
+                    <div class="section-header">
+                        <h2>Site Ayarları</h2>
+                    </div>
+                    <div class="settings-form">
+                        <form id="settings-form">
+                            <div class="form-group">
+                                <label>Site Başlığı</label>
+                                <input type="text" name="site_title" value="MUSIC - Marmara Üniversitesi Bilim ve Disiplinlerarası Topluluğu">
+                            </div>
+                            <div class="form-group">
+                                <label>Site Açıklaması</label>
+                                <textarea name="site_description" rows="3">Bilimi sadece üniversite öğrencileri arasında değil; ortaokul ve lise çağındaki gençlere de sevdirmek</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>İletişim E-postası</label>
+                                <input type="email" name="contact_email" value="info@music-marmara.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Sosyal Medya Linkleri</label>
+                                <div class="social-inputs">
+                                    <input type="url" name="instagram" placeholder="Instagram URL">
+                                    <input type="url" name="twitter" placeholder="Twitter URL">
+                                    <input type="url" name="linkedin" placeholder="LinkedIn URL">
+                                    <input type="url" name="youtube" placeholder="YouTube URL">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="announcement-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Yeni Duyuru</h3>
+                <button class="modal-close" onclick="closeModal('announcement-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="announcement-form">
+                <div class="form-group">
+                    <label>Başlık</label>
+                    <input type="text" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select name="category" required>
+                        <option value="">Seçiniz</option>
+                        <option value="genel">Genel</option>
+                        <option value="konuk">Konuk</option>
+                        <option value="yarisma">Yarışma</option>
+                        <option value="atolye">Atölye</option>
+                        <option value="konferans">Konferans</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>İçerik</label>
+                    <textarea name="content" rows="6" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Resim</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>Durum</label>
+                    <select name="status">
+                        <option value="active">Aktif</option>
+                        <option value="draft">Taslak</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('announcement-modal')">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="blog-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Yeni Blog Yazısı</h3>
+                <button class="modal-close" onclick="closeModal('blog-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="blog-form">
+                <div class="form-group">
+                    <label>Başlık</label>
+                    <input type="text" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select name="category" required>
+                        <option value="">Seçiniz</option>
+                        <option value="bilim">Bilim</option>
+                        <option value="teknoloji">Teknoloji</option>
+                        <option value="etkinlik">Etkinlik</option>
+                        <option value="duyuru">Duyuru</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>İçerik</label>
+                    <textarea name="content" rows="8" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Özet</label>
+                    <textarea name="excerpt" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Resim</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label>Durum</label>
+                    <select name="status">
+                        <option value="published">Yayınlandı</option>
+                        <option value="draft">Taslak</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('blog-modal')">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Yeni Etkinlik</h3>
+                <button class="modal-close" onclick="closeModal('event-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="event-form">
+                <div class="form-group">
+                    <label>Etkinlik Adı</label>
+                    <input type="text" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label>Etkinlik Türü</label>
+                    <select name="type" required>
+                        <option value="">Seçiniz</option>
+                        <option value="bilim-senligi">Bilim Şenliği</option>
+                        <option value="atolye">Atölye</option>
+                        <option value="konferans">Konferans</option>
+                        <option value="teknik-gezi">Teknik Gezi</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tarih</label>
+                    <input type="datetime-local" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Konum</label>
+                    <input type="text" name="location" required>
+                </div>
+                <div class="form-group">
+                    <label>Açıklama</label>
+                    <textarea name="description" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Maksimum Katılımcı</label>
+                    <input type="number" name="max_participants" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Kayıt Gerekli mi?</label>
+                    <select name="registration_required">
+                        <option value="yes">Evet</option>
+                        <option value="no">Hayır</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Resim</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('event-modal')">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
