@@ -16,9 +16,15 @@ CREATE TABLE IF NOT EXISTS blog_interactions (
     id SERIAL PRIMARY KEY,
     blog_id INTEGER REFERENCES blog_posts(id) ON DELETE CASCADE,
     user_ip VARCHAR(45), -- IP adresi için
+    user_fingerprint VARCHAR(50), -- Browser fingerprint için
     interaction_type VARCHAR(20) NOT NULL, -- 'view', 'like', 'share'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Unique constraint ekle (bir IP + fingerprint kombinasyonu sadece bir kez beğeni yapabilir)
+CREATE UNIQUE INDEX IF NOT EXISTS unique_like_per_user 
+ON blog_interactions (blog_id, user_ip, user_fingerprint, interaction_type) 
+WHERE interaction_type = 'like';
 
 -- Blog comments tablosu oluştur
 CREATE TABLE IF NOT EXISTS blog_comments (

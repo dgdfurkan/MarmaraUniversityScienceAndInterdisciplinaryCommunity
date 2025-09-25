@@ -339,8 +339,9 @@ class DatabaseService {
     static async toggleBlogLike(postId) {
         try {
             const userIP = await this.getUserIP();
+            const userFingerprint = await this.getUserFingerprint();
             
-            // Check if user already liked this post
+            // Check if user already liked this post (IP + Fingerprint kontrolü)
             const { data: existingLike, error: checkError } = await supabase
                 .from('blog_interactions')
                 .select('*')
@@ -367,7 +368,7 @@ class DatabaseService {
                     .select();
                 
                 if (error) throw error;
-                return data[0];
+                return { ...data[0], action: 'unliked' };
             } else {
                 // Like: add interaction and increment count
                 await supabase
@@ -375,6 +376,7 @@ class DatabaseService {
                     .insert([{
                         blog_id: postId,
                         user_ip: userIP,
+                        user_fingerprint: userFingerprint,
                         interaction_type: 'like'
                     }]);
                 
@@ -385,7 +387,7 @@ class DatabaseService {
                     .select();
                 
                 if (error) throw error;
-                return data[0];
+                return { ...data[0], action: 'liked' };
             }
         } catch (error) {
             console.error('Error toggling blog like:', error);
@@ -428,6 +430,38 @@ class DatabaseService {
         } catch (error) {
             // Fallback to a random IP for development
             return '127.0.0.1';
+        }
+    }
+
+    // Helper function to get user fingerprint (browser + device info)
+    static async getUserFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('MUSIC Blog Fingerprint', 2, 2);
+            
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL()
+            ].join('|');
+            
+            // Simple hash function
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                const char = fingerprint.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            
+            return Math.abs(hash).toString(36);
+        } catch (error) {
+            // Fallback fingerprint
+            return 'fallback_' + Math.random().toString(36).substr(2, 9);
         }
     }
 }

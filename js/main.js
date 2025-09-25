@@ -215,9 +215,24 @@ async function toggleLike(postId) {
         const likeElement = document.querySelector(`[onclick="toggleLike(${postId})"] span`);
         if (likeElement) {
             likeElement.textContent = result.like_count;
+            
+            // Visual feedback
+            const icon = likeElement.previousElementSibling;
+            if (result.action === 'liked') {
+                icon.style.color = '#ef4444'; // Red for liked
+                icon.classList.remove('fa-heart');
+                icon.classList.add('fa-heart');
+            } else {
+                icon.style.color = '#6b7280'; // Gray for unliked
+            }
         }
     } catch (error) {
         console.error('Error toggling like:', error);
+        if (error.message.includes('duplicate key')) {
+            alert('Bu yazıyı zaten beğendiniz!');
+        } else {
+            alert('Beğeni işlemi sırasında bir hata oluştu.');
+        }
     }
 }
 
