@@ -62,51 +62,37 @@ async function loadBlogPosts() {
         
         blogContainer.innerHTML = posts.map(post => {
             const postDate = new Date(post.created_at);
-            const day = postDate.getDate();
-            const month = postDate.toLocaleDateString('tr-TR', { month: 'long' }).toUpperCase();
+            const formattedDate = postDate.toLocaleDateString('tr-TR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
             
             // Get image source
-            const imageSrc = post.image_file || post.image_url || 'https://via.placeholder.com/530x320/3b82f6/ffffff?text=MUSIC';
+            const imageSrc = post.image_file || post.image_url || 'https://images.unsplash.com/photo-1640102953836-5651f5d6b240?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1024&q=80';
             
             // Otomatik görüntülenme sayısını artır
             incrementViewCount(post.id);
             
             return `
-                <div class="blog-card-new">
-                    <div class="blog-thumbnail">
+                <div class="card" data-post-id="${post.id}">
+                    <div class="card-img-holder">
                         <img src="${imageSrc}" alt="${post.title}">
                     </div>
-                    <div class="blog-content-new">
-                        <h1>${post.title}</h1>
-                        <div class="blog-author">
-                            <img src="${post.author_avatar || 'https://via.placeholder.com/20x20/3b82f6/ffffff?text=M'}" alt="${post.author_name}">
-                            <h2>${post.author_name || 'MUSIC Ekibi'}</h2>
-                        </div>
-                        <div class="blog-separator"></div>
-                        <p>${post.excerpt || post.content.substring(0, 200) + '...'}</p>
-                    </div>
-                    <div class="blog-date">${day}</div>
-                    <div class="blog-month">${month}</div>
-                    <div class="blog-actions">
-                        <div class="blog-action">
-                            <i class="fas fa-eye"></i>
-                            <span>${post.view_count || 0}</span>
-                        </div>
-                        <div class="blog-action" onclick="toggleLike(${post.id})">
-                            <i class="fas fa-heart"></i>
-                            <span>${post.like_count || 0}</span>
-                        </div>
-                        <div class="blog-action" onclick="openCommentModal(${post.id})">
-                            <i class="fas fa-envelope"></i>
-                            <span>Yorum</span>
-                        </div>
-                        <div class="blog-action" onclick="sharePost(${post.id})">
-                            <i class="fas fa-share-alt"></i>
-                            <span>${post.share_count || 0}</span>
-                        </div>
-                    </div>
-                    <div class="blog-fab" onclick="scrollToTop()">
-                        <i class="fas fa-arrow-up"></i>
+                    <h3 class="blog-title">${post.title}</h3>
+                    <span class="blog-time">${formattedDate}</span>
+                    <p class="description">
+                        ${post.excerpt || post.content.substring(0, 150) + '...'}
+                    </p>
+                    <div class="options">
+                        <span onclick="readFullBlog(${post.id})">
+                            Blog Yazısını Oku
+                        </span>
+                        <button class="btn" onclick="toggleLike(${post.id})">
+                            <i class="fas fa-heart" style="color: ${post.user_liked ? '#ef4444' : '#22215B'}"></i>
+                            ${post.like_count || 0}
+                        </button>
                     </div>
                 </div>
             `;
@@ -215,17 +201,21 @@ async function toggleLike(postId) {
     try {
         const result = await DatabaseService.toggleBlogLike(postId);
         
-        // Update the like count in UI
-        const likeElement = document.querySelector(`[onclick="toggleLike(${postId})"] span`);
-        if (likeElement) {
-            likeElement.textContent = result.like_count;
+        // Update the like count and icon color in UI
+        const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
+        if (cardElement) {
+            const likeButton = cardElement.querySelector(`[onclick="toggleLike(${postId})"]`);
+            const icon = likeButton.querySelector('i');
             
-            // Visual feedback
-            const icon = likeElement.previousElementSibling;
+            // Update like count
+            const textNode = likeButton.childNodes[likeButton.childNodes.length - 1];
+            textNode.textContent = ` ${result.like_count}`;
+            
+            // Update icon color
             if (result.action === 'liked') {
                 icon.style.color = '#ef4444'; // Red for liked
             } else {
-                icon.style.color = '#6b7280'; // Gray for unliked
+                icon.style.color = '#22215B'; // Default color for unliked
             }
         }
         
@@ -281,6 +271,11 @@ async function sharePost(postId) {
         console.error('Error sharing post:', error);
         alert('Paylaşım sırasında bir hata oluştu.');
     }
+}
+
+function readFullBlog(postId) {
+    // TODO: Implement full blog reading page
+    alert('Blog detay sayfası yakında eklenecek!');
 }
 
 function openCommentModal(postId) {
