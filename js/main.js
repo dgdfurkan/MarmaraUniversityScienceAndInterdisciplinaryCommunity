@@ -309,6 +309,11 @@ async function readFullBlog(postId) {
         const postContent = data.content;
         const authorName = data.author_name || 'MUSIC Ekibi';
         
+        // Debug: Log the content to see what we're getting
+        console.log('Blog content from Supabase:', postContent);
+        console.log('Content type:', typeof postContent);
+        console.log('Content length:', postContent ? postContent.length : 'null/undefined');
+        
         // Create modal HTML
         const modalHTML = `
             <div class="blog-modal-overlay" id="blog-modal-overlay">
@@ -418,16 +423,29 @@ function openCommentModal(postId) {
 }
 
 function formatBlogContent(content) {
+    console.log('formatBlogContent input:', content);
+    
+    // If content is null or undefined, return empty string
+    if (!content) {
+        console.log('Content is null/undefined, returning empty string');
+        return '';
+    }
+    
     // If content contains HTML tags, return it as is
     if (content.includes('<') && content.includes('>')) {
+        console.log('Content contains HTML, returning as is');
         return content;
     }
     
     // Otherwise, format as plain text with paragraphs
+    console.log('Content is plain text, formatting as paragraphs');
     const paragraphs = content.split('\n\n').filter(p => p.trim() !== '');
-    return paragraphs.map(paragraph => 
+    const result = paragraphs.map(paragraph => 
         `<p>${paragraph.trim()}</p>`
     ).join('');
+    
+    console.log('Formatted result:', result);
+    return result;
 }
 
 function scrollToTop() {
