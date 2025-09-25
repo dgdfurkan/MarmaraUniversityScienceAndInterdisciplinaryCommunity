@@ -1307,20 +1307,28 @@ function addEditorListeners(editorId) {
         editor.removeEventListener('keyup', syncEditorContent);
         editor.removeEventListener('blur', syncEditorContent);
         
-        // Add input event listener - MULTIPLE EVENTS
+        // Add input event listener - MULTIPLE EVENTS WITH CAPTURE
         editor.addEventListener('input', () => {
             console.log('INPUT EVENT TRIGGERED for:', editorId);
             syncEditorContent();
-        });
+        }, true);
         
-        editor.addEventListener('keydown', () => {
-            console.log('KEYDOWN EVENT TRIGGERED for:', editorId);
+        editor.addEventListener('keydown', (e) => {
+            console.log('KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
             syncEditorContent();
-        });
+        }, true);
         
-        editor.addEventListener('keypress', () => {
-            console.log('KEYPRESS EVENT TRIGGERED for:', editorId);
+        editor.addEventListener('keypress', (e) => {
+            console.log('KEYPRESS EVENT TRIGGERED for:', editorId, 'Key:', e.key);
             syncEditorContent();
+        }, true);
+        
+        // AGGRESSIVE: Add to window as well
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement === editor) {
+                console.log('WINDOW KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
+                syncEditorContent();
+            }
         });
         
         // AGGRESSIVE TEST: Click event
