@@ -204,88 +204,102 @@ async function handleAnnouncementSubmit(e) {
     }
 }
 
+// -----------------------------------------------------------------------------
+// BLOG: Submit — Boş content push problemini çözen versiyon
+// -----------------------------------------------------------------------------
 async function handleBlogSubmit(e) {
-    e.preventDefault();
-    
-    // Sync editor content before submitting - SAME AS EVENTS
-    syncEditorContent();
-    
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
-    
-    // Handle image upload
-    let imageUrl = null;
-    let imageFile = null;
-    
-    if (data.image_type === 'url' && data.image_url) {
-        imageUrl = data.image_url;
-    } else if (data.image_type === 'file' && data.image_file) {
-        try {
-            const file = e.target.image_file.files[0];
-            if (file) {
-                const uploadResult = await DatabaseService.uploadMedia(file);
-                imageFile = uploadResult.fullPath;
-            }
-        } catch (error) {
-            console.error('Error uploading image:', error);
-            alert('Fotoğraf yüklenirken bir hata oluştu.');
-            return;
-        }
-    }
-    
-    // Clean data - remove empty fields and image if not needed
-    const cleanData = {
-        title: data.title,
-        content: data.content, // This now contains HTML from rich text editor
-        excerpt: data.excerpt,
-        category: data.category,
-        status: data.status || 'published'
-    };
-    
-    // Debug: Log the content being sent
-    console.log('Blog content being sent to Supabase:', data.content);
-    console.log('Content type:', typeof data.content);
-    console.log('Content length:', data.content ? data.content.length : 'null/undefined');
-    
-    // Add image data only if provided
-    if (imageUrl) {
-        cleanData.image_url = imageUrl;
-    }
-    if (imageFile) {
-        cleanData.image_file = imageFile;
-    }
-    
+  e.preventDefault();
+
+  // Önce editör ile hidden'ı kesin senkronla
+  syncEditorContent();
+
+  // Editörden HTML'i doğrudan çek (FormData'ya güvenmeyelim)
+  const contentHTML = getEditorHtmlSafely('blog-content-editor', 'blog-content-hidden');
+
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData);
+
+  // Görsel yükleme
+  let imageUrl = null;
+  let imageFile = null;
+
+  if (data.image_type === 'url' && data.image_url) {
+    imageUrl = data.image_url;
+  } else if (data.image_type === 'file' && data.image_file) {
     try {
-        const result = await DatabaseService.createBlogPost(cleanData);
-        const newRecord = result[0];
-        
-        // Debug: Log the record ID
-        console.log('New blog record:', newRecord);
-        console.log('Record ID type:', typeof newRecord.id);
-        console.log('Record ID value:', newRecord.id);
-        
-        // Log activity - Skip for now due to UUID issues
-        // await DatabaseService.logActivity('create', 'blog_posts', newRecord.id, newRecord.title, null, newRecord);
-        
-        // Save version history - Skip for now due to UUID issues
-        // await DatabaseService.saveVersionHistory('blog_posts', newRecord.id, newRecord, 'Initial version');
-        
-        alert('Blog yazısı başarıyla eklendi!');
-        closeModal('blog-modal');
-        loadBlogPosts();
-        loadRecentActivities();
-        
-        // Clear editor
-        const blogEditor = document.getElementById('blog-content-editor');
-        if (blogEditor) {
-            blogEditor.innerHTML = '';
-            syncEditorContent();
-        }
-        
+      const file = e.target.image_file?.files?.[0];
+      if (file) {
+        const uploadResult = await DatabaseService.uploadMedia(file);
+        imageFile = uploadResult.fullPath;
+      }
     } catch (error) {
-        console.error('Error creating blog post:', error);
-        alert('Blog yazısı eklenirken bir hata oluştu: ' + error.message);
+      console.error('Error uploading image:', error);
+      alert('Fotoğraf yüklenirken bir hata oluştu.');
+      return;
     }
+  }
+
+  // Temiz veri — content'i doğrudan contentHTML'den al
+  const cleanData = {
+    title: data.title,
+    // 🔴 KRİTİK: FormData yerine doğrudan editörden gelen HTML'i kullan
+    content: contentHTML,
+    excerpt: data.excerpt,
+    category: data.category,
+    status: data.status || 'published'
+  };
+
+  // Debug yardımcıları
+  console.log('Blog content (final):', cleanData.content);
+  console.log('Len:', cleanData.content ? cleanData.content.length : '0');
+
+  // Boş content'e karşı koruma (isteğe bağlı)
+  if (!cleanData.content || cleanData.content.trim() === '') {
+    const proceed = confirm('İçerik boş görünüyor. Yine de kaydetmek istiyor musunuz?');
+    if (!proceed) return;
+  }
+
+  // Görsel alanları
+  if (imageUrl) cleanData.image_url = imageUrl;
+  if (imageFile) cleanData.image_file = imageFile;
+
+  try {
+    const result = await DatabaseService.createBlogPost(cleanData);
+    const newRecord = result[0];
+
+    alert('Blog yazısı başarıyla eklendi!');
+    closeModal('blog-modal');
+    loadBlogPosts();
+    loadRecentActivities();
+
+    // Editörü temizle ve senkronla
+    const blogEditor = document.getElementById('blog-content-editor');
+    if (blogEditor) {
+      blogEditor.innerHTML = '';
+      syncEditorContent();
+    }
+  } catch (error) {
+    console.error('Error creating blog post:', error);
+    alert('Blog yazısı eklenirken bir hata oluştu: ' + error.message);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// BLOG: Formu doldur — Hem editor hem hidden alanları doldur
+// -----------------------------------------------------------------------------
+function populateBlogForm(blogPost) {
+  const form = document.getElementById('blog-form');
+  form.querySelector('[name="title"]').value = blogPost.title || '';
+  form.querySelector('[name="category"]').value = blogPost.category || '';
+  form.querySelector('[name="excerpt"]').value = blogPost.excerpt || '';
+  form.querySelector('[name="status"]').value = blogPost.status || 'published';
+
+  // Editor + hidden birlikte güncellensin
+  const editor = document.getElementById('blog-content-editor');
+  const hidden = document.getElementById('blog-content-hidden');
+  const html = blogPost.content || '';
+  if (editor) editor.innerHTML = html;
+  if (hidden) hidden.value = html;
 }
 
 async function handleEventSubmit(e) {
@@ -1181,8 +1195,29 @@ function updateToolbarButtons() {
     }
 }
 
-// Update toolbar when selection changes
-document.addEventListener('selectionchange', updateToolbarButtons);
+// -----------------------------------------------------------------------------
+// Yardımcı: Editör HTML'ini güvenle al (contenteditable veya hidden textarea)
+// -----------------------------------------------------------------------------
+function getEditorHtmlSafely(editorId, hiddenId) {
+  const editorEl = document.getElementById(editorId);
+  const hiddenEl = document.getElementById(hiddenId);
+
+  // Eğer editor varsa, HTML'ini al
+  let htmlFromEditor = editorEl ? editorEl.innerHTML : '';
+
+  // Bazı durumlarda contenteditable boş görünebilir ama aslında <br> bırakır.
+  // Bu durumda boş sayalım.
+  const looksEmpty = (html) => !html || html.replace(/<br\s*\/?>(\n)?/gi, '').replace(/&nbsp;/g, '').trim() === '';
+
+  if (looksEmpty(htmlFromEditor) && hiddenEl && typeof hiddenEl.value === 'string') {
+    // Hidden alan doluysa onu kullan
+    return hiddenEl.value;
+  }
+
+  // Hidden alanı da editörle senkron tutalım
+  if (hiddenEl) hiddenEl.value = htmlFromEditor;
+  return htmlFromEditor;
+}
 
 // Sync editor content with hidden textarea
 function syncEditorContent() {
