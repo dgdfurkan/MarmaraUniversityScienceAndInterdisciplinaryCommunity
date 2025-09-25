@@ -1201,13 +1201,16 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - DIRECT sync without timeout
+    // Sync blog editor - FORCE content capture
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
         console.log('Syncing blog editor...');
         
-        // Get all possible content types
+        // FORCE: Try to get content from any possible source
+        let finalContent = '';
+        
+        // Method 1: Check if editor has any content
         const innerHTML = blogEditor.innerHTML;
         const textContent = blogEditor.textContent || '';
         const innerText = blogEditor.innerText || '';
@@ -1218,8 +1221,39 @@ function syncEditorContent() {
         console.log('Blog editor innerText:', innerText);
         console.log('Blog editor value:', value);
         
+        // Method 2: Check all child elements
+        const children = blogEditor.children;
+        const childNodes = blogEditor.childNodes;
+        console.log('Editor children count:', children.length);
+        console.log('Editor childNodes count:', childNodes.length);
+        
+        // Method 3: Check if editor is actually editable
+        const isContentEditable = blogEditor.contentEditable;
+        const isEditable = blogEditor.isContentEditable;
+        console.log('Editor contentEditable:', isContentEditable);
+        console.log('Editor isEditable:', isEditable);
+        
+        // Method 4: Try to get content from selection
+        const selection = window.getSelection();
+        const selectedText = selection.toString();
+        console.log('Selected text:', selectedText);
+        
+        // Method 5: Check if there's any text in the editor
+        const allText = blogEditor.innerText || blogEditor.textContent || '';
+        console.log('All text in editor:', allText);
+        
+        // If editor is completely empty, show error
+        if (!innerHTML && !textContent && !innerText && !value && !allText) {
+            console.log('ERROR: Editor is completely empty!');
+            console.log('Editor element:', blogEditor);
+            console.log('Editor HTML:', blogEditor.outerHTML);
+            
+            // Show alert to user
+            alert('Rich Text Editor çalışmıyor! Lütfen sayfayı yenileyin ve tekrar deneyin.');
+            return;
+        }
+        
         // Use the first non-empty content
-        let finalContent = '';
         if (innerHTML && innerHTML.trim() !== '') {
             finalContent = innerHTML;
         } else if (textContent && textContent.trim() !== '') {
@@ -1228,6 +1262,8 @@ function syncEditorContent() {
             finalContent = `<p>${innerText}</p>`;
         } else if (value && value.trim() !== '') {
             finalContent = `<p>${value}</p>`;
+        } else if (allText && allText.trim() !== '') {
+            finalContent = `<p>${allText}</p>`;
         }
         
         blogHidden.value = finalContent;
