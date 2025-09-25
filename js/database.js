@@ -310,5 +310,32 @@ class DatabaseService {
     }
 }
 
-// Export for use in other files
-window.DatabaseService = DatabaseService;
+// Test Supabase connection and tables
+async function testSupabaseConnection() {
+    try {
+        console.log('Testing Supabase connection...');
+        
+        // Test basic connection
+        const { data, error } = await supabase
+            .from('announcements')
+            .select('*')
+            .limit(1);
+        
+        if (error) {
+            console.error('Supabase connection error:', error);
+            console.log('Available tables might be different. Check your Supabase dashboard.');
+            return false;
+        }
+        
+        console.log('Supabase connection successful!');
+        return true;
+    } catch (error) {
+        console.error('Supabase connection test failed:', error);
+        return false;
+    }
+}
+
+// Test connection on page load
+document.addEventListener('DOMContentLoaded', () => {
+    testSupabaseConnection();
+});
