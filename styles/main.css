@@ -551,7 +551,7 @@ section {
 
 .card {
     width: 100%;
-    height: auto;
+    height: 500px;
     background: #fff;
     border-radius: 1.5rem;
     padding: 1.5rem;
@@ -559,6 +559,8 @@ section {
     position: relative;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .card:hover {
@@ -568,25 +570,25 @@ section {
 
 .card-img-holder {
     width: 100%;
-    height: auto;
+    height: 180px;
     position: relative;
     margin-bottom: 1rem;
+    flex-shrink: 0;
 }
 
 .card-img-holder img {
     width: 100%;
-    height: auto;
-    max-height: 15rem;
+    height: 100%;
     object-fit: cover;
     border-radius: 1.5rem;
 }
 
 .blog-title {
     color: #22215B;
-    padding: 1rem 0;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 600;
-    margin: 0;
+    margin: 0 0 0.5rem 0;
+    flex-shrink: 0;
 }
 
 .blog-time {
@@ -594,14 +596,19 @@ section {
     color: #22215B;
     margin-bottom: 1rem;
     display: block;
+    flex-shrink: 0;
 }
 
 .description {
-    padding: 1rem 0;
     color: #22215B80;
-    font-size: 1rem;
-    line-height: 1.6;
+    font-size: 0.9rem;
+    line-height: 1.5;
     margin-bottom: 1rem;
+    flex: 1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
 }
 
 .options {
@@ -609,7 +616,8 @@ section {
     align-items: center;
     justify-content: space-between;
     font-size: 1rem;
-    margin-top: 1rem;
+    margin-top: auto;
+    flex-shrink: 0;
 }
 
 .options span {
@@ -658,16 +666,16 @@ section {
     }
     
     .card {
+        height: 450px;
         padding: 1rem;
+    }
+    
+    .card-img-holder {
+        height: 150px;
     }
     
     .blog-title {
         font-size: 1.25rem;
-        padding: 0.5rem 0;
-    }
-    
-    .card-img-holder img {
-        max-height: 12rem;
     }
 }
 
@@ -678,15 +686,21 @@ section {
     }
     
     .card {
+        height: 400px;
         padding: 0.75rem;
+    }
+    
+    .card-img-holder {
+        height: 120px;
     }
     
     .blog-title {
         font-size: 1.1rem;
     }
     
-    .card-img-holder img {
-        max-height: 10rem;
+    .description {
+        font-size: 0.85rem;
+        -webkit-line-clamp: 3;
     }
 }
 

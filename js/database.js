@@ -76,12 +76,42 @@ class DatabaseService {
         try {
             const { data, error } = await supabase
                 .from('blog_posts')
-                .select('*')
+                .select(`
+                    *,
+                    blog_interactions(count)
+                `)
                 .eq('status', 'published')
                 .order('created_at', { ascending: false });
             
             if (error) throw error;
-            return data || [];
+
+            // Get user fingerprint for like status
+            const userFingerprint = await this.getUserFingerprint();
+            const userIP = await this.getUserIP();
+
+            // Process the data to add interaction counts and user like status
+            const processedData = (data || []).map(post => {
+                const interactions = post.blog_interactions || [];
+                const viewCount = interactions.filter(i => i.interaction_type === 'view').length;
+                const likeCount = interactions.filter(i => i.interaction_type === 'like').length;
+                const shareCount = interactions.filter(i => i.interaction_type === 'share').length;
+                
+                // Check if current user has liked this post
+                const userLiked = interactions.some(i => 
+                    i.interaction_type === 'like' && 
+                    (i.user_ip === userIP || i.user_fingerprint === userFingerprint)
+                );
+
+                return {
+                    ...post,
+                    view_count: viewCount,
+                    like_count: likeCount,
+                    share_count: shareCount,
+                    user_liked: userLiked
+                };
+            });
+
+            return processedData;
         } catch (error) {
             console.error('Error fetching blog posts:', error);
             return [];
