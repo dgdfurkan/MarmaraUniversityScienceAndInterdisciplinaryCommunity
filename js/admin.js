@@ -94,12 +94,7 @@ function openModal(modalId) {
                     editor.focus();
                     console.log('Blog editor focused for testing');
                     
-                    // MANUEL TEST: Editor'a yazı ekle
-                    setTimeout(() => {
-                        editor.innerHTML = '<p>MANUEL TEST YAZISI</p>';
-                        console.log('MANUEL TEST: Editor content set to:', editor.innerHTML);
-                        syncEditorContent();
-                    }, 500);
+                    // MANUEL TEST KALDIRILDI - Sadece odaklan
                 }
             }, 100);
         } else if (modalId === 'announcement-modal') {
@@ -1323,10 +1318,23 @@ function addEditorListeners(editorId) {
             syncEditorContent();
         }, true);
         
+        editor.addEventListener('keyup', (e) => {
+            console.log('KEYUP EVENT TRIGGERED for:', editorId, 'Key:', e.key);
+            syncEditorContent();
+        }, true);
+        
         // AGGRESSIVE: Add to window as well
         window.addEventListener('keydown', (e) => {
             if (document.activeElement === editor) {
                 console.log('WINDOW KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
+                syncEditorContent();
+            }
+        });
+        
+        // AGGRESSIVE: Add to document as well
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement === editor) {
+                console.log('DOCUMENT KEYDOWN EVENT TRIGGERED for:', editorId, 'Key:', e.key);
                 syncEditorContent();
             }
         });
