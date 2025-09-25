@@ -274,34 +274,41 @@ async function sharePost(postId) {
 }
 
 async function readFullBlog(postId) {
+    // Close any existing modal first
+    closeBlogModal();
+    
     // Add click animation
     const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
     if (cardElement) {
         cardElement.classList.add('clicking');
         setTimeout(() => {
             cardElement.classList.remove('clicking');
-        }, 200);
+        }, 150);
     }
     
     try {
-        // Get full blog post data from Supabase
-        const posts = await DatabaseService.getBlogPosts();
-        const post = posts.find(p => p.id === postId);
+        // Get specific blog post data from Supabase
+        const { data, error } = await supabase
+            .from('blog_posts')
+            .select('*')
+            .eq('id', postId)
+            .eq('status', 'published')
+            .single();
         
-        if (!post) {
+        if (error || !data) {
             alert('Blog yazısı bulunamadı!');
             return;
         }
         
-        const postTitle = post.title;
-        const postDate = new Date(post.created_at).toLocaleDateString('tr-TR', { 
+        const postTitle = data.title;
+        const postDate = new Date(data.created_at).toLocaleDateString('tr-TR', { 
             weekday: 'long', 
             year: 'numeric', 
             month: 'long', 
             day: 'numeric' 
         });
-        const postContent = post.content;
-        const authorName = post.author_name || 'MUSIC Ekibi';
+        const postContent = data.content;
+        const authorName = data.author_name || 'MUSIC Ekibi';
         
         // Create modal HTML
         const modalHTML = `
@@ -343,18 +350,16 @@ async function readFullBlog(postId) {
         // Add modal to body
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        // Show modal with animation
-        setTimeout(() => {
-            const modalOverlay = document.getElementById('blog-modal-overlay');
-            modalOverlay.classList.add('active');
-            
-            // Close modal when clicking outside
-            modalOverlay.addEventListener('click', function(e) {
-                if (e.target === modalOverlay) {
-                    closeBlogModal();
-                }
-            });
-        }, 10);
+        // Show modal with animation immediately
+        const modalOverlay = document.getElementById('blog-modal-overlay');
+        modalOverlay.classList.add('active');
+        
+        // Close modal when clicking outside
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                closeBlogModal();
+            }
+        });
         
         // Prevent body scroll
         document.body.style.overflow = 'hidden';
