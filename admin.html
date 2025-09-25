@@ -87,7 +87,7 @@
                                 <i class="fas fa-bullhorn"></i>
                             </div>
                             <div class="stat-content">
-                                <h3>12</h3>
+                                <h3 id="announcements-count">0</h3>
                                 <p>Aktif Duyuru</p>
                             </div>
                         </div>
@@ -96,7 +96,7 @@
                                 <i class="fas fa-blog"></i>
                             </div>
                             <div class="stat-content">
-                                <h3>8</h3>
+                                <h3 id="blog-count">0</h3>
                                 <p>Blog Yazısı</p>
                             </div>
                         </div>
@@ -105,7 +105,7 @@
                                 <i class="fas fa-calendar-alt"></i>
                             </div>
                             <div class="stat-content">
-                                <h3>5</h3>
+                                <h3 id="events-count">0</h3>
                                 <p>Yaklaşan Etkinlik</p>
                             </div>
                         </div>
@@ -114,7 +114,7 @@
                                 <i class="fas fa-users"></i>
                             </div>
                             <div class="stat-content">
-                                <h3>156</h3>
+                                <h3 id="registrations-count">0</h3>
                                 <p>Toplam Kayıt</p>
                             </div>
                         </div>
@@ -123,28 +123,8 @@
                     <div class="dashboard-grid">
                         <div class="dashboard-card">
                             <h3>Son Aktiviteler</h3>
-                            <div class="activity-list">
-                                <div class="activity-item">
-                                    <i class="fas fa-plus-circle"></i>
-                                    <div>
-                                        <p>Yeni duyuru eklendi: "Bilim Şenliği 2024"</p>
-                                        <span>2 saat önce</span>
-                                    </div>
-                                </div>
-                                <div class="activity-item">
-                                    <i class="fas fa-user-plus"></i>
-                                    <div>
-                                        <p>5 yeni etkinlik kaydı alındı</p>
-                                        <span>4 saat önce</span>
-                                    </div>
-                                </div>
-                                <div class="activity-item">
-                                    <i class="fas fa-edit"></i>
-                                    <div>
-                                        <p>Blog yazısı güncellendi: "Biyoteknoloji Atölyesi"</p>
-                                        <span>1 gün önce</span>
-                                    </div>
-                                </div>
+                            <div class="activity-list" id="recent-activities">
+                                <!-- Activities will be loaded dynamically -->
                             </div>
                         </div>
 

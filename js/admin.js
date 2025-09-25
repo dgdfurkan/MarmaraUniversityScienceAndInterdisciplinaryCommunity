@@ -813,8 +813,123 @@ document.getElementById('media-upload').addEventListener('change', async functio
     }
 });
 
+// Load dashboard statistics
+async function loadDashboardStats() {
+    try {
+        // Get real data from Supabase
+        const [announcements, blogPosts, events, registrations] = await Promise.all([
+            DatabaseService.getAnnouncements(),
+            DatabaseService.getBlogPosts(),
+            DatabaseService.getEvents(),
+            DatabaseService.getRegistrations()
+        ]);
+
+        // Update statistics
+        document.getElementById('announcements-count').textContent = announcements.length;
+        document.getElementById('blog-count').textContent = blogPosts.length;
+        document.getElementById('events-count').textContent = events.length;
+        document.getElementById('registrations-count').textContent = registrations.length;
+
+        // Load recent activities
+        loadRecentActivities(announcements, blogPosts, events, registrations);
+
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+        // Set default values if error
+        document.getElementById('announcements-count').textContent = '0';
+        document.getElementById('blog-count').textContent = '0';
+        document.getElementById('events-count').textContent = '0';
+        document.getElementById('registrations-count').textContent = '0';
+    }
+}
+
+// Load recent activities
+function loadRecentActivities(announcements, blogPosts, events, registrations) {
+    const activitiesContainer = document.getElementById('recent-activities');
+    if (!activitiesContainer) return;
+
+    const activities = [];
+
+    // Add recent announcements
+    announcements.slice(0, 3).forEach(announcement => {
+        activities.push({
+            type: 'announcement',
+            message: `Yeni duyuru eklendi: "${announcement.title}"`,
+            time: getTimeAgo(announcement.created_at),
+            icon: 'fas fa-bullhorn'
+        });
+    });
+
+    // Add recent blog posts
+    blogPosts.slice(0, 3).forEach(post => {
+        activities.push({
+            type: 'blog',
+            message: `Blog yazısı eklendi: "${post.title}"`,
+            time: getTimeAgo(post.created_at),
+            icon: 'fas fa-blog'
+        });
+    });
+
+    // Add recent events
+    events.slice(0, 3).forEach(event => {
+        activities.push({
+            type: 'event',
+            message: `Yeni etkinlik eklendi: "${event.title}"`,
+            time: getTimeAgo(event.created_at),
+            icon: 'fas fa-calendar'
+        });
+    });
+
+    // Add recent registrations
+    registrations.slice(0, 3).forEach(registration => {
+        activities.push({
+            type: 'registration',
+            message: `Yeni kayıt alındı: ${registration.first_name} ${registration.last_name}`,
+            time: getTimeAgo(registration.created_at),
+            icon: 'fas fa-user-plus'
+        });
+    });
+
+    // Sort by date (newest first)
+    activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+    // Display activities
+    activitiesContainer.innerHTML = activities.slice(0, 5).map(activity => `
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="${activity.icon}"></i>
+            </div>
+            <div class="activity-content">
+                <p>${activity.message}</p>
+                <span class="activity-time">${activity.time}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Helper function to get time ago
+function getTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    if (diffInSeconds < 60) {
+        return 'Az önce';
+    } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} dakika önce`;
+    } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} saat önce`;
+    } else {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} gün önce`;
+    }
+}
+
 // Initialize dashboard on page load
 document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardStats();
     loadAnnouncements();
     loadBlogPosts();
     loadEvents();

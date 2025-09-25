@@ -277,19 +277,29 @@ body {
     padding: 0.75rem;
     background: #f8fafc;
     border-radius: 8px;
+    margin-bottom: 0.5rem;
 }
 
-.activity-item i {
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-icon {
     color: #3b82f6;
     font-size: 1.1rem;
 }
 
-.activity-item p {
-    font-weight: 500;
-    margin-bottom: 0.25rem;
+.activity-content {
+    flex: 1;
 }
 
-.activity-item span {
+.activity-content p {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    margin: 0;
+}
+
+.activity-time {
     font-size: 0.8rem;
     color: #6b7280;
 }
