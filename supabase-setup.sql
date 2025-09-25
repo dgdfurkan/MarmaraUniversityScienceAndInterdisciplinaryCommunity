@@ -110,10 +110,23 @@ CREATE POLICY "Allow anonymous delete" ON events FOR DELETE USING (true);
 CREATE POLICY "Allow anonymous delete" ON registrations FOR DELETE USING (true);
 CREATE POLICY "Allow anonymous delete" ON media FOR DELETE USING (true);
 
--- Storage Bucket Oluşturma
-INSERT INTO storage.buckets (id, name, public) VALUES ('media', 'media', true);
+-- Storage Bucket Oluşturma (eğer yoksa)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('media', 'media', true)
+ON CONFLICT (id) DO NOTHING;
 
--- Storage Policies
-CREATE POLICY "Allow anonymous uploads" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'media');
-CREATE POLICY "Allow anonymous downloads" ON storage.objects FOR SELECT USING (bucket_id = 'media');
-CREATE POLICY "Allow anonymous deletes" ON storage.objects FOR DELETE USING (bucket_id = 'media');
+-- Storage Policies (eğer yoksa)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous uploads' AND tablename = 'objects') THEN
+        CREATE POLICY "Allow anonymous uploads" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'media');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous downloads' AND tablename = 'objects') THEN
+        CREATE POLICY "Allow anonymous downloads" ON storage.objects FOR SELECT USING (bucket_id = 'media');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous deletes' AND tablename = 'objects') THEN
+        CREATE POLICY "Allow anonymous deletes" ON storage.objects FOR DELETE USING (bucket_id = 'media');
+    END IF;
+END $$;
