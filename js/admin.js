@@ -83,11 +83,21 @@ function openModal(modalId) {
         
         // Add event listeners to editors when modal opens
         if (modalId === 'blog-modal') {
-            addEditorListeners('blog-content-editor');
+            // Blog modal için biraz bekle - DOM hazır olsun
+            setTimeout(() => {
+                addEditorListeners('blog-content-editor');
+                console.log('Blog modal opened, listeners added');
+            }, 100);
         } else if (modalId === 'announcement-modal') {
-            addEditorListeners('announcement-content-editor');
+            setTimeout(() => {
+                addEditorListeners('announcement-content-editor');
+                console.log('Announcement modal opened, listeners added');
+            }, 100);
         } else if (modalId === 'event-modal') {
-            addEditorListeners('event-content-editor');
+            setTimeout(() => {
+                addEditorListeners('event-content-editor');
+                console.log('Event modal opened, listeners added');
+            }, 100);
         }
     }
 }
@@ -1274,6 +1284,9 @@ function syncEditorContent() {
 // Add event listeners to editor
 function addEditorListeners(editorId) {
     const editor = document.getElementById(editorId);
+    console.log('addEditorListeners called for:', editorId);
+    console.log('Editor element found:', editor);
+    
     if (editor) {
         // Remove existing listeners first to avoid duplicates
         editor.removeEventListener('input', syncEditorContent);
@@ -1281,13 +1294,18 @@ function addEditorListeners(editorId) {
         editor.removeEventListener('blur', syncEditorContent);
         
         // Add input event listener
-        editor.addEventListener('input', syncEditorContent);
+        editor.addEventListener('input', () => {
+            console.log('INPUT EVENT TRIGGERED for:', editorId);
+            syncEditorContent();
+        });
         
         // Add paste event listener
         editor.addEventListener('paste', (e) => {
             e.preventDefault();
             const text = e.clipboardData.getData('text/plain');
             document.execCommand('insertText', false, text);
+            console.log('PASTE EVENT TRIGGERED for:', editorId);
+            syncEditorContent();
         });
         
         // Add focus event listener
@@ -1302,9 +1320,14 @@ function addEditorListeners(editorId) {
         });
         
         // Add keyup event listener
-        editor.addEventListener('keyup', syncEditorContent);
+        editor.addEventListener('keyup', () => {
+            console.log('KEYUP EVENT TRIGGERED for:', editorId);
+            syncEditorContent();
+        });
         
         console.log('Event listeners added to:', editorId);
+    } else {
+        console.error('Editor element not found:', editorId);
     }
 }
 
