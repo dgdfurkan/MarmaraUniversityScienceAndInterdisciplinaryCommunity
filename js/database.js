@@ -312,9 +312,19 @@ class DatabaseService {
     // Blog Interactions
     static async incrementBlogView(postId) {
         try {
+            // Önce mevcut sayıyı al
+            const { data: currentPost, error: fetchError } = await supabase
+                .from('blog_posts')
+                .select('view_count')
+                .eq('id', postId)
+                .single();
+            
+            if (fetchError) throw fetchError;
+            
+            // Sayıyı artır
             const { data, error } = await supabase
                 .from('blog_posts')
-                .update({ view_count: supabase.raw('view_count + 1') })
+                .update({ view_count: (currentPost.view_count || 0) + 1 })
                 .eq('id', postId)
                 .select();
             
@@ -361,9 +371,18 @@ class DatabaseService {
                     .delete()
                     .eq('id', existingLike.id);
                 
+                // Önce mevcut sayıyı al
+                const { data: currentPost, error: fetchError } = await supabase
+                    .from('blog_posts')
+                    .select('like_count')
+                    .eq('id', postId)
+                    .single();
+                
+                if (fetchError) throw fetchError;
+                
                 const { data, error } = await supabase
                     .from('blog_posts')
-                    .update({ like_count: supabase.raw('like_count - 1') })
+                    .update({ like_count: Math.max((currentPost.like_count || 0) - 1, 0) })
                     .eq('id', postId)
                     .select();
                 
@@ -380,9 +399,18 @@ class DatabaseService {
                         interaction_type: 'like'
                     }]);
                 
+                // Önce mevcut sayıyı al
+                const { data: currentPost, error: fetchError } = await supabase
+                    .from('blog_posts')
+                    .select('like_count')
+                    .eq('id', postId)
+                    .single();
+                
+                if (fetchError) throw fetchError;
+                
                 const { data, error } = await supabase
                     .from('blog_posts')
-                    .update({ like_count: supabase.raw('like_count + 1') })
+                    .update({ like_count: (currentPost.like_count || 0) + 1 })
                     .eq('id', postId)
                     .select();
                 
@@ -397,9 +425,19 @@ class DatabaseService {
 
     static async incrementBlogShare(postId) {
         try {
+            // Önce mevcut sayıyı al
+            const { data: currentPost, error: fetchError } = await supabase
+                .from('blog_posts')
+                .select('share_count')
+                .eq('id', postId)
+                .single();
+            
+            if (fetchError) throw fetchError;
+            
+            // Sayıyı artır
             const { data, error } = await supabase
                 .from('blog_posts')
-                .update({ share_count: supabase.raw('share_count + 1') })
+                .update({ share_count: (currentPost.share_count || 0) + 1 })
                 .eq('id', postId)
                 .select();
             
