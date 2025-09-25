@@ -1196,36 +1196,50 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - Get all possible content
+    // Sync blog editor - Force content capture
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
-        // Get all possible content types
-        const innerHTML = blogEditor.innerHTML;
-        const textContent = blogEditor.textContent || '';
-        const innerText = blogEditor.innerText || '';
-        const value = blogEditor.value || '';
+        // Force focus and wait a bit for content to be captured
+        blogEditor.focus();
         
-        console.log('Blog editor innerHTML:', innerHTML);
-        console.log('Blog editor textContent:', textContent);
-        console.log('Blog editor innerText:', innerText);
-        console.log('Blog editor value:', value);
-        
-        // Use the first non-empty content
-        let finalContent = '';
-        if (innerHTML && innerHTML.trim() !== '') {
-            finalContent = innerHTML;
-        } else if (textContent && textContent.trim() !== '') {
-            finalContent = `<p>${textContent}</p>`;
-        } else if (innerText && innerText.trim() !== '') {
-            finalContent = `<p>${innerText}</p>`;
-        } else if (value && value.trim() !== '') {
-            finalContent = `<p>${value}</p>`;
-        }
-        
-        blogHidden.value = finalContent;
-        console.log('Blog editor final content:', finalContent);
-        console.log('Blog hidden field value:', blogHidden.value);
+        // Wait for any pending content to be processed
+        setTimeout(() => {
+            // Get all possible content types
+            const innerHTML = blogEditor.innerHTML;
+            const textContent = blogEditor.textContent || '';
+            const innerText = blogEditor.innerText || '';
+            const value = blogEditor.value || '';
+            
+            console.log('Blog editor innerHTML:', innerHTML);
+            console.log('Blog editor textContent:', textContent);
+            console.log('Blog editor innerText:', innerText);
+            console.log('Blog editor value:', value);
+            
+            // Check if editor has any content at all
+            if (innerHTML.trim() === '' && textContent.trim() === '' && innerText.trim() === '' && value.trim() === '') {
+                console.log('WARNING: Blog editor is completely empty!');
+                console.log('Editor element:', blogEditor);
+                console.log('Editor children:', blogEditor.children);
+                console.log('Editor childNodes:', blogEditor.childNodes);
+            }
+            
+            // Use the first non-empty content
+            let finalContent = '';
+            if (innerHTML && innerHTML.trim() !== '') {
+                finalContent = innerHTML;
+            } else if (textContent && textContent.trim() !== '') {
+                finalContent = `<p>${textContent}</p>`;
+            } else if (innerText && innerText.trim() !== '') {
+                finalContent = `<p>${innerText}</p>`;
+            } else if (value && value.trim() !== '') {
+                finalContent = `<p>${value}</p>`;
+            }
+            
+            blogHidden.value = finalContent;
+            console.log('Blog editor final content:', finalContent);
+            console.log('Blog hidden field value:', blogHidden.value);
+        }, 100);
     }
     
     // Sync event editor
