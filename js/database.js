@@ -323,7 +323,24 @@ async function testSupabaseConnection() {
         
         if (error) {
             console.error('Supabase connection error:', error);
-            console.log('Available tables might be different. Check your Supabase dashboard.');
+            console.log('Error details:', error.message);
+            console.log('Error code:', error.code);
+            console.log('Error hint:', error.hint);
+            
+            // Try to get table info
+            try {
+                const { data: tables, error: tablesError } = await supabase
+                    .from('information_schema.tables')
+                    .select('table_name')
+                    .eq('table_schema', 'public');
+                
+                if (!tablesError && tables) {
+                    console.log('Available tables:', tables.map(t => t.table_name));
+                }
+            } catch (e) {
+                console.log('Could not fetch table list');
+            }
+            
             return false;
         }
         
