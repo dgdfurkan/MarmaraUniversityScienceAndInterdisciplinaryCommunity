@@ -7,18 +7,42 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Supabase client initialization
 let supabase;
 
-// Initialize Supabase (only if keys are provided)
-if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
-    // Supabase client would be initialized here
-    // For now, we'll use mock functions
-    supabase = {
-        from: (table) => ({
-            select: () => Promise.resolve({ data: [], error: null }),
-            insert: () => Promise.resolve({ data: [], error: null }),
-            update: () => Promise.resolve({ data: [], error: null }),
-            delete: () => Promise.resolve({ data: [], error: null })
+// Mock Supabase client for development
+supabase = {
+    from: (table) => ({
+        select: (columns = '*') => ({
+            eq: (column, value) => ({
+                order: (column, options) => Promise.resolve({ data: [], error: null })
+            }),
+            gte: (column, value) => ({
+                order: (column, options) => Promise.resolve({ data: [], error: null })
+            }),
+            order: (column, options) => Promise.resolve({ data: [], error: null })
+        }),
+        insert: (data) => Promise.resolve({ data: [], error: null }),
+        update: (data) => ({
+            eq: (column, value) => Promise.resolve({ data: [], error: null })
+        }),
+        delete: () => ({
+            eq: (column, value) => Promise.resolve({ data: [], error: null })
         })
-    };
+    }),
+    storage: {
+        from: (bucket) => ({
+            upload: (fileName, file) => Promise.resolve({ 
+                data: { path: `media/${fileName}`, fullPath: `media/${fileName}` }, 
+                error: null 
+            })
+        })
+    }
+};
+
+// Initialize real Supabase when keys are provided
+if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+    // Real Supabase initialization would go here
+    // import { createClient } from '@supabase/supabase-js'
+    // supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    console.log('Real Supabase would be initialized here with URL:', SUPABASE_URL);
 }
 
 // Database functions
