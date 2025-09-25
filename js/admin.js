@@ -1191,6 +1191,7 @@ function syncEditorContent() {
     const announcementHidden = document.getElementById('announcement-content-hidden');
     if (announcementEditor && announcementHidden) {
         announcementHidden.value = announcementEditor.innerHTML;
+        console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
     // Sync blog editor
@@ -1198,6 +1199,8 @@ function syncEditorContent() {
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
         blogHidden.value = blogEditor.innerHTML;
+        console.log('Blog editor synced:', blogEditor.innerHTML);
+        console.log('Blog hidden field value:', blogHidden.value);
     }
     
     // Sync event editor
@@ -1205,6 +1208,7 @@ function syncEditorContent() {
     const eventHidden = document.getElementById('event-content-hidden');
     if (eventEditor && eventHidden) {
         eventHidden.value = eventEditor.innerHTML;
+        console.log('Event editor synced:', eventEditor.innerHTML);
     }
 }
 
