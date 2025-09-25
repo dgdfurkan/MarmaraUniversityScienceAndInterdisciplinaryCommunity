@@ -532,6 +532,14 @@ section {
     color: #9ca3af;
 }
 
+.no-events {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 2rem;
+    grid-column: 1 / -1;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .hamburger {

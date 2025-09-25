@@ -104,8 +104,63 @@ function getCategoryName(category) {
     return categories[category] || category;
 }
 
-// Load blog posts when page loads
-document.addEventListener('DOMContentLoaded', loadBlogPosts);
+// Load events dynamically
+async function loadEvents() {
+    const eventsGrid = document.getElementById('events-grid');
+    if (!eventsGrid) return;
+    
+    try {
+        const events = await DatabaseService.getEvents();
+        
+        if (events.length === 0) {
+            eventsGrid.innerHTML = '<p class="no-events">Henüz etkinlik bulunmuyor. Yakında yeni etkinlikler eklenecek!</p>';
+            return;
+        }
+        
+        eventsGrid.innerHTML = events.map(event => {
+            const eventDate = new Date(event.date);
+            const isFull = (event.registered || 0) >= event.capacity;
+            
+            return `
+                <div class="event-card">
+                    <div class="event-image">
+                        <i class="${getEventIcon(event.type)}"></i>
+                    </div>
+                    <div class="event-content">
+                        <h3>${event.title}</h3>
+                        <p>${event.description}</p>
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar"></i> ${eventDate.toLocaleDateString('tr-TR')}</span>
+                            <span><i class="fas fa-map-marker-alt"></i> ${event.location}</span>
+                        </div>
+                        <a href="register.html" class="event-link">Kayıt Ol <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error loading events:', error);
+        eventsGrid.innerHTML = '<p class="no-events">Etkinlikler yüklenirken bir hata oluştu.</p>';
+    }
+}
+
+// Helper function to get event icon based on type
+function getEventIcon(type) {
+    const icons = {
+        'bilim-senligi': 'fas fa-flask',
+        'atolye': 'fas fa-tools',
+        'konferans': 'fas fa-microphone',
+        'teknik-gezi': 'fas fa-bus'
+    };
+    return icons[type] || 'fas fa-calendar-alt';
+}
+
+// Load blog posts and events when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadBlogPosts();
+    loadEvents();
+});
 
 // Add scroll effect to navbar
 window.addEventListener('scroll', () => {
