@@ -80,6 +80,15 @@ function openModal(modalId) {
     if (modal) {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+        
+        // Add event listeners to editors when modal opens
+        if (modalId === 'blog-modal') {
+            addEditorListeners('blog-content-editor');
+        } else if (modalId === 'announcement-modal') {
+            addEditorListeners('announcement-content-editor');
+        } else if (modalId === 'event-modal') {
+            addEditorListeners('event-content-editor');
+        }
     }
 }
 
@@ -160,13 +169,21 @@ async function handleAnnouncementSubmit(e) {
         }
     }
     
-    // Clean data - remove empty fields and image if not needed
+    // Editörden HTML'i doğrudan çek (FormData'ya güvenmeyelim)
+    const contentHTML = getEditorHtmlSafely('announcement-content-editor', 'announcement-content-hidden');
+    
+    // Clean data - content'i doğrudan contentHTML'den al
     const cleanData = {
         title: data.title,
-        content: data.content, // This now contains HTML from rich text editor
+        // 🔴 KRİTİK: FormData yerine doğrudan editörden gelen HTML'i kullan
+        content: contentHTML,
         category: data.category,
         status: data.status || 'active'
     };
+    
+    // Debug yardımcıları
+    console.log('Announcement content (final):', cleanData.content);
+    console.log('Len:', cleanData.content ? cleanData.content.length : '0');
     
     // Add image data only if provided
     if (imageUrl) {
@@ -331,19 +348,27 @@ async function handleEventSubmit(e) {
         }
     }
     
-    // Clean data - remove empty fields and image if not needed
+    // Editörden HTML'i doğrudan çek (FormData'ya güvenmeyelim)
+    const contentHTML = getEditorHtmlSafely('event-content-editor', 'event-content-hidden');
+    
+    // Clean data - content'i doğrudan contentHTML'den al
     const cleanData = {
         title: data.title,
         type: data.type,
         date: data.date,
         location: data.location,
         description: data.description,
-        content: data.content, // This now contains HTML from rich text editor
+        // 🔴 KRİTİK: FormData yerine doğrudan editörden gelen HTML'i kullan
+        content: contentHTML,
         price: parseFloat(data.price) || 0,
         capacity: parseInt(data.capacity) || 0,
         registration_required: data.registration_required === 'on',
         status: data.status || 'active'
     };
+    
+    // Debug yardımcıları
+    console.log('Event content (final):', cleanData.content);
+    console.log('Len:', cleanData.content ? cleanData.content.length : '0');
     
     // Add image data only if provided
     if (imageUrl) {
@@ -1246,6 +1271,43 @@ function syncEditorContent() {
     }
 }
 
+// Add event listeners to editor
+function addEditorListeners(editorId) {
+    const editor = document.getElementById(editorId);
+    if (editor) {
+        // Remove existing listeners first to avoid duplicates
+        editor.removeEventListener('input', syncEditorContent);
+        editor.removeEventListener('keyup', syncEditorContent);
+        editor.removeEventListener('blur', syncEditorContent);
+        
+        // Add input event listener
+        editor.addEventListener('input', syncEditorContent);
+        
+        // Add paste event listener
+        editor.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+        
+        // Add focus event listener
+        editor.addEventListener('focus', () => {
+            console.log('Editor focused:', editorId);
+        });
+        
+        // Add blur event listener
+        editor.addEventListener('blur', () => {
+            console.log('Editor blurred:', editorId);
+            syncEditorContent();
+        });
+        
+        // Add keyup event listener
+        editor.addEventListener('keyup', syncEditorContent);
+        
+        console.log('Event listeners added to:', editorId);
+    }
+}
+
 // Add event listener to all editors
 document.addEventListener('DOMContentLoaded', () => {
     const editors = [
@@ -1255,33 +1317,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     
     editors.forEach(editorId => {
-        const editor = document.getElementById(editorId);
-        if (editor) {
-            // Add input event listener
-            editor.addEventListener('input', syncEditorContent);
-            
-            // Add paste event listener
-            editor.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const text = e.clipboardData.getData('text/plain');
-                document.execCommand('insertText', false, text);
-            });
-            
-            // Add focus event listener
-            editor.addEventListener('focus', () => {
-                console.log('Editor focused:', editorId);
-            });
-            
-            // Add blur event listener
-            editor.addEventListener('blur', () => {
-                console.log('Editor blurred:', editorId);
-                syncEditorContent();
-            });
-            
-            // Add keyup event listener
-            editor.addEventListener('keyup', syncEditorContent);
-            
-            console.log('Event listeners added to:', editorId);
-        }
+        addEditorListeners(editorId);
     });
 });
