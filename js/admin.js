@@ -227,11 +227,17 @@ async function handleAnnouncementSubmit(e) {
 async function handleBlogSubmit(e) {
   e.preventDefault();
 
-  // Önce editör ile hidden'ı kesin senkronla
+  // Önce editör ile hidden'ı kesin senkronla - MULTIPLE TIMES
   syncEditorContent();
+  setTimeout(() => syncEditorContent(), 100);
+  setTimeout(() => syncEditorContent(), 200);
 
   // Editörden HTML'i doğrudan çek (FormData'ya güvenmeyelim)
   const contentHTML = getEditorHtmlSafely('blog-content-editor', 'blog-content-hidden');
+  
+  // Fallback: Hidden field'dan da al
+  const hiddenContent = document.getElementById('blog-content-hidden')?.value || '';
+  const finalContent = contentHTML || hiddenContent;
 
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData);
@@ -256,11 +262,11 @@ async function handleBlogSubmit(e) {
     }
   }
 
-  // Temiz veri — content'i doğrudan contentHTML'den al
+  // Temiz veri — content'i doğrudan finalContent'den al
   const cleanData = {
     title: data.title,
     // 🔴 KRİTİK: FormData yerine doğrudan editörden gelen HTML'i kullan
-    content: contentHTML,
+    content: finalContent,
     excerpt: data.excerpt,
     category: data.category,
     status: data.status || 'published'
@@ -269,12 +275,6 @@ async function handleBlogSubmit(e) {
   // Debug yardımcıları
   console.log('Blog content (final):', cleanData.content);
   console.log('Len:', cleanData.content ? cleanData.content.length : '0');
-
-  // Boş content'e karşı koruma (isteğe bağlı)
-  if (!cleanData.content || cleanData.content.trim() === '') {
-    const proceed = confirm('İçerik boş görünüyor. Yine de kaydetmek istiyor musunuz?');
-    if (!proceed) return;
-  }
 
   // Görsel alanları
   if (imageUrl) cleanData.image_url = imageUrl;
@@ -1230,17 +1230,13 @@ function getEditorHtmlSafely(editorId, hiddenId) {
   // Eğer editor varsa, HTML'ini al
   let htmlFromEditor = editorEl ? editorEl.innerHTML : '';
 
-  // Bazı durumlarda contenteditable boş görünebilir ama aslında <br> bırakır.
-  // Bu durumda boş sayalım.
-  const looksEmpty = (html) => !html || html.replace(/<br\s*\/?>(\n)?/gi, '').replace(/&nbsp;/g, '').trim() === '';
-
-  if (looksEmpty(htmlFromEditor) && hiddenEl && typeof hiddenEl.value === 'string') {
-    // Hidden alan doluysa onu kullan
-    return hiddenEl.value;
-  }
+  console.log('getEditorHtmlSafely - Editor HTML:', htmlFromEditor);
+  console.log('getEditorHtmlSafely - Editor element:', editorEl);
 
   // Hidden alanı da editörle senkron tutalım
   if (hiddenEl) hiddenEl.value = htmlFromEditor;
+  
+  // Direkt editörden HTML'i döndür - boş kontrolü kaldırıldı
   return htmlFromEditor;
 }
 
@@ -1254,12 +1250,16 @@ function syncEditorContent() {
         console.log('Announcement editor synced:', announcementEditor.innerHTML);
     }
     
-    // Sync blog editor - SAME AS EVENTS
+    // Blog - AGGRESSIVE SYNC
     const blogEditor = document.getElementById('blog-content-editor');
     const blogHidden = document.getElementById('blog-content-hidden');
     if (blogEditor && blogHidden) {
-        blogHidden.value = blogEditor.innerHTML;
-        console.log('Blog editor synced:', blogEditor.innerHTML);
+        const html = blogEditor.innerHTML;
+        blogHidden.value = html;
+        console.log('Blog editor synced:', html);
+        console.log('Blog editor element:', blogEditor);
+        console.log('Blog editor contentEditable:', blogEditor.contentEditable);
+        console.log('Blog editor isContentEditable:', blogEditor.isContentEditable);
     }
     
     // Sync event editor
