@@ -189,13 +189,12 @@ async function handleAnnouncementSubmit(e) {
         }
     }
     
-    // Editörden HTML'i doğrudan çek (FormData'ya güvenmeyelim)
-    const contentHTML = getEditorHtmlSafely('announcement-content-editor', 'announcement-content-hidden');
+    // Get content from RichTextEditor
+    const contentHTML = getEditorContent('announcement');
     
-    // Clean data - content'i doğrudan contentHTML'den al
+    // Clean data - content'i RichTextEditor'dan al
     const cleanData = {
         title: data.title,
-        // 🔴 KRİTİK: FormData yerine doğrudan editörden gelen HTML'i kullan
         content: contentHTML,
         category: data.category,
         status: data.status || 'active'
@@ -247,19 +246,11 @@ async function handleAnnouncementSubmit(e) {
 async function handleBlogSubmit(e) {
   e.preventDefault();
 
-  // 1. ADIM: Editördeki HTML'i doğrudan ve güvenilir bir şekilde al.
-  // FormData'ya güvenmek yerine, içeriği direkt olarak contenteditable div'in innerHTML'inden okuyoruz.
-  // Bu, senkronizasyon gecikmelerinden kaynaklanan sorunları ortadan kaldırır.
-  const blogEditor = document.getElementById('blog-content-editor');
-  const contentHTML = blogEditor ? blogEditor.innerHTML : '';
-
-  // AGRESIF DEBUG - Form gönderilmeden önce ne var?
-  console.log('🚀🚀🚀 FORM GÖNDERİLİYOR!');
-  console.log('🚀🚀🚀 Editor Element:', blogEditor);
-  console.log('🚀🚀🚀 innerHTML:', contentHTML);
-  console.log('🚀🚀🚀 textContent:', blogEditor ? blogEditor.textContent : 'NULL');
-  console.log('🚀🚀🚀 innerText:', blogEditor ? blogEditor.innerText : 'NULL');
-  console.log('🚀🚀🚀 İçerik Uzunluğu:', contentHTML.length);
+  // Get content from RichTextEditor
+  const contentHTML = getEditorContent('blog');
+  
+  console.log('Blog content from RichTextEditor:', contentHTML);
+  console.log('Content length:', contentHTML.length);
 
   // GEÇICI: Boş kontrol kapatıldı - debug için
   /*
@@ -385,17 +376,16 @@ async function handleEventSubmit(e) {
         }
     }
     
-    // Editörden HTML'i doğrudan çek (FormData'ya güvenmeyelim)
-    const contentHTML = getEditorHtmlSafely('event-content-editor', 'event-content-hidden');
+    // Get content from RichTextEditor
+    const contentHTML = getEditorContent('event');
     
-    // Clean data - content'i doğrudan contentHTML'den al
+    // Clean data - content'i RichTextEditor'dan al
     const cleanData = {
         title: data.title,
         type: data.type,
         date: data.date,
         location: data.location,
         description: data.description,
-        // 🔴 KRİTİK: FormData yerine doğrudan editörden gelen HTML'i kullan
         content: contentHTML,
         price: parseFloat(data.price) || 0,
         capacity: parseInt(data.capacity) || 0,
@@ -688,9 +678,11 @@ function populateBlogForm(blogPost) {
     const form = document.getElementById('blog-form');
     form.querySelector('[name="title"]').value = blogPost.title || '';
     form.querySelector('[name="category"]').value = blogPost.category || '';
-    form.querySelector('[name="content"]').value = blogPost.content || '';
     form.querySelector('[name="excerpt"]').value = blogPost.excerpt || '';
     form.querySelector('[name="status"]').value = blogPost.status || 'published';
+    
+    // Set content in RichTextEditor
+    setEditorContent('blog', blogPost.content || '');
 }
 
 async function deleteBlogPost(id) {
@@ -1101,9 +1093,78 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEvents();
     loadRegistrations();
     loadMedia();
+    
+    // Initialize RichTextEditor instances
+    setTimeout(() => {
+        initializeRichTextEditors();
+    }, 500); // Wait for DOM to be fully loaded
 });
 
-// Rich Text Editor Functions
+// RichTextEditor Integration
+let announcementEditor, blogEditor, eventEditor;
+
+// Initialize RichTextEditor instances
+function initializeRichTextEditors() {
+    try {
+        // Initialize Announcement Editor
+        announcementEditor = new RichTextEditor("#announcement-content-editor");
+        
+        // Initialize Blog Editor
+        blogEditor = new RichTextEditor("#blog-content-editor");
+        
+        // Initialize Event Editor
+        eventEditor = new RichTextEditor("#event-content-editor");
+        
+        console.log('RichTextEditor instances initialized successfully');
+    } catch (error) {
+        console.error('Error initializing RichTextEditor:', error);
+    }
+}
+
+// Get HTML content from RichTextEditor
+function getEditorContent(editorType) {
+    try {
+        switch(editorType) {
+            case 'announcement':
+                return announcementEditor ? announcementEditor.getHTMLCode() : '';
+            case 'blog':
+                return blogEditor ? blogEditor.getHTMLCode() : '';
+            case 'event':
+                return eventEditor ? eventEditor.getHTMLCode() : '';
+            default:
+                return '';
+        }
+    } catch (error) {
+        console.error('Error getting editor content:', error);
+        return '';
+    }
+}
+
+// Set HTML content to RichTextEditor
+function setEditorContent(editorType, htmlContent) {
+    try {
+        switch(editorType) {
+            case 'announcement':
+                if (announcementEditor) announcementEditor.setHTMLCode(htmlContent || '');
+                break;
+            case 'blog':
+                if (blogEditor) blogEditor.setHTMLCode(htmlContent || '');
+                break;
+            case 'event':
+                if (eventEditor) eventEditor.setHTMLCode(htmlContent || '');
+                break;
+        }
+    } catch (error) {
+        console.error('Error setting editor content:', error);
+    }
+}
+
+// Clear RichTextEditor content
+function clearEditorContent(editorType) {
+    setEditorContent(editorType, '');
+}
+
+// Legacy Rich Text Editor Functions (for backward compatibility)
 function formatText(command) {
     // Get the currently focused editor
     const activeEditor = document.activeElement;
