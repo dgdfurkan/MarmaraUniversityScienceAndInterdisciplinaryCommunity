@@ -68,7 +68,8 @@ async function loadBlogPosts() {
                 month: 'long', 
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
+                timeZone: 'Europe/Istanbul'
             });
             
             // Get image source
@@ -160,7 +161,8 @@ async function loadAnnouncements() {
                         month: 'long',
                         day: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        timeZone: 'Europe/Istanbul'
                     })}</span>
                 </div>
             </div>
@@ -203,7 +205,8 @@ async function loadEvents() {
                                 month: 'long',
                                 day: 'numeric',
                                 hour: '2-digit',
-                                minute: '2-digit'
+                                minute: '2-digit',
+                                timeZone: 'Europe/Istanbul'
                             })}</span>
                             <span><i class="fas fa-map-marker-alt"></i> ${event.location}</span>
                         </div>
@@ -354,7 +357,8 @@ async function readFullBlog(postId) {
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZone: 'Europe/Istanbul'
         });
         const postContent = data.content;
         const authorName = data.author_name || 'MUSIC Ekibi';

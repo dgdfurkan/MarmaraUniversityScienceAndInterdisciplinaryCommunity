@@ -465,7 +465,14 @@ async function loadAnnouncements() {
             <tr>
                 <td>${announcement.title}</td>
                 <td><span class="category-badge category-${announcement.category}">${getCategoryName(announcement.category)}</span></td>
-                <td>${new Date(announcement.created_at).toLocaleDateString('tr-TR')}</td>
+                <td>${new Date(announcement.created_at).toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                })}</td>
                 <td><span class="status-badge status-${announcement.status}">${getStatusName(announcement.status)}</span></td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick="editAnnouncement(${announcement.id})">
@@ -494,7 +501,14 @@ async function loadBlogPosts() {
             <tr>
                 <td>${post.title}</td>
                 <td><span class="category-badge category-${post.category}">${getCategoryName(post.category)}</span></td>
-                <td>${new Date(post.created_at).toLocaleDateString('tr-TR')}</td>
+                <td>${new Date(post.created_at).toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                })}</td>
                 <td><span class="status-badge status-${post.status}">${getStatusName(post.status)}</span></td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick="editBlogPost(${post.id})">
@@ -523,7 +537,14 @@ async function loadEvents() {
             <tr>
                 <td>${event.title}</td>
                 <td><span class="category-badge category-${event.type}">${getEventTypeName(event.type)}</span></td>
-                <td>${new Date(event.date).toLocaleDateString('tr-TR')}</td>
+                <td>${new Date(event.date).toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                })}</td>
                 <td>${event.registered || 0}/${event.capacity}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick="editEvent(${event.id})">
@@ -554,7 +575,14 @@ async function loadRegistrations() {
                 <td>${registration.email}</td>
                 <td>${registration.phone}</td>
                 <td>${registration.event_title || 'Etkinlik Bulunamadı'}</td>
-                <td>${new Date(registration.created_at).toLocaleDateString('tr-TR')}</td>
+                <td>${new Date(registration.created_at).toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                })}</td>
                 <td>
                     <button class="btn btn-sm btn-secondary" onclick="viewRegistration(${registration.id})">
                         <i class="fas fa-eye"></i>
@@ -588,7 +616,14 @@ async function loadMedia() {
                 </div>
                 <div class="media-item-content">
                     <h4>${item.name}</h4>
-                    <p>${(item.metadata?.size / 1024).toFixed(1) || '0'} KB • ${new Date(item.created_at).toLocaleDateString('tr-TR')}</p>
+                    <p>${(item.metadata?.size / 1024).toFixed(1) || '0'} KB • ${new Date(item.created_at).toLocaleString('tr-TR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'Europe/Istanbul'
+                    })}</p>
                     <div class="media-actions">
                         <button class="btn btn-sm btn-secondary" onclick="downloadMedia('${item.name}')">
                             <i class="fas fa-download"></i>
@@ -1037,6 +1072,15 @@ async function loadRecentActivities() {
 
         activitiesContainer.innerHTML = activities.map(activity => {
             const timeAgo = getTimeAgo(activity.created_at);
+            const exactTime = new Date(activity.created_at).toLocaleString('tr-TR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Europe/Istanbul'
+            });
+            
             let icon = 'fas fa-plus';
             let message = '';
             let actionClass = '';
@@ -1080,7 +1124,7 @@ async function loadRecentActivities() {
                     </div>
                     <div class="activity-content">
                         <p>${message}</p>
-                        <span class="activity-time">${timeAgo}</span>
+                        <span class="activity-time" title="${exactTime}">${timeAgo}</span>
                     </div>
                 </div>
             `;
