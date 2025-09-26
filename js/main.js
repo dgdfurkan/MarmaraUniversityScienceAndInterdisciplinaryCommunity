@@ -146,27 +146,61 @@ async function loadAnnouncements() {
             return;
         }
         
-        announcementsContainer.innerHTML = announcements.map(announcement => `
-            <div class="announcement-card">
-                <div class="announcement-header">
-                    <h3>${announcement.title}</h3>
-                    <span class="announcement-category ${announcement.category}">${getCategoryName(announcement.category)}</span>
+        announcementsContainer.innerHTML = announcements.map(announcement => {
+            const announcementDate = new Date(announcement.created_at);
+            const formattedDate = announcementDate.toLocaleDateString('tr-TR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            const formattedTime = announcementDate.toLocaleTimeString('tr-TR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            return `
+                <div class="announcement-card">
+                    <div class="announcement-header">
+                        <div class="header-icon"><i class="fas fa-bullhorn"></i></div>
+                        <div class="header-text">
+                            <h2>${announcement.title}</h2>
+                            <p class="date">${formattedDate} • ${formattedTime}</p>
+                        </div>
+                    </div>
+                    <div class="announcement-content">
+                        <p>${announcement.content ? announcement.content.replace(/<[^>]*>/g, '') : 'İçerik bulunmuyor'}</p>
+                    </div>
+                    <div class="announcement-footer">
+                        <div class="reactions-group reactions">
+                            <div class="reaction" data-reaction="onay">
+                                <span class="emoji">👍</span>
+                                <span class="count">${Math.floor(Math.random() * 20) + 5}</span>
+                            </div>
+                            <div class="reaction" data-reaction="katiliyorum">
+                                <span class="emoji">✅</span>
+                                <span class="count">${Math.floor(Math.random() * 30) + 10}</span>
+                            </div>
+                            <div class="reaction" data-reaction="katilamiyorum">
+                                <span class="emoji">❌</span>
+                                <span class="count">${Math.floor(Math.random() * 5) + 1}</span>
+                            </div>
+                            <div class="reaction" data-reaction="sorum-var">
+                                <span class="emoji">🤔</span>
+                                <span class="count">${Math.floor(Math.random() * 8) + 2}</span>
+                            </div>
+                            <div class="reaction" data-reaction="destek">
+                                <span class="emoji">👏</span>
+                                <span class="count">${Math.floor(Math.random() * 15) + 5}</span>
+                            </div>
+                        </div>
+                        <div class="view-count">
+                            <i class="fas fa-eye"></i>
+                            <span>${Math.floor(Math.random() * 200) + 50} Görüntülenme</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="announcement-content">
-                    <p>${announcement.content ? announcement.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'İçerik bulunmuyor'}</p>
-                </div>
-                <div class="announcement-footer">
-                    <span class="announcement-date">${new Date(announcement.created_at).toLocaleString('tr-TR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Europe/Istanbul'
-                    })}</span>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
     } catch (error) {
         console.error('Error loading announcements:', error);
@@ -1591,6 +1625,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const eventId = e.target.getAttribute('data-event-id');
             const formData = new FormData(e.target);
             handleEventRegistration(eventId, formData);
+        }
+    });
+    
+    // Announcement reaction handlers
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.reaction')) {
+            const reaction = e.target.closest('.reaction');
+            const parent = reaction.closest('.reactions');
+            const currentlyActive = parent.querySelector('.reaction.active');
+            const countSpan = reaction.querySelector('.count');
+            let count = parseInt(countSpan.textContent);
+
+            if (currentlyActive && currentlyActive !== reaction) {
+                // Başka bir reaksiyon aktifse, onu pasif yap ve sayısını azalt
+                const activeCountSpan = currentlyActive.querySelector('.count');
+                activeCountSpan.textContent = parseInt(activeCountSpan.textContent) - 1;
+                currentlyActive.classList.remove('active');
+            }
+
+            if (reaction.classList.contains('active')) {
+                // Aynı reaksiyona tekrar tıklandıysa, iptal et
+                reaction.classList.remove('active');
+                countSpan.textContent = count - 1;
+            } else {
+                // Yeni bir reaksiyon seçildiyse, aktif yap ve sayısını artır
+                reaction.classList.add('active');
+                countSpan.textContent = count + 1;
+            }
         }
     });
 });
