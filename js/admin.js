@@ -1342,6 +1342,11 @@ function insertImage() {
         img.style.borderRadius = '8px';
         img.style.margin = '1rem 0';
         
+        // Wait for image to load, then wrap with resize container
+        img.onload = () => {
+            wrapImageWithResizeContainer(img);
+        };
+        
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
@@ -1451,6 +1456,219 @@ function updateToolbarButtons() {
             }
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+// Image Resize Functionality
+// -----------------------------------------------------------------------------
+function wrapImageWithResizeContainer(img) {
+    // Check if already wrapped
+    if (img.parentElement.classList.contains('image-resize-container')) {
+        return img.parentElement;
+    }
+    
+    // Create container
+    const container = document.createElement('div');
+    container.className = 'image-resize-container';
+    
+    // Create handles
+    const handles = document.createElement('div');
+    handles.className = 'image-resize-handles';
+    
+    // Create resize info
+    const info = document.createElement('div');
+    info.className = 'image-resize-info';
+    info.textContent = `${img.naturalWidth || img.width} × ${img.naturalHeight || img.height}`;
+    
+    // Create handles
+    const handlePositions = ['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'];
+    handlePositions.forEach(pos => {
+        const handle = document.createElement('div');
+        handle.className = `image-resize-handle ${pos}`;
+        handle.dataset.direction = pos;
+        handles.appendChild(handle);
+    });
+    
+    // Wrap image
+    img.parentNode.insertBefore(container, img);
+    container.appendChild(img);
+    container.appendChild(handles);
+    container.appendChild(info);
+    
+    // Add event listeners
+    addImageResizeListeners(container);
+    
+    return container;
+}
+
+function addImageResizeListeners(container) {
+    const img = container.querySelector('img');
+    const handles = container.querySelectorAll('.image-resize-handle');
+    const info = container.querySelector('.image-resize-info');
+    
+    // Image click to select
+    img.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectImage(container);
+    });
+    
+    // Handle drag events
+    handles.forEach(handle => {
+        handle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startResize(e, container, handle.dataset.direction);
+        });
+    });
+    
+    // Update info on resize
+    const observer = new ResizeObserver(() => {
+        if (info) {
+            info.textContent = `${Math.round(img.offsetWidth)} × ${Math.round(img.offsetHeight)}`;
+        }
+    });
+    observer.observe(img);
+}
+
+function selectImage(container) {
+    // Remove selection from other images
+    document.querySelectorAll('.image-resize-container').forEach(c => {
+        c.classList.remove('selected');
+        c.querySelector('img').classList.remove('selected');
+    });
+    
+    // Select current image
+    container.classList.add('selected');
+    container.querySelector('img').classList.add('selected');
+}
+
+function startResize(e, container, direction) {
+    const img = container.querySelector('img');
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = img.offsetWidth;
+    const startHeight = img.offsetHeight;
+    const aspectRatio = startWidth / startHeight;
+    
+    let isResizing = false;
+    
+    function handleMouseMove(e) {
+        if (!isResizing) {
+            isResizing = true;
+            document.body.style.cursor = getResizeCursor(direction);
+        }
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        
+        // Calculate new dimensions based on direction
+        switch (direction) {
+            case 'se': // Bottom-right
+                newWidth = Math.max(50, startWidth + deltaX);
+                newHeight = newWidth / aspectRatio;
+                break;
+            case 'sw': // Bottom-left
+                newWidth = Math.max(50, startWidth - deltaX);
+                newHeight = newWidth / aspectRatio;
+                break;
+            case 'ne': // Top-right
+                newWidth = Math.max(50, startWidth + deltaX);
+                newHeight = newWidth / aspectRatio;
+                break;
+            case 'nw': // Top-left
+                newWidth = Math.max(50, startWidth - deltaX);
+                newHeight = newWidth / aspectRatio;
+                break;
+            case 'e': // Right
+                newWidth = Math.max(50, startWidth + deltaX);
+                newHeight = newWidth / aspectRatio;
+                break;
+            case 'w': // Left
+                newWidth = Math.max(50, startWidth - deltaX);
+                newHeight = newWidth / aspectRatio;
+                break;
+            case 's': // Bottom
+                newHeight = Math.max(50, startHeight + deltaY);
+                newWidth = newHeight * aspectRatio;
+                break;
+            case 'n': // Top
+                newHeight = Math.max(50, startHeight - deltaY);
+                newWidth = newHeight * aspectRatio;
+                break;
+        }
+        
+        // Apply constraints
+        const maxWidth = container.parentElement.offsetWidth;
+        const maxHeight = 800;
+        
+        if (newWidth > maxWidth) {
+            newWidth = maxWidth;
+            newHeight = newWidth / aspectRatio;
+        }
+        
+        if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            newWidth = newHeight * aspectRatio;
+        }
+        
+        // Apply new dimensions
+        img.style.width = newWidth + 'px';
+        img.style.height = newHeight + 'px';
+    }
+    
+    function handleMouseUp() {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    }
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+}
+
+function getResizeCursor(direction) {
+    const cursors = {
+        'nw': 'nw-resize',
+        'ne': 'ne-resize',
+        'sw': 'sw-resize',
+        'se': 'se-resize',
+        'n': 'n-resize',
+        's': 's-resize',
+        'w': 'w-resize',
+        'e': 'e-resize'
+    };
+    return cursors[direction] || 'default';
+}
+
+function initializeImageResize() {
+    // Wrap existing images
+    document.querySelectorAll('.editor-content img').forEach(img => {
+        wrapImageWithResizeContainer(img);
+    });
+    
+    // Watch for new images
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    if (node.tagName === 'IMG') {
+                        wrapImageWithResizeContainer(node);
+                    } else {
+                        const images = node.querySelectorAll('img');
+                        images.forEach(img => wrapImageWithResizeContainer(img));
+                    }
+                }
+            });
+        });
+    });
+    
+    document.querySelectorAll('.editor-content').forEach(editor => {
+        observer.observe(editor, { childList: true, subtree: true });
+    });
 }
 
 // -----------------------------------------------------------------------------
@@ -1590,6 +1808,9 @@ function addEditorListeners(editorId) {
         });
         
         console.log('Event listeners added to:', editorId);
+        
+        // Initialize image resize functionality
+        initializeImageResize();
     } else {
         console.error('Editor element not found:', editorId);
     }
