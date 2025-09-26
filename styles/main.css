@@ -931,6 +931,7 @@ section {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 4;
+    line-clamp: 4;
     -webkit-box-orient: vertical;
 }
 
@@ -1278,6 +1279,7 @@ section {
     .description {
         font-size: 0.85rem;
         -webkit-line-clamp: 3;
+        line-clamp: 3;
     }
 }
 
