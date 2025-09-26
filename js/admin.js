@@ -305,6 +305,16 @@ async function handleBlogSubmit(e) {
       : await DatabaseService.createBlogPost(cleanData);
     
     const newRecord = result[0];
+    
+    // Log activity
+    await DatabaseService.logActivity(
+        currentEditId ? 'update' : 'create', 
+        'blog_posts', 
+        newRecord.id, 
+        newRecord.title, 
+        currentEditId ? null : null, 
+        newRecord
+    );
 
     alert(`Blog yazısı başarıyla ${currentEditId ? 'güncellendi' : 'eklendi'}!`);
     closeModal('blog-modal');
@@ -655,9 +665,18 @@ function populateAnnouncementForm(announcement) {
 async function deleteAnnouncement(id) {
     if (confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) {
         try {
+            // Get announcement title before deletion for activity log
+            const announcement = await DatabaseService.getAnnouncement(id);
+            const title = announcement?.title || 'Unknown';
+            
             await DatabaseService.deleteAnnouncement(id);
+            
+            // Log activity
+            await DatabaseService.logActivity('delete', 'announcements', id, title);
+            
             alert('Duyuru silindi!');
             loadAnnouncements();
+            loadRecentActivities();
         } catch (error) {
             console.error('Error deleting announcement:', error);
             alert('Duyuru silinirken bir hata oluştu.');
@@ -688,9 +707,18 @@ function populateBlogForm(blogPost) {
 async function deleteBlogPost(id) {
     if (confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
         try {
+            // Get blog post title before deletion for activity log
+            const blogPost = await DatabaseService.getBlogPost(id);
+            const title = blogPost?.title || 'Unknown';
+            
             await DatabaseService.deleteBlogPost(id);
+            
+            // Log activity
+            await DatabaseService.logActivity('delete', 'blog_posts', id, title);
+            
             alert('Blog yazısı silindi!');
             loadBlogPosts();
+            loadRecentActivities();
         } catch (error) {
             console.error('Error deleting blog post:', error);
             alert('Blog yazısı silinirken bir hata oluştu.');
@@ -727,9 +755,18 @@ function populateEventForm(event) {
 async function deleteEvent(id) {
     if (confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
         try {
+            // Get event title before deletion for activity log
+            const event = await DatabaseService.getEvent(id);
+            const title = event?.title || 'Unknown';
+            
             await DatabaseService.deleteEvent(id);
+            
+            // Log activity
+            await DatabaseService.logActivity('delete', 'events', id, title);
+            
             alert('Etkinlik silindi!');
             loadEvents();
+            loadRecentActivities();
         } catch (error) {
             console.error('Error deleting event:', error);
             alert('Etkinlik silinirken bir hata oluştu.');

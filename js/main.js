@@ -62,11 +62,13 @@ async function loadBlogPosts() {
         
         blogContainer.innerHTML = posts.map(post => {
             const postDate = new Date(post.created_at);
-            const formattedDate = postDate.toLocaleDateString('tr-TR', { 
+            const formattedDate = postDate.toLocaleString('tr-TR', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
-                day: 'numeric' 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
             
             // Get image source
@@ -153,7 +155,13 @@ async function loadAnnouncements() {
                     <p>${announcement.content ? announcement.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'İçerik bulunmuyor'}</p>
                 </div>
                 <div class="announcement-footer">
-                    <span class="announcement-date">${new Date(announcement.created_at).toLocaleDateString('tr-TR')}</span>
+                    <span class="announcement-date">${new Date(announcement.created_at).toLocaleString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}</span>
                 </div>
             </div>
         `).join('');
@@ -190,7 +198,13 @@ async function loadEvents() {
                         <h3>${event.title}</h3>
                         <p>${event.description}</p>
                         <div class="event-meta">
-                            <span><i class="fas fa-calendar"></i> ${eventDate.toLocaleDateString('tr-TR')}</span>
+                            <span><i class="fas fa-calendar"></i> ${eventDate.toLocaleString('tr-TR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}</span>
                             <span><i class="fas fa-map-marker-alt"></i> ${event.location}</span>
                         </div>
                         <a href="register.html" class="event-link">Kayıt Ol <i class="fas fa-arrow-right"></i></a>
@@ -334,11 +348,13 @@ async function readFullBlog(postId) {
         }
         
         const postTitle = data.title;
-        const postDate = new Date(data.created_at).toLocaleDateString('tr-TR', { 
+        const postDate = new Date(data.created_at).toLocaleString('tr-TR', { 
             weekday: 'long', 
             year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
         const postContent = data.content;
         const authorName = data.author_name || 'MUSIC Ekibi';
