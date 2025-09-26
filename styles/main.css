@@ -753,6 +753,23 @@ section {
     font-size: 1rem;
 }
 
+/* Hide image resize info in blog modal */
+.blog-modal-content .image-resize-info {
+    display: none !important;
+}
+
+.blog-modal-content .image-resize-handles {
+    display: none !important;
+}
+
+.blog-modal-content .image-resize-container {
+    display: inline-block;
+}
+
+.blog-modal-content .image-resize-container img {
+    outline: none !important;
+}
+
 .blog-modal-content p {
     margin-bottom: 1.5rem;
     white-space: pre-wrap;

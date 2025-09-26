@@ -358,6 +358,18 @@ async function readFullBlog(postId) {
         const modalOverlay = document.getElementById('blog-modal-overlay');
         modalOverlay.classList.add('active');
         
+        // Remove image resize containers from blog modal content
+        const modalContent = document.getElementById('blog-modal-content');
+        const resizeContainers = modalContent.querySelectorAll('.image-resize-container');
+        resizeContainers.forEach(container => {
+            const img = container.querySelector('img');
+            if (img) {
+                // Move image out of resize container
+                container.parentNode.insertBefore(img, container);
+                container.remove();
+            }
+        });
+        
         // Close modal when clicking outside
         modalOverlay.addEventListener('click', function(e) {
             if (e.target === modalOverlay) {
