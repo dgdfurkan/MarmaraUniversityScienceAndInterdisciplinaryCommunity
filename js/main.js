@@ -189,28 +189,84 @@ async function loadEvents() {
         
         eventsGrid.innerHTML = events.map(event => {
             const eventDate = new Date(event.date);
-            const isFull = (event.registered || 0) >= event.capacity;
-            
+            const eventId = event.id;
             return `
-                <div class="event-card">
-                    <div class="event-image">
-                        <i class="${getEventIcon(event.type)}"></i>
-                    </div>
-                    <div class="event-content">
-                        <h3>${event.title}</h3>
-                        <p>${event.description}</p>
-                        <div class="event-meta">
-                            <span><i class="fas fa-calendar"></i> ${eventDate.toLocaleString('tr-TR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                timeZone: 'Europe/Istanbul'
-                            })}</span>
-                            <span><i class="fas fa-map-marker-alt"></i> ${event.location}</span>
+                <div class="event-card-container">
+                    <div class="event-card" data-event-id="${eventId}">
+                        <!-- KARTIN ÖN YÜZÜ -->
+                        <div class="card-face card-front">
+                            <div class="card-image">
+                                <img src="${event.image_url || 'https://placehold.co/600x400/a2d2ff/333?text=Etkinlik'}" alt="${event.title}">
+                            </div>
+                            <div class="card-content">
+                                <h2 class="event-title">${event.title}</h2>
+                                <ul class="event-details">
+                                    <li><i class="fas fa-calendar-alt"></i> ${eventDate.toLocaleString('tr-TR', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        timeZone: 'Europe/Istanbul'
+                                    })}</li>
+                                    <li><i class="fas fa-clock"></i> ${eventDate.toLocaleString('tr-TR', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        timeZone: 'Europe/Istanbul'
+                                    })}</li>
+                                    <li><i class="fas fa-map-marker-alt"></i> ${event.location}</li>
+                                </ul>
+                                <p class="event-description">${event.description ? event.description.substring(0, 100) + '...' : 'Etkinlik açıklaması bulunmuyor.'}</p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="participant-count"><i class="fas fa-users"></i> ${event.capacity || 'Sınırsız'} Katılımcı</div>
+                                <button class="btn flip-btn" onclick="flipEventCard(${eventId})">Katıl</button>
+                            </div>
                         </div>
-                        <a href="register.html" class="event-link">Kayıt Ol <i class="fas fa-arrow-right"></i></a>
+                        <!-- KARTIN ARKA YÜZÜ (FORM) -->
+                        <div class="card-face card-back">
+                            <div class="registration-form">
+                                <h3 class="form-title">Etkinliğe Kayıt Ol</h3>
+                                <form class="event-registration-form" data-event-id="${eventId}">
+                                    <div class="animated-form-control">
+                                        <input type="text" name="fullname" required="">
+                                        <label for="fullname">
+                                            <span style="transition-delay:0ms">İ</span><span style="transition-delay:50ms">s</span><span style="transition-delay:100ms">i</span><span style="transition-delay:150ms">m</span><span style="transition-delay:200ms"> </span><span style="transition-delay:250ms">S</span><span style="transition-delay:300ms">o</span><span style="transition-delay:350ms">y</span><span style="transition-delay:400ms">i</span><span style="transition-delay:450ms">s</span><span style="transition-delay:500ms">i</span><span style="transition-delay:550ms">m</span>
+                                        </label>
+                                    </div>
+                                   
+                                    <div class="animated-form-control">
+                                        <input type="text" name="university" autocomplete="off" required="">
+                                        <label for="university">
+                                             <span style="transition-delay:0ms">Ü</span><span style="transition-delay:50ms">n</span><span style="transition-delay:100ms">i</span><span style="transition-delay:150ms">v</span><span style="transition-delay:200ms">e</span><span style="transition-delay:250ms">r</span><span style="transition-delay:300ms">s</span><span style="transition-delay:350ms">i</span><span style="transition-delay:400ms">t</span><span style="transition-delay:450ms">e</span>
+                                        </label>
+                                        <div class="custom-dropdown university-dropdown"></div>
+                                    </div>
+
+                                    <div class="animated-form-control">
+                                        <input type="text" name="department" autocomplete="off" required="">
+                                        <label for="department">
+                                            <span style="transition-delay:0ms">B</span><span style="transition-delay:50ms">ö</span><span style="transition-delay:100ms">l</span><span style="transition-delay:150ms">ü</span><span style="transition-delay:200ms">m</span>
+                                        </label>
+                                        <div class="custom-dropdown department-dropdown"></div>
+                                    </div>
+
+                                    <div class="animated-form-control">
+                                        <input type="email" name="email" required="">
+                                        <label for="email">
+                                            <span style="transition-delay:0ms">E</span><span style="transition-delay:50ms">-</span><span style="transition-delay:100ms">p</span><span style="transition-delay:150ms">o</span><span style="transition-delay:200ms">s</span><span style="transition-delay:250ms">t</span><span style="transition-delay:300ms">a</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="button" class="btn btn-back" onclick="flipEventCardBack(${eventId})">Geri Dön</button>
+                                        <button type="submit" class="btn">Kaydı Onayla</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="success-message">
+                                 <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+                                 <h3>Kaydınız Alındı!</h3>
+                                 <p>Etkinlik detayları e-posta adresinize gönderilecektir.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -219,6 +275,22 @@ async function loadEvents() {
     } catch (error) {
         console.error('Error loading events:', error);
         eventsGrid.innerHTML = '<p class="no-events">Etkinlikler yüklenirken bir hata oluştu.</p>';
+    }
+}
+
+// Event card flip functions
+function flipEventCard(eventId) {
+    const card = document.querySelector(`[data-event-id="${eventId}"]`);
+    if (card) {
+        card.classList.add('is-flipped');
+        setupCustomDropdowns(eventId);
+    }
+}
+
+function flipEventCardBack(eventId) {
+    const card = document.querySelector(`[data-event-id="${eventId}"]`);
+    if (card) {
+        card.classList.remove('is-flipped');
     }
 }
 
@@ -519,10 +591,95 @@ function scrollToTop() {
 }
 
 // Load blog posts and events when page loads
+// Data Arrays for dropdowns
+const universities = ["Boğaziçi Üniversitesi", "Galatasaray Üniversitesi", "İstanbul Teknik Üniversitesi", "İstanbul Medeniyet Üniversitesi", "İstanbul Üniversitesi", "İstanbul Üniversitesi-Cerrahpaşa", "Marmara Üniversitesi", "Mimar Sinan Güzel Sanatlar Üniversitesi", "Sağlık Bilimleri Üniversitesi", "Türk-Alman Üniversitesi", "Yıldız Teknik Üniversitesi", "Acıbadem Mehmet Ali Aydınlar Üniversitesi", "Altınbaş Üniversitesi", "Bahçeşehir Üniversitesi", "Beykoz Üniversitesi", "Bezm-i Alem Vakıf Üniversitesi", "Demiroğlu Bilim Üniversitesi", "Doğuş Üniversitesi", "Fatih Sultan Mehmet Vakıf Üniversitesi", "Fenerbahçe Üniversitesi", "Haliç Üniversitesi", "Işık Üniversitesi", "İbn Haldun Üniversitesi", "İstanbul 29 Mayıs Üniversitesi", "İstanbul Arel Üniversitesi", "İstanbul Atlas Üniversitesi", "İstanbul Aydın Üniversitesi", "İstanbul Beykent Üniversitesi", "İstanbul Bilgi Üniversitesi", "İstanbul Esenyurt Üniversitesi", "İstanbul Galata Üniversitesi", "İstanbul Gedik Üniversitesi", "İstanbul Gelişim Üniversitesi", "İstanbul Kent Üniversitesi", "İstanbul Kültür Üniversitesi", "İstanbul Medipol Üniversitesi", "İstanbul Nişantaşı Üniversitesi", "İstanbul Okan Üniversitesi", "İstanbul Rumeli Üniversitesi", "İstanbul Sabahattin Zaim Üniversitesi", "İstanbul Sağlık ve Teknoloji Üniversitesi"];
+
+const departments = ["Bilgisayar Mühendisliği", "Elektrik-Elektronik Mühendisliği", "Endüstri Mühendisliği", "İnşaat Mühendisliği", "Makine Mühendisliği", "Kimya Mühendisliği", "Matematik", "Fizik", "Kimya", "Biyoloji", "İşletme", "İktisat", "Siyaset Bilimi", "Uluslararası İlişkiler", "Hukuk", "Tıp", "Eczacılık", "Diş Hekimliği", "Hemşirelik", "Fizyoterapi", "Psikoloji", "Sosyoloji", "Tarih", "Türk Dili ve Edebiyatı", "İngiliz Dili ve Edebiyatı", "Alman Dili ve Edebiyatı", "Fransız Dili ve Edebiyatı", "Rus Dili ve Edebiyatı", "Çin Dili ve Edebiyatı", "Japon Dili ve Edebiyatı", "Arap Dili ve Edebiyatı", "Fars Dili ve Edebiyatı", "İspanyol Dili ve Edebiyatı", "İtalyanca", "Portekizce", "Mimarlık", "İç Mimarlık", "Endüstriyel Tasarım", "Grafik Tasarım", "Moda Tasarımı", "Güzel Sanatlar", "Müzik", "Tiyatro", "Sinema", "Radyo ve Televizyon", "Gazetecilik", "Halkla İlişkiler", "Reklamcılık", "Turizm", "Otel İşletmeciliği", "Gastronomi", "Spor Bilimleri", "Beden Eğitimi", "Antrenörlük", "Rehberlik ve Psikolojik Danışmanlık", "Okul Öncesi Öğretmenliği", "Sınıf Öğretmenliği", "Matematik Öğretmenliği", "Fen Bilgisi Öğretmenliği", "Türkçe Öğretmenliği", "İngilizce Öğretmenliği", "Sosyal Bilgiler Öğretmenliği", "Tarih Öğretmenliği", "Coğrafya Öğretmenliği", "Felsefe Grubu Öğretmenliği", "Din Kültürü ve Ahlak Bilgisi Öğretmenliği", "Müzik Öğretmenliği", "Resim Öğretmenliği", "Beden Eğitimi Öğretmenliği", "Bilgisayar ve Öğretim Teknolojileri Öğretmenliği", "Özel Eğitim Öğretmenliği", "Zihin Engelliler Öğretmenliği", "İşitme Engelliler Öğretmenliği", "Görme Engelliler Öğretmenliği", "Üstün Zekalılar Öğretmenliği", "Çocuk Gelişimi", "Aile ve Tüketici Bilimleri", "Beslenme ve Diyetetik", "Sosyal Hizmet", "Çalışma Ekonomisi ve Endüstri İlişkileri", "Kamu Yönetimi", "Siyaset Bilimi ve Kamu Yönetimi", "Uluslararası İlişkiler", "Avrupa Birliği İlişkileri", "Amerikan Kültürü ve Edebiyatı", "Arkeoloji", "Sanat Tarihi", "Felsefe", "Sosyoloji", "Antropoloji", "Psikoloji", "Coğrafya", "Jeoloji", "Jeofizik", "Meteoroloji", "Harita Mühendisliği", "Şehir ve Bölge Planlama", "Peyzaj Mimarlığı", "Orman Mühendisliği", "Ziraat Mühendisliği", "Gıda Mühendisliği", "Veterinerlik", "Su Ürünleri Mühendisliği", "Balıkçılık Teknolojisi", "Denizcilik İşletmeleri Yönetimi", "Gemi İnşaatı", "Gemi Makineleri İşletme Mühendisliği", "Deniz Ulaştırma İşletme Mühendisliği", "Uçak Mühendisliği", "Havacılık ve Uzay Mühendisliği", "Uçak Elektrik ve Elektroniği", "Havacılık Yönetimi", "Pilotaj", "Uçak Bakım ve Onarım", "Havacılık Elektrik ve Elektroniği", "Raylı Sistemler Mühendisliği", "Otomotiv Mühendisliği", "Mekatronik Mühendisliği", "Biyomedikal Mühendisliği", "Malzeme Bilimi ve Mühendisliği", "Nanoteknoloji Mühendisliği", "Enerji Sistemleri Mühendisliği", "Çevre Mühendisliği", "Petrol ve Doğalgaz Mühendisliği", "Maden Mühendisliği", "Jeoloji Mühendisliği", "Jeofizik Mühendisliği", "Harita Mühendisliği", "Geomatik Mühendisliği", "İnşaat Mühendisliği", "Yapı Mühendisliği", "Geoteknik", "Ulaştırma Mühendisliği", "Su Yapıları Mühendisliği", "Yapı Malzemeleri Mühendisliği", "İnşaat İşletmeciliği", "Yapı Denetimi", "Şehir Planlama", "Bölge Planlama", "Peyzaj Planlama", "Çevre Planlama", "Kentsel Tasarım", "Mimari Restorasyon", "İç Mimarlık ve Çevre Tasarımı", "Endüstriyel Tasarım", "Grafik Tasarım", "Görsel İletişim Tasarımı", "Moda Tasarımı", "Tekstil Tasarımı", "Seramik Tasarımı", "Cam Tasarımı", "Metal Tasarımı", "Ahşap Tasarımı", "Deri Tasarımı", "Takı Tasarımı", "Kuyumculuk", "El Sanatları", "Geleneksel Türk Sanatları", "Çini Sanatı", "Ebru Sanatı", "Tezhip Sanatı", "Hat Sanatı", "Minyatür Sanatı", "Kaligrafi", "Resim", "Heykel", "Seramik", "Cam", "Metal", "Ahşap", "Deri", "Tekstil", "Fotoğraf", "Video", "Sinema", "Tiyatro", "Dans", "Müzik", "Opera", "Bale", "Klasik Müzik", "Caz", "Rock", "Pop", "Halk Müziği", "Türk Halk Müziği", "Türk Sanat Müziği", "Arabesk", "Rap", "Hip Hop", "Elektronik Müzik", "Ambient", "New Age", "World Music", "Folk", "Blues", "Country", "Reggae", "Ska", "Punk", "Metal", "Hard Rock", "Progressive Rock", "Psychedelic Rock", "Alternative Rock", "Indie Rock", "Grunge", "Britpop", "Shoegaze", "Post-Rock", "Math Rock", "Emo", "Screamo", "Post-Hardcore", "Metalcore", "Deathcore", "Nu Metal", "Industrial Metal", "Gothic Metal", "Symphonic Metal", "Power Metal", "Thrash Metal", "Death Metal", "Black Metal", "Doom Metal", "Stoner Metal", "Sludge Metal", "Post-Metal", "Atmospheric Black Metal", "Depressive Black Metal", "Raw Black Metal", "Symphonic Black Metal", "Viking Metal", "Pagan Metal", "Folk Metal", "Celtic Metal", "Medieval Metal", "Oriental Metal", "Progressive Metal", "Technical Death Metal", "Melodic Death Metal", "Brutal Death Metal", "Slam Death Metal", "Grindcore", "Crust Punk", "D-Beat", "Hardcore Punk", "Post-Punk", "New Wave", "Synthpop", "New Romantic", "Gothic Rock", "Darkwave", "Coldwave", "Minimal Wave", "Industrial", "EBM", "Aggrotech", "Futurepop", "Synthwave", "Retrowave", "Outrun", "Vaporwave", "Chillwave", "Witch House", "Dark Ambient", "Drone", "Noise", "Power Electronics", "Harsh Noise", "Merzbow", "Whitehouse", "Throbbing Gristle", "Coil", "Current 93", "Death in June", "Sol Invictus", "Nurse with Wound", "SPK", "Einstürzende Neubauten", "Test Dept", "Laibach", "Skinny Puppy", "Front 242", "Nitzer Ebb", "Front Line Assembly", "VNV Nation", "Covenant", "Apoptygma Berzerk", "And One", "Wolfsheim", "De/Vision", "Camouflage", "Depeche Mode", "New Order", "Joy Division", "The Cure", "Siouxsie and the Banshees", "Bauhaus", "The Sisters of Mercy", "Fields of the Nephilim", "The Mission", "Rosetta Stone", "Clan of Xymox", "Love and Rockets", "Tones on Tail", "The Damned", "The Misfits", "The Cramps", "The B-52's", "Talking Heads", "Blondie", "Patti Smith", "Iggy Pop", "David Bowie", "Lou Reed", "Velvet Underground", "Nico", "John Cale", "Brian Eno", "Roxy Music", "T. Rex", "Marc Bolan", "Gary Glitter", "Slade", "Sweet", "Mud", "Suzi Quatro", "Alice Cooper", "Kiss", "Aerosmith", "Led Zeppelin", "Black Sabbath", "Deep Purple", "Uriah Heep", "Jethro Tull", "Yes", "Genesis", "Pink Floyd", "King Crimson", "Emerson, Lake & Palmer", "Rush", "Van der Graaf Generator", "Gentle Giant", "Camel", "Caravan", "Soft Machine", "Can", "Kraftwerk", "Tangerine Dream", "Klaus Schulze", "Jean-Michel Jarre", "Vangelis", "Mike Oldfield", "Enya", "Clannad", "Loreena McKennitt", "Dead Can Dance", "Lisa Gerrard", "Brendan Perry", "This Mortal Coil", "Cocteau Twins", "4AD", "4AD Records", "Rough Trade", "Factory Records", "Mute Records", "Warp Records", "Ninja Tune", "Mo' Wax", "Wax Trax!", "Cleopatra Records", "Metropolis Records", "Dependent Records", "Out of Line", "Accession Records", "Infacted Recordings", "Scanner", "Dark Dimensions", "Alfa Matrix", "L-Tracks", "Synthetic Symphony", "SPV", "Nuclear Blast", "Century Media", "Roadrunner Records", "Metal Blade", "Earache Records", "Relapse Records", "Southern Lord", "Profound Lore", "20 Buck Spin", "Gilead Media", "Flenser", "Sacred Bones", "Dais Records", "Hospital Productions", "Cold Spring", "Cyclic Law", "Malignant Records", "Cruel Nature", "Small Doses", "Aurora Borealis", "Cold Meat Industry", "Cold Spring", "Cyclic Law", "Malignant Records", "Cruel Nature", "Small Doses", "Aurora Borealis", "Cold Meat Industry"];
+
+// Custom dropdown setup function
+function setupCustomDropdowns(eventId) {
+    const card = document.querySelector(`[data-event-id="${eventId}"]`);
+    if (!card) return;
+
+    const universityInput = card.querySelector('input[name="university"]');
+    const departmentInput = card.querySelector('input[name="department"]');
+    const universityDropdown = card.querySelector('.university-dropdown');
+    const departmentDropdown = card.querySelector('.department-dropdown');
+
+    if (universityInput && universityDropdown) {
+        setupCustomDropdown(universityInput, universityDropdown, universities);
+    }
+
+    if (departmentInput && departmentDropdown) {
+        setupCustomDropdown(departmentInput, departmentDropdown, departments);
+    }
+}
+
+function setupCustomDropdown(input, dropdown, data) {
+    function renderItems(filter = '') {
+        dropdown.innerHTML = '';
+        const filteredData = data.filter(item => item.toLowerCase().includes(filter.toLowerCase()));
+        filteredData.slice(0, 10).forEach(item => {
+            const div = document.createElement('div');
+            div.textContent = item;
+            div.className = 'custom-dropdown-item';
+            div.addEventListener('click', () => {
+                input.value = item;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                dropdown.style.display = 'none';
+            });
+            dropdown.appendChild(div);
+        });
+    }
+
+    input.addEventListener('focus', () => {
+        renderItems(input.value);
+        dropdown.style.display = 'block';
+    });
+    
+    input.addEventListener('input', () => {
+        renderItems(input.value);
+        if (dropdown.style.display !== 'block') {
+            dropdown.style.display = 'block';
+        }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (event) => {
+        if (!input.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+// Event registration form handler
+function handleEventRegistration(eventId, formData) {
+    const card = document.querySelector(`[data-event-id="${eventId}"]`);
+    if (!card) return;
+
+    const regFormContainer = card.querySelector('.registration-form');
+    const successMsg = card.querySelector('.success-message');
+    
+    if (regFormContainer && successMsg) {
+        regFormContainer.style.display = 'none';
+        successMsg.style.display = 'flex';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadAnnouncements();
     loadBlogPosts();
     loadEvents();
+    
+    // Event registration form handlers
+    document.addEventListener('submit', function(e) {
+        if (e.target.classList.contains('event-registration-form')) {
+            e.preventDefault();
+            const eventId = e.target.getAttribute('data-event-id');
+            const formData = new FormData(e.target);
+            handleEventRegistration(eventId, formData);
+        }
+    });
 });
 
 // Add scroll effect to navbar
