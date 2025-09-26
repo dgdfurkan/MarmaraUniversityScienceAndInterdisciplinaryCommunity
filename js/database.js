@@ -576,7 +576,7 @@ DatabaseService.logActivity = async function(actionType, tableName, recordId, re
             .insert({
                 action_type: actionType,
                 table_name: tableName,
-                record_id: recordId,
+                record_id: String(recordId), // Convert to string to avoid UUID issues
                 record_title: recordTitle,
                 old_data: oldData,
                 new_data: newData,
@@ -586,6 +586,7 @@ DatabaseService.logActivity = async function(actionType, tableName, recordId, re
         if (error) throw error;
     } catch (error) {
         console.error('Error logging activity:', error);
+        // Don't throw error to prevent breaking the main operation
     }
 };
 

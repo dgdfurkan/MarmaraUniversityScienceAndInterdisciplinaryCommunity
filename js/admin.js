@@ -666,7 +666,7 @@ async function deleteAnnouncement(id) {
     if (confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) {
         try {
             // Get announcement title before deletion for activity log
-            const announcement = await DatabaseService.getAnnouncement(id);
+            const announcement = await getAnnouncementById(id);
             const title = announcement?.title || 'Unknown';
             
             await DatabaseService.deleteAnnouncement(id);
@@ -708,7 +708,7 @@ async function deleteBlogPost(id) {
     if (confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
         try {
             // Get blog post title before deletion for activity log
-            const blogPost = await DatabaseService.getBlogPost(id);
+            const blogPost = await getBlogPostById(id);
             const title = blogPost?.title || 'Unknown';
             
             await DatabaseService.deleteBlogPost(id);
@@ -756,7 +756,7 @@ async function deleteEvent(id) {
     if (confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
         try {
             // Get event title before deletion for activity log
-            const event = await DatabaseService.getEvent(id);
+            const event = await getEventById(id);
             const title = event?.title || 'Unknown';
             
             await DatabaseService.deleteEvent(id);
