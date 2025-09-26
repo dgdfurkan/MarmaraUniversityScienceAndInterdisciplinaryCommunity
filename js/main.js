@@ -592,7 +592,53 @@ function scrollToTop() {
 
 // Load blog posts and events when page loads
 // Data Arrays for dropdowns
-const universities = ["Boğaziçi Üniversitesi", "Galatasaray Üniversitesi", "İstanbul Teknik Üniversitesi", "İstanbul Medeniyet Üniversitesi", "İstanbul Üniversitesi", "İstanbul Üniversitesi-Cerrahpaşa", "Marmara Üniversitesi", "Mimar Sinan Güzel Sanatlar Üniversitesi", "Sağlık Bilimleri Üniversitesi", "Türk-Alman Üniversitesi", "Yıldız Teknik Üniversitesi", "Acıbadem Mehmet Ali Aydınlar Üniversitesi", "Altınbaş Üniversitesi", "Bahçeşehir Üniversitesi", "Beykoz Üniversitesi", "Bezm-i Alem Vakıf Üniversitesi", "Demiroğlu Bilim Üniversitesi", "Doğuş Üniversitesi", "Fatih Sultan Mehmet Vakıf Üniversitesi", "Fenerbahçe Üniversitesi", "Haliç Üniversitesi", "Işık Üniversitesi", "İbn Haldun Üniversitesi", "İstanbul 29 Mayıs Üniversitesi", "İstanbul Arel Üniversitesi", "İstanbul Atlas Üniversitesi", "İstanbul Aydın Üniversitesi", "İstanbul Beykent Üniversitesi", "İstanbul Bilgi Üniversitesi", "İstanbul Esenyurt Üniversitesi", "İstanbul Galata Üniversitesi", "İstanbul Gedik Üniversitesi", "İstanbul Gelişim Üniversitesi", "İstanbul Kent Üniversitesi", "İstanbul Kültür Üniversitesi", "İstanbul Medipol Üniversitesi", "İstanbul Nişantaşı Üniversitesi", "İstanbul Okan Üniversitesi", "İstanbul Rumeli Üniversitesi", "İstanbul Sabahattin Zaim Üniversitesi", "İstanbul Sağlık ve Teknoloji Üniversitesi"];
+const universities = [
+    "Boğaziçi Üniversitesi",
+    "Galatasaray Üniversitesi", 
+    "İstanbul Teknik Üniversitesi",
+    "İstanbul Medeniyet Üniversitesi",
+    "İstanbul Üniversitesi",
+    "İstanbul Üniversitesi-Cerrahpaşa",
+    "Marmara Üniversitesi",
+    "Mimar Sinan Güzel Sanatlar Üniversitesi",
+    "Sağlık Bilimleri Üniversitesi",
+    "Türk-Alman Üniversitesi",
+    "Yıldız Teknik Üniversitesi",
+    "Acıbadem Mehmet Ali Aydınlar Üniversitesi",
+    "Altınbaş Üniversitesi",
+    "Ataşehir Adıgüzel Meslek Yüksekokulu",
+    "Bahçeşehir Üniversitesi",
+    "Beykoz Üniversitesi",
+    "Bezm-i Alem Vakıf Üniversitesi",
+    "Demiroğlu Bilim Üniversitesi",
+    "Doğuş Üniversitesi",
+    "Fatih Sultan Mehmet Vakıf Üniversitesi",
+    "Fenerbahçe Üniversitesi",
+    "Haliç Üniversitesi",
+    "Işık Üniversitesi",
+    "İbn Haldun Üniversitesi",
+    "İstanbul 29 Mayıs Üniversitesi",
+    "İstanbul Arel Üniversitesi",
+    "İstanbul Atlas Üniversitesi",
+    "İstanbul Aydın Üniversitesi",
+    "İstanbul Beykent Üniversitesi",
+    "İstanbul Bilgi Üniversitesi",
+    "İstanbul Esenyurt Üniversitesi",
+    "İstanbul Galata Üniversitesi",
+    "İstanbul Gedik Üniversitesi",
+    "İstanbul Gelişim Üniversitesi",
+    "İstanbul Kent Üniversitesi",
+    "İstanbul Kültür Üniversitesi",
+    "İstanbul Medeniyet Üniversitesi",
+    "İstanbul Medipol Üniversitesi",
+    "İstanbul Nişantaşı Üniversitesi",
+    "İstanbul Okan Üniversitesi",
+    "İstanbul Rumeli Üniversitesi",
+    "İstanbul Sabahattin Zaim Üniversitesi",
+    "İstanbul Sağlık ve Sosyal Bilimler Meslek YüksekOkulu",
+    "İstanbul Sağlık ve Teknoloji Üniversitesi",
+    "İstanbul Şişli Meslek Yüksekokulu"
+];
 
 const departments = ["Bilgisayar Mühendisliği", "Elektrik-Elektronik Mühendisliği", "Endüstri Mühendisliği", "İnşaat Mühendisliği", "Makine Mühendisliği", "Kimya Mühendisliği", "Matematik", "Fizik", "Kimya", "Biyoloji", "İşletme", "İktisat", "Siyaset Bilimi", "Uluslararası İlişkiler", "Hukuk", "Tıp", "Eczacılık", "Diş Hekimliği", "Hemşirelik", "Fizyoterapi", "Psikoloji", "Sosyoloji", "Tarih", "Türk Dili ve Edebiyatı", "İngiliz Dili ve Edebiyatı", "Alman Dili ve Edebiyatı", "Fransız Dili ve Edebiyatı", "Rus Dili ve Edebiyatı", "Çin Dili ve Edebiyatı", "Japon Dili ve Edebiyatı", "Arap Dili ve Edebiyatı", "Fars Dili ve Edebiyatı", "İspanyol Dili ve Edebiyatı", "İtalyanca", "Portekizce", "Mimarlık", "İç Mimarlık", "Endüstriyel Tasarım", "Grafik Tasarım", "Moda Tasarımı", "Güzel Sanatlar", "Müzik", "Tiyatro", "Sinema", "Radyo ve Televizyon", "Gazetecilik", "Halkla İlişkiler", "Reklamcılık", "Turizm", "Otel İşletmeciliği", "Gastronomi", "Spor Bilimleri", "Beden Eğitimi", "Antrenörlük", "Rehberlik ve Psikolojik Danışmanlık", "Okul Öncesi Öğretmenliği", "Sınıf Öğretmenliği", "Matematik Öğretmenliği", "Fen Bilgisi Öğretmenliği", "Türkçe Öğretmenliği", "İngilizce Öğretmenliği", "Sosyal Bilgiler Öğretmenliği", "Tarih Öğretmenliği", "Coğrafya Öğretmenliği", "Felsefe Grubu Öğretmenliği", "Din Kültürü ve Ahlak Bilgisi Öğretmenliği", "Müzik Öğretmenliği", "Resim Öğretmenliği", "Beden Eğitimi Öğretmenliği", "Bilgisayar ve Öğretim Teknolojileri Öğretmenliği", "Özel Eğitim Öğretmenliği", "Zihin Engelliler Öğretmenliği", "İşitme Engelliler Öğretmenliği", "Görme Engelliler Öğretmenliği", "Üstün Zekalılar Öğretmenliği", "Çocuk Gelişimi", "Aile ve Tüketici Bilimleri", "Beslenme ve Diyetetik", "Sosyal Hizmet", "Çalışma Ekonomisi ve Endüstri İlişkileri", "Kamu Yönetimi", "Siyaset Bilimi ve Kamu Yönetimi", "Uluslararası İlişkiler", "Avrupa Birliği İlişkileri", "Amerikan Kültürü ve Edebiyatı", "Arkeoloji", "Sanat Tarihi", "Felsefe", "Sosyoloji", "Antropoloji", "Psikoloji", "Coğrafya", "Jeoloji", "Jeofizik", "Meteoroloji", "Harita Mühendisliği", "Şehir ve Bölge Planlama", "Peyzaj Mimarlığı", "Orman Mühendisliği", "Ziraat Mühendisliği", "Gıda Mühendisliği", "Veterinerlik", "Su Ürünleri Mühendisliği", "Balıkçılık Teknolojisi", "Denizcilik İşletmeleri Yönetimi", "Gemi İnşaatı", "Gemi Makineleri İşletme Mühendisliği", "Deniz Ulaştırma İşletme Mühendisliği", "Uçak Mühendisliği", "Havacılık ve Uzay Mühendisliği", "Uçak Elektrik ve Elektroniği", "Havacılık Yönetimi", "Pilotaj", "Uçak Bakım ve Onarım", "Havacılık Elektrik ve Elektroniği", "Raylı Sistemler Mühendisliği", "Otomotiv Mühendisliği", "Mekatronik Mühendisliği", "Biyomedikal Mühendisliği", "Malzeme Bilimi ve Mühendisliği", "Nanoteknoloji Mühendisliği", "Enerji Sistemleri Mühendisliği", "Çevre Mühendisliği", "Petrol ve Doğalgaz Mühendisliği", "Maden Mühendisliği", "Jeoloji Mühendisliği", "Jeofizik Mühendisliği", "Harita Mühendisliği", "Geomatik Mühendisliği", "İnşaat Mühendisliği", "Yapı Mühendisliği", "Geoteknik", "Ulaştırma Mühendisliği", "Su Yapıları Mühendisliği", "Yapı Malzemeleri Mühendisliği", "İnşaat İşletmeciliği", "Yapı Denetimi", "Şehir Planlama", "Bölge Planlama", "Peyzaj Planlama", "Çevre Planlama", "Kentsel Tasarım", "Mimari Restorasyon", "İç Mimarlık ve Çevre Tasarımı", "Endüstriyel Tasarım", "Grafik Tasarım", "Görsel İletişim Tasarımı", "Moda Tasarımı", "Tekstil Tasarımı", "Seramik Tasarımı", "Cam Tasarımı", "Metal Tasarımı", "Ahşap Tasarımı", "Deri Tasarımı", "Takı Tasarımı", "Kuyumculuk", "El Sanatları", "Geleneksel Türk Sanatları", "Çini Sanatı", "Ebru Sanatı", "Tezhip Sanatı", "Hat Sanatı", "Minyatür Sanatı", "Kaligrafi", "Resim", "Heykel", "Seramik", "Cam", "Metal", "Ahşap", "Deri", "Tekstil", "Fotoğraf", "Video", "Sinema", "Tiyatro", "Dans", "Müzik", "Opera", "Bale", "Klasik Müzik", "Caz", "Rock", "Pop", "Halk Müziği", "Türk Halk Müziği", "Türk Sanat Müziği", "Arabesk", "Rap", "Hip Hop", "Elektronik Müzik", "Ambient", "New Age", "World Music", "Folk", "Blues", "Country", "Reggae", "Ska", "Punk", "Metal", "Hard Rock", "Progressive Rock", "Psychedelic Rock", "Alternative Rock", "Indie Rock", "Grunge", "Britpop", "Shoegaze", "Post-Rock", "Math Rock", "Emo", "Screamo", "Post-Hardcore", "Metalcore", "Deathcore", "Nu Metal", "Industrial Metal", "Gothic Metal", "Symphonic Metal", "Power Metal", "Thrash Metal", "Death Metal", "Black Metal", "Doom Metal", "Stoner Metal", "Sludge Metal", "Post-Metal", "Atmospheric Black Metal", "Depressive Black Metal", "Raw Black Metal", "Symphonic Black Metal", "Viking Metal", "Pagan Metal", "Folk Metal", "Celtic Metal", "Medieval Metal", "Oriental Metal", "Progressive Metal", "Technical Death Metal", "Melodic Death Metal", "Brutal Death Metal", "Slam Death Metal", "Grindcore", "Crust Punk", "D-Beat", "Hardcore Punk", "Post-Punk", "New Wave", "Synthpop", "New Romantic", "Gothic Rock", "Darkwave", "Coldwave", "Minimal Wave", "Industrial", "EBM", "Aggrotech", "Futurepop", "Synthwave", "Retrowave", "Outrun", "Vaporwave", "Chillwave", "Witch House", "Dark Ambient", "Drone", "Noise", "Power Electronics", "Harsh Noise", "Merzbow", "Whitehouse", "Throbbing Gristle", "Coil", "Current 93", "Death in June", "Sol Invictus", "Nurse with Wound", "SPK", "Einstürzende Neubauten", "Test Dept", "Laibach", "Skinny Puppy", "Front 242", "Nitzer Ebb", "Front Line Assembly", "VNV Nation", "Covenant", "Apoptygma Berzerk", "And One", "Wolfsheim", "De/Vision", "Camouflage", "Depeche Mode", "New Order", "Joy Division", "The Cure", "Siouxsie and the Banshees", "Bauhaus", "The Sisters of Mercy", "Fields of the Nephilim", "The Mission", "Rosetta Stone", "Clan of Xymox", "Love and Rockets", "Tones on Tail", "The Damned", "The Misfits", "The Cramps", "The B-52's", "Talking Heads", "Blondie", "Patti Smith", "Iggy Pop", "David Bowie", "Lou Reed", "Velvet Underground", "Nico", "John Cale", "Brian Eno", "Roxy Music", "T. Rex", "Marc Bolan", "Gary Glitter", "Slade", "Sweet", "Mud", "Suzi Quatro", "Alice Cooper", "Kiss", "Aerosmith", "Led Zeppelin", "Black Sabbath", "Deep Purple", "Uriah Heep", "Jethro Tull", "Yes", "Genesis", "Pink Floyd", "King Crimson", "Emerson, Lake & Palmer", "Rush", "Van der Graaf Generator", "Gentle Giant", "Camel", "Caravan", "Soft Machine", "Can", "Kraftwerk", "Tangerine Dream", "Klaus Schulze", "Jean-Michel Jarre", "Vangelis", "Mike Oldfield", "Enya", "Clannad", "Loreena McKennitt", "Dead Can Dance", "Lisa Gerrard", "Brendan Perry", "This Mortal Coil", "Cocteau Twins", "4AD", "4AD Records", "Rough Trade", "Factory Records", "Mute Records", "Warp Records", "Ninja Tune", "Mo' Wax", "Wax Trax!", "Cleopatra Records", "Metropolis Records", "Dependent Records", "Out of Line", "Accession Records", "Infacted Recordings", "Scanner", "Dark Dimensions", "Alfa Matrix", "L-Tracks", "Synthetic Symphony", "SPV", "Nuclear Blast", "Century Media", "Roadrunner Records", "Metal Blade", "Earache Records", "Relapse Records", "Southern Lord", "Profound Lore", "20 Buck Spin", "Gilead Media", "Flenser", "Sacred Bones", "Dais Records", "Hospital Productions", "Cold Spring", "Cyclic Law", "Malignant Records", "Cruel Nature", "Small Doses", "Aurora Borealis", "Cold Meat Industry", "Cold Spring", "Cyclic Law", "Malignant Records", "Cruel Nature", "Small Doses", "Aurora Borealis", "Cold Meat Industry"];
 
