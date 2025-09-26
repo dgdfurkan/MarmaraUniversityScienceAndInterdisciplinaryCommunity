@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     action_type VARCHAR(50) NOT NULL, -- 'create', 'update', 'delete', 'draft'
     table_name VARCHAR(50) NOT NULL, -- 'announcements', 'blog_posts', 'events'
-    record_id UUID NOT NULL,
+    record_id TEXT NOT NULL,
     record_title VARCHAR(255) NOT NULL,
     old_data JSONB, -- Previous data for updates/deletes
     new_data JSONB, -- New data for creates/updates
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 CREATE TABLE IF NOT EXISTS version_history (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     table_name VARCHAR(50) NOT NULL,
-    record_id UUID NOT NULL,
+    record_id TEXT NOT NULL,
     version_number INTEGER NOT NULL,
     data JSONB NOT NULL,
     change_summary TEXT,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS version_history (
 CREATE TABLE IF NOT EXISTS drafts (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     table_name VARCHAR(50) NOT NULL,
-    record_id UUID, -- NULL for new drafts
+    record_id TEXT, -- NULL for new drafts
     title VARCHAR(255) NOT NULL,
     data JSONB NOT NULL,
     admin_user VARCHAR(100) DEFAULT 'admin',
