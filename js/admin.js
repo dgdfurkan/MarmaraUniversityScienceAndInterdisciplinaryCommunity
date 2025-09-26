@@ -772,18 +772,42 @@ async function editEvent(id) {
 
 function populateEventForm(event) {
     const form = document.getElementById('event-form');
-    form.querySelector('[name="title"]').value = event.title || '';
-    form.querySelector('[name="type"]').value = event.type || '';
-    form.querySelector('[name="location"]').value = event.location || '';
-    form.querySelector('[name="description"]').value = event.description || '';
-    form.querySelector('[name="capacity"]').value = event.capacity || '';
-    form.querySelector('[name="registration_required"]').value = event.registration_required ? 'yes' : 'no';
+    if (!form) {
+        console.error('Event form not found');
+        return;
+    }
+    
+    // Safely populate form fields
+    const titleField = form.querySelector('[name="title"]');
+    const typeField = form.querySelector('[name="type"]');
+    const locationField = form.querySelector('[name="location"]');
+    const descriptionField = form.querySelector('[name="description"]');
+    const capacityField = form.querySelector('[name="capacity"]');
+    const registrationField = form.querySelector('[name="registration_required"]');
+    const dateField = form.querySelector('[name="date"]');
+    
+    if (titleField) titleField.value = event.title || '';
+    if (typeField) typeField.value = event.type || '';
+    if (locationField) locationField.value = event.location || '';
+    if (descriptionField) descriptionField.value = event.description || '';
+    if (capacityField) capacityField.value = event.capacity || '';
+    if (registrationField) registrationField.value = event.registration_required ? 'yes' : 'no';
     
     // Format date for datetime-local input
-    if (event.date) {
+    if (dateField && event.date) {
         const date = new Date(event.date);
         const formattedDate = date.toISOString().slice(0, 16);
-        form.querySelector('[name="date"]').value = formattedDate;
+        dateField.value = formattedDate;
+    }
+    
+    // Populate RichTextEditor content
+    if (event.content) {
+        setTimeout(() => {
+            const editor = document.getElementById('event-content-editor');
+            if (editor && editor.innerHTML) {
+                editor.innerHTML = event.content;
+            }
+        }, 500);
     }
 }
 

@@ -498,6 +498,13 @@
                     <input type="number" name="capacity" min="1">
                 </div>
                 <div class="form-group">
+                    <label>Kayıt Gerekli mi?</label>
+                    <select name="registration_required" required>
+                        <option value="yes">Evet</option>
+                        <option value="no">Hayır</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>İçerik</label>
                     <div id="event-content-editor"></div>
                     <textarea name="content" id="event-content-hidden" style="display: none;"></textarea>
