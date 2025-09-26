@@ -130,6 +130,40 @@ function getCategoryName(category) {
     return categories[category] || category;
 }
 
+// Load announcements dynamically
+async function loadAnnouncements() {
+    const announcementsContainer = document.getElementById('announcements-container');
+    if (!announcementsContainer) return;
+    
+    try {
+        const announcements = await DatabaseService.getAnnouncements();
+        
+        if (announcements.length === 0) {
+            announcementsContainer.innerHTML = '<p class="no-announcements">Henüz duyuru bulunmuyor. Yakında yeni duyurular eklenecek!</p>';
+            return;
+        }
+        
+        announcementsContainer.innerHTML = announcements.map(announcement => `
+            <div class="announcement-card">
+                <div class="announcement-header">
+                    <h3>${announcement.title}</h3>
+                    <span class="announcement-category ${announcement.category}">${getCategoryName(announcement.category)}</span>
+                </div>
+                <div class="announcement-content">
+                    <p>${announcement.content ? announcement.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'İçerik bulunmuyor'}</p>
+                </div>
+                <div class="announcement-footer">
+                    <span class="announcement-date">${new Date(announcement.created_at).toLocaleDateString('tr-TR')}</span>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error loading announcements:', error);
+        announcementsContainer.innerHTML = '<p class="error">Duyurular yüklenirken bir hata oluştu.</p>';
+    }
+}
+
 // Load events dynamically
 async function loadEvents() {
     const eventsGrid = document.getElementById('events-grid');
@@ -466,6 +500,7 @@ function scrollToTop() {
 
 // Load blog posts and events when page loads
 document.addEventListener('DOMContentLoaded', () => {
+    loadAnnouncements();
     loadBlogPosts();
     loadEvents();
 });
