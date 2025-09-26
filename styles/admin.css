@@ -505,8 +505,8 @@ body {
 .modal-content {
     background: white;
     border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
+    width: 95%;
+    max-width: 1200px;
     max-height: 90vh;
     overflow-y: auto;
 }
@@ -739,8 +739,9 @@ body {
     }
     
     .modal-content {
-        width: 95%;
-        margin: 1rem;
+        width: 98%;
+        max-width: 100%;
+        margin: 0.5rem;
     }
     
     .social-inputs {
@@ -761,6 +762,15 @@ body {
     
     .modal-actions {
         flex-direction: column;
+    }
+    
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0;
+        height: 100vh;
+        max-height: 100vh;
     }
 }
 
