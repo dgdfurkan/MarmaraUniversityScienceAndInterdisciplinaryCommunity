@@ -187,14 +187,14 @@ async function loadEvents() {
             return;
         }
         
-        eventsGrid.innerHTML = events.map(event => {
+        eventsGrid.innerHTML = events.reverse().map(event => {
             const eventDate = new Date(event.date);
             const eventId = event.id;
             return `
                 <div class="event-card-container">
                     <div class="event-card" data-event-id="${eventId}">
                         <!-- KARTIN ÖN YÜZÜ -->
-                        <div class="card-face card-front">
+                        <div class="card-face card-front" onclick="flipEventCard(${eventId})">
                             <div class="card-image">
                                 <img src="${event.image_url || 'https://placehold.co/600x400/a2d2ff/333?text=Etkinlik'}" alt="${event.title}">
                             </div>
@@ -218,7 +218,7 @@ async function loadEvents() {
                             </div>
                             <div class="card-footer">
                                 <div class="participant-count"><i class="fas fa-users"></i> ${event.capacity || 'Sınırsız'} Katılımcı</div>
-                                <button class="btn flip-btn" onclick="flipEventCard(${eventId})">Katıl</button>
+                                <button class="btn flip-btn" onclick="event.stopPropagation(); flipEventCard(${eventId})">Katıl</button>
                             </div>
                         </div>
                         <!-- KARTIN ARKA YÜZÜ (FORM) -->
