@@ -188,14 +188,14 @@ async function loadEvents() {
         }
         
         // En yeni etkinliği en sola koymak için reverse kullanıyoruz
-        eventsGrid.innerHTML = events.map(event => {
+        eventsGrid.innerHTML = events.reverse().map(event => {
             const eventDate = new Date(event.date);
             const eventId = event.id;
             return `
                 <div class="event-card-container">
-                    <div class="event-card" data-event-id="${eventId}" onclick="flipEventCard(${eventId})">
+                    <div class="event-card" data-event-id="${eventId}">
                         <!-- KARTIN ÖN YÜZÜ -->
-                        <div class="card-face card-front">
+                        <div class="card-face card-front" onclick="flipEventCard(${eventId})">
                             <div class="card-image">
                                 <img src="${event.image_url || 'https://placehold.co/600x400/a2d2ff/333?text=Etkinlik'}" alt="${event.title}">
                             </div>
@@ -219,7 +219,7 @@ async function loadEvents() {
                             </div>
                             <div class="card-footer">
                                 <div class="participant-count"><i class="fas fa-users"></i> ${event.capacity || 'Sınırsız'} Katılımcı</div>
-                                <button class="btn flip-btn" onclick="event.stopPropagation(); flipEventCard(${eventId})">Etkinliğe Kayıt Ol</button>
+                                <button class="btn flip-btn" onclick="event.stopPropagation(); flipEventCard(${eventId})">Katıl</button>
                             </div>
                         </div>
                         <!-- KARTIN ARKA YÜZÜ (FORM) -->
@@ -262,13 +262,10 @@ async function loadEvents() {
                                     </div>
                                 </form>
                             </div>
-                            <div class="success-message" style="display: none;">
+                            <div class="success-message">
                                  <div class="success-icon"><i class="fas fa-check-circle"></i></div>
                                  <h3>Kaydınız Alındı!</h3>
                                  <p>Etkinlik detayları e-posta adresinize gönderilecektir.</p>
-                                 <button type="button" class="btn btn-primary" onclick="flipEventCardBack(${eventId})">
-                                     <i class="fas fa-arrow-left"></i> Geri Dön
-                                 </button>
                             </div>
                         </div>
                     </div>
@@ -703,38 +700,16 @@ function setupCustomDropdown(input, dropdown, data) {
 }
 
 // Event registration form handler
-async function handleEventRegistration(eventId, formData) {
+function handleEventRegistration(eventId, formData) {
     const card = document.querySelector(`[data-event-id="${eventId}"]`);
     if (!card) return;
 
-    try {
-        // Convert FormData to object
-        const data = Object.fromEntries(formData);
-        data.eventId = eventId;
-        data.registrationDate = new Date().toISOString();
-        
-        // Create registration
-        await DatabaseService.createRegistration(data);
-        
-        // Show success message
-        const regFormContainer = card.querySelector('.registration-form');
-        const successMsg = card.querySelector('.success-message');
-        
-        if (regFormContainer && successMsg) {
-            regFormContainer.style.display = 'none';
-            successMsg.style.display = 'flex';
-        }
-        
-        // Update participant count display
-        const participantCount = card.querySelector('.participant-count');
-        if (participantCount) {
-            const currentCount = parseInt(participantCount.textContent.match(/\d+/)?.[0] || '0');
-            participantCount.innerHTML = `<i class="fas fa-users"></i> ${currentCount + 1} Katılımcı`;
-        }
-        
-    } catch (error) {
-        console.error('Registration error:', error);
-        alert('Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    const regFormContainer = card.querySelector('.registration-form');
+    const successMsg = card.querySelector('.success-message');
+    
+    if (regFormContainer && successMsg) {
+        regFormContainer.style.display = 'none';
+        successMsg.style.display = 'flex';
     }
 }
 

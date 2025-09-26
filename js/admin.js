@@ -531,7 +531,7 @@ async function loadEvents() {
     if (!tableBody) return;
     
     try {
-        const events = await DatabaseService.getEvents();
+        const events = await DatabaseService.getEvents(true); // Include past events for admin
         
         tableBody.innerHTML = events.map(event => `
             <tr>
@@ -776,7 +776,7 @@ function populateEventForm(event) {
     form.querySelector('[name="type"]').value = event.type || '';
     form.querySelector('[name="location"]').value = event.location || '';
     form.querySelector('[name="description"]').value = event.description || '';
-    form.querySelector('[name="max_participants"]').value = event.capacity || '';
+    form.querySelector('[name="capacity"]').value = event.capacity || '';
     form.querySelector('[name="registration_required"]').value = event.registration_required ? 'yes' : 'no';
     
     // Format date for datetime-local input

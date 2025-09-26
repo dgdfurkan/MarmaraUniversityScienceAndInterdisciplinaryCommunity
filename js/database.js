@@ -166,14 +166,20 @@ class DatabaseService {
     }
 
     // Events
-    static async getEvents() {
+    static async getEvents(includePast = false) {
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('events')
                 .select('*')
-                .gte('date', new Date().toISOString())
-                .eq('status', 'active')
-                .order('date', { ascending: true });
+                .eq('status', 'active');
+            
+            if (!includePast) {
+                query = query.gte('date', new Date().toISOString());
+            }
+            
+            query = query.order('date', { ascending: true });
+            
+            const { data, error } = await query;
             
             if (error) throw error;
             return data || [];
@@ -239,10 +245,41 @@ class DatabaseService {
                 .select();
             
             if (error) throw error;
+            
+            // Update event registered count
+            if (registrationData.eventId) {
+                await this.updateEventRegisteredCount(registrationData.eventId);
+            }
+            
             console.log('Registration created:', data);
             return data;
         } catch (error) {
             console.error('Error creating registration:', error);
+            throw error;
+        }
+    }
+
+    static async updateEventRegisteredCount(eventId) {
+        try {
+            // Get current registration count for this event
+            const { count, error: countError } = await supabase
+                .from('registrations')
+                .select('*', { count: 'exact', head: true })
+                .eq('eventId', eventId);
+            
+            if (countError) throw countError;
+            
+            // Update event's registered count
+            const { error: updateError } = await supabase
+                .from('events')
+                .update({ registered: count || 0 })
+                .eq('id', eventId);
+            
+            if (updateError) throw updateError;
+            
+            console.log(`Updated event ${eventId} registered count to ${count || 0}`);
+        } catch (error) {
+            console.error('Error updating event registered count:', error);
             throw error;
         }
     }
