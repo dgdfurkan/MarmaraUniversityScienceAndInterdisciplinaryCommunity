@@ -393,6 +393,91 @@ section {
     margin-bottom: 0;
 }
 
+.announcement-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.announcement-content ul {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.announcement-content li {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.announcement-content strong {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.announcement-content h1,
+.announcement-content h2,
+.announcement-content h3,
+.announcement-content h4,
+.announcement-content h5,
+.announcement-content h6 {
+    margin: 1.5rem 0 1rem 0;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.announcement-content h1 {
+    font-size: 1.5rem;
+}
+
+.announcement-content h2 {
+    font-size: 1.3rem;
+}
+
+.announcement-content h3 {
+    font-size: 1.1rem;
+}
+
+.announcement-content blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: #6b7280;
+}
+
+.announcement-content a {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.announcement-content a:hover {
+    color: #1d4ed8;
+}
+
+.announcement-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.announcement-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.announcement-content th,
+.announcement-content td {
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.announcement-content th {
+    background-color: #f9fafb;
+    font-weight: 600;
+}
+
 .announcement-footer {
     display: flex;
     justify-content: space-between;
