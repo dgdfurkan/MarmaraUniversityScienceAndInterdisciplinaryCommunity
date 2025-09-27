@@ -10,6 +10,13 @@ CREATE TABLE IF NOT EXISTS announcements (
     image_url TEXT, -- Fotoğraf linki için
     image_file TEXT, -- Yüklenen dosya için
     status VARCHAR(20) DEFAULT 'active',
+    -- Reaction counts
+    reaction_onay INTEGER DEFAULT 0,
+    reaction_katiliyorum INTEGER DEFAULT 0,
+    reaction_katilamiyorum INTEGER DEFAULT 0,
+    reaction_sorum_var INTEGER DEFAULT 0,
+    reaction_destek INTEGER DEFAULT 0,
+    view_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

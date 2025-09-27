@@ -133,6 +133,15 @@ function getCategoryName(category) {
     return categories[category] || category;
 }
 
+// Increment announcement view count
+async function incrementAnnouncementViewCount(announcementId) {
+    try {
+        await DatabaseService.incrementAnnouncementViewCount(announcementId);
+    } catch (error) {
+        console.error('Error incrementing view count:', error);
+    }
+}
+
 // Load announcements dynamically
 async function loadAnnouncements() {
     const announcementsContainer = document.getElementById('announcements-container');
@@ -158,44 +167,47 @@ async function loadAnnouncements() {
                 minute: '2-digit'
             });
             
+            // Otomatik görüntülenme sayısını artır
+            incrementAnnouncementViewCount(announcement.id);
+            
             return `
-                <div class="announcement-card">
-                    <div class="announcement-header">
+                <div class="announcement-card" data-announcement-id="${announcement.id}">
+                <div class="announcement-header">
                         <div class="header-icon"><i class="fas fa-bullhorn"></i></div>
                         <div class="header-text">
                             <h2>${announcement.title}</h2>
                             <p class="date">${formattedDate} • ${formattedTime}</p>
                         </div>
-                    </div>
-                    <div class="announcement-content">
-                        <p>${announcement.content ? announcement.content.replace(/<[^>]*>/g, '') : 'İçerik bulunmuyor'}</p>
-                    </div>
-                    <div class="announcement-footer">
+                </div>
+                <div class="announcement-content">
+                        ${announcement.content || '<p>İçerik bulunmuyor</p>'}
+                </div>
+                <div class="announcement-footer">
                         <div class="reactions-group reactions">
                             <div class="reaction" data-reaction="onay">
                                 <span class="emoji">👍</span>
-                                <span class="count">${Math.floor(Math.random() * 20) + 5}</span>
-                            </div>
+                                <span class="count">${announcement.reaction_onay || 0}</span>
+                </div>
                             <div class="reaction" data-reaction="katiliyorum">
                                 <span class="emoji">✅</span>
-                                <span class="count">${Math.floor(Math.random() * 30) + 10}</span>
-                            </div>
+                                <span class="count">${announcement.reaction_katiliyorum || 0}</span>
+            </div>
                             <div class="reaction" data-reaction="katilamiyorum">
                                 <span class="emoji">❌</span>
-                                <span class="count">${Math.floor(Math.random() * 5) + 1}</span>
+                                <span class="count">${announcement.reaction_katilamiyorum || 0}</span>
                             </div>
                             <div class="reaction" data-reaction="sorum-var">
                                 <span class="emoji">🤔</span>
-                                <span class="count">${Math.floor(Math.random() * 8) + 2}</span>
+                                <span class="count">${announcement.reaction_sorum_var || 0}</span>
                             </div>
                             <div class="reaction" data-reaction="destek">
                                 <span class="emoji">👏</span>
-                                <span class="count">${Math.floor(Math.random() * 15) + 5}</span>
+                                <span class="count">${announcement.reaction_destek || 0}</span>
                             </div>
                         </div>
                         <div class="view-count">
                             <i class="fas fa-eye"></i>
-                            <span>${Math.floor(Math.random() * 200) + 50} Görüntülenme</span>
+                            <span>${announcement.view_count || 0} Görüntülenme</span>
                         </div>
                     </div>
                 </div>
@@ -1592,12 +1604,12 @@ async function handleEventRegistration(eventId, formData) {
         await DatabaseService.createRegistration(data);
         
         // Show success message
-        const regFormContainer = card.querySelector('.registration-form');
-        const successMsg = card.querySelector('.success-message');
-        
-        if (regFormContainer && successMsg) {
-            regFormContainer.style.display = 'none';
-            successMsg.style.display = 'flex';
+    const regFormContainer = card.querySelector('.registration-form');
+    const successMsg = card.querySelector('.success-message');
+    
+    if (regFormContainer && successMsg) {
+        regFormContainer.style.display = 'none';
+        successMsg.style.display = 'flex';
         }
         
         // Update participant count display
@@ -1629,29 +1641,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Announcement reaction handlers
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', async function(e) {
         if (e.target.closest('.reaction')) {
             const reaction = e.target.closest('.reaction');
+            const announcementCard = reaction.closest('.announcement-card');
+            const announcementId = announcementCard.dataset.announcementId;
+            const reactionType = reaction.dataset.reaction;
+            
+            if (!announcementId || !reactionType) return;
+            
             const parent = reaction.closest('.reactions');
             const currentlyActive = parent.querySelector('.reaction.active');
             const countSpan = reaction.querySelector('.count');
             let count = parseInt(countSpan.textContent);
 
-            if (currentlyActive && currentlyActive !== reaction) {
-                // Başka bir reaksiyon aktifse, onu pasif yap ve sayısını azalt
-                const activeCountSpan = currentlyActive.querySelector('.count');
-                activeCountSpan.textContent = parseInt(activeCountSpan.textContent) - 1;
-                currentlyActive.classList.remove('active');
-            }
+            try {
+                if (currentlyActive && currentlyActive !== reaction) {
+                    // Başka bir reaksiyon aktifse, onu pasif yap ve sayısını azalt
+                    const activeReactionType = currentlyActive.dataset.reaction;
+                    await DatabaseService.updateAnnouncementReaction(announcementId, activeReactionType, false);
+                    
+                    const activeCountSpan = currentlyActive.querySelector('.count');
+                    activeCountSpan.textContent = parseInt(activeCountSpan.textContent) - 1;
+                    currentlyActive.classList.remove('active');
+                }
 
-            if (reaction.classList.contains('active')) {
-                // Aynı reaksiyona tekrar tıklandıysa, iptal et
-                reaction.classList.remove('active');
-                countSpan.textContent = count - 1;
-            } else {
-                // Yeni bir reaksiyon seçildiyse, aktif yap ve sayısını artır
-                reaction.classList.add('active');
-                countSpan.textContent = count + 1;
+                if (reaction.classList.contains('active')) {
+                    // Aynı reaksiyona tekrar tıklandıysa, iptal et
+                    await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, false);
+                    reaction.classList.remove('active');
+                    countSpan.textContent = count - 1;
+                } else {
+                    // Yeni bir reaksiyon seçildiyse, aktif yap ve sayısını artır
+                    await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, true);
+                    reaction.classList.add('active');
+                    countSpan.textContent = count + 1;
+                }
+            } catch (error) {
+                console.error('Error updating reaction:', error);
+                alert('Reaksiyon güncellenirken bir hata oluştu.');
             }
         }
     });

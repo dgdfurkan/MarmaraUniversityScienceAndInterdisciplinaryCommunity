@@ -776,3 +776,43 @@ DatabaseService.getRecentActivities = async function(limit = 10) {
         return [];
     }
 };
+
+// Announcement reactions
+DatabaseService.updateAnnouncementReaction = async function(announcementId, reactionType, increment = true) {
+    try {
+        const fieldName = `reaction_${reactionType}`;
+        const change = increment ? 1 : -1;
+        
+        const { data, error } = await supabase
+            .from('announcements')
+            .update({ 
+                [fieldName]: supabase.raw(`${fieldName} + ${change}`)
+            })
+            .eq('id', announcementId)
+            .select();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error updating announcement reaction:', error);
+        throw error;
+    }
+};
+
+DatabaseService.incrementAnnouncementViewCount = async function(announcementId) {
+    try {
+        const { data, error } = await supabase
+            .from('announcements')
+            .update({ 
+                view_count: supabase.raw('view_count + 1')
+            })
+            .eq('id', announcementId)
+            .select();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error incrementing view count:', error);
+        throw error;
+    }
+};
