@@ -828,44 +828,41 @@ DatabaseService.markAnnouncementAsViewed = async function(announcementId) {
             return { already_viewed: true };
         }
         
-        // User interactions tablosu varsa güncelle
-        if (existingInteraction !== null) {
-            try {
-                if (existingInteraction) {
-                    // Mevcut etkileşimi güncelle
-                    const { data, error } = await supabase
-                        .from('announcement_interactions')
-                        .update({ has_viewed: true })
-                        .eq('user_ip', userIP)
-                        .eq('announcement_id', announcementId)
-                        .select();
-                    
-                    if (error) throw error;
-                    return data;
-                } else {
-                    // Yeni etkileşim oluştur
-                    const { data, error } = await supabase
-                        .from('announcement_interactions')
-                        .insert({
-                            user_ip: userIP,
-                            announcement_id: announcementId,
-                            has_viewed: true
-                        })
-                        .select();
-                    
-                    if (error) throw error;
-                    return data;
-                }
-            } catch (interactionError) {
-                if (interactionError.status === 406) {
-                    return { already_viewed: false };
-                }
-                console.warn('User interactions table not available, skipping view tracking');
+        // Her durumda has_viewed: true olarak kaydet (oy verilmese bile)
+        try {
+            if (existingInteraction) {
+                // Mevcut etkileşimi güncelle
+                const { data, error } = await supabase
+                    .from('announcement_interactions')
+                    .update({ has_viewed: true })
+                    .eq('user_ip', userIP)
+                    .eq('announcement_id', announcementId)
+                    .select();
+                
+                if (error) throw error;
+                return data;
+            } else {
+                // Yeni etkileşim oluştur (oy verilmese bile)
+                const { data, error } = await supabase
+                    .from('announcement_interactions')
+                    .insert({
+                        user_ip: userIP,
+                        announcement_id: announcementId,
+                        has_viewed: true,
+                        reaction_type: null
+                    })
+                    .select();
+                
+                if (error) throw error;
+                return data;
+            }
+        } catch (interactionError) {
+            if (interactionError.status === 406) {
                 return { already_viewed: false };
             }
+            console.warn('Announcement interactions table not available, skipping view tracking');
+            return { already_viewed: false };
         }
-        
-        return { already_viewed: false };
     } catch (error) {
         console.error('Error marking announcement as viewed:', error);
         return { already_viewed: false };
