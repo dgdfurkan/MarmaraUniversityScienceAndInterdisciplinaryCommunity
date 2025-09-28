@@ -196,7 +196,7 @@ async function loadAnnouncements() {
                                 <span class="emoji">❌</span>
                                 <span class="count">${announcement.reaction_katilamiyorum || 0}</span>
                             </div>
-                            <div class="reaction" data-reaction="sorum-var">
+                            <div class="reaction" data-reaction="sorum_var">
                                 <span class="emoji">🤔</span>
                                 <span class="count">${announcement.reaction_sorum_var || 0}</span>
                             </div>
@@ -207,7 +207,7 @@ async function loadAnnouncements() {
                         </div>
                         <div class="view-count">
                             <i class="fas fa-eye"></i>
-                            <span>${announcement.view_count || 0} Görüntülenme</span>
+                            <span>${announcement.view_count || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -1693,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', () => {
             onay: ['#3b5998', '#ffffff', '#cfe2ff'],
             katiliyorum: ['#28a745', '#ffffff', '#a3d9b1'],
             katilamiyorum: ['#dc3545', '#6c757d', '#f8d7da'],
-            'sorum-var': ['#ffc107', '#ffffff', '#ffeeba'],
+            'sorum_var': ['#ffc107', '#ffffff', '#ffeeba'],
             destek: ['#6c63ff', '#f5d5e4', '#dcd9ff']
         };
 

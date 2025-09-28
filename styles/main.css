@@ -379,7 +379,7 @@ section {
 .announcement-card.glow-onay::before { --glow-color: rgba(59, 89, 152, 0.5); animation: glowPulse 1.5s ease-out; }
 .announcement-card.glow-katiliyorum::before { --glow-color: rgba(40, 167, 69, 0.5); animation: glowPulse 1.5s ease-out; }
 .announcement-card.glow-katilamiyorum::before { --glow-color: rgba(220, 53, 69, 0.4); animation: glowPulse 1.5s ease-out; }
-.announcement-card.glow-sorum-var::before { --glow-color: rgba(255, 193, 7, 0.5); animation: glowPulse 1.5s ease-out; }
+.announcement-card.glow-sorum_var::before { --glow-color: rgba(255, 193, 7, 0.5); animation: glowPulse 1.5s ease-out; }
 .announcement-card.glow-destek::before { --glow-color: rgba(108, 99, 255, 0.5); animation: glowPulse 1.5s ease-out; }
 
 .announcement-header {
