@@ -777,34 +777,176 @@ DatabaseService.getRecentActivities = async function(limit = 10) {
     }
 };
 
+// IP tabanlı kullanıcı etkileşimleri
+DatabaseService.getUserIP = async function() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error('Error getting user IP:', error);
+        return '127.0.0.1'; // Fallback IP
+    }
+};
+
+DatabaseService.getUserInteraction = async function(announcementId) {
+    try {
+        const userIP = await this.getUserIP();
+        
+        const { data, error } = await supabase
+            .from('user_interactions')
+            .select('*')
+            .eq('user_ip', userIP)
+            .eq('announcement_id', announcementId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+            throw error;
+        }
+        
+        return data || null;
+    } catch (error) {
+        console.error('Error getting user interaction:', error);
+        return null;
+    }
+};
+
+DatabaseService.markAnnouncementAsViewed = async function(announcementId) {
+    try {
+        const userIP = await this.getUserIP();
+        
+        // Önce mevcut etkileşimi kontrol et
+        const existingInteraction = await this.getUserInteraction(announcementId);
+        
+        if (existingInteraction && existingInteraction.has_viewed) {
+            return { already_viewed: true };
+        }
+        
+        if (existingInteraction) {
+            // Mevcut etkileşimi güncelle
+            const { data, error } = await supabase
+                .from('user_interactions')
+                .update({ has_viewed: true })
+                .eq('user_ip', userIP)
+                .eq('announcement_id', announcementId)
+                .select();
+            
+            if (error) throw error;
+            return data;
+        } else {
+            // Yeni etkileşim oluştur
+            const { data, error } = await supabase
+                .from('user_interactions')
+                .insert({
+                    user_ip: userIP,
+                    announcement_id: announcementId,
+                    has_viewed: true
+                })
+                .select();
+            
+            if (error) throw error;
+            return data;
+        }
+    } catch (error) {
+        console.error('Error marking announcement as viewed:', error);
+        throw error;
+    }
+};
+
 // Announcement reactions
 DatabaseService.updateAnnouncementReaction = async function(announcementId, reactionType, increment = true) {
     try {
+        const userIP = await this.getUserIP();
         const fieldName = `reaction_${reactionType}`;
         
-        // Önce mevcut değeri al
-        const { data: currentData, error: fetchError } = await supabase
-            .from('announcements')
-            .select(fieldName)
-            .eq('id', announcementId)
-            .single();
+        // Önce mevcut etkileşimi kontrol et
+        const existingInteraction = await this.getUserInteraction(announcementId);
         
-        if (fetchError) throw fetchError;
+        if (increment) {
+            // Yeni reaksiyon ekleme
+            if (existingInteraction && existingInteraction.reaction_type) {
+                // Eski reaksiyonu kaldır
+                const oldFieldName = `reaction_${existingInteraction.reaction_type}`;
+                const { data: oldData, error: oldError } = await supabase
+                    .from('announcements')
+                    .select(oldFieldName)
+                    .eq('id', announcementId)
+                    .single();
+                
+                if (oldError) throw oldError;
+                
+                const oldValue = oldData[oldFieldName] || 0;
+                const newOldValue = Math.max(0, oldValue - 1);
+                
+                // Eski reaksiyonu azalt
+                await supabase
+                    .from('announcements')
+                    .update({ [oldFieldName]: newOldValue })
+                    .eq('id', announcementId);
+            }
+            
+            // Yeni reaksiyonu ekle
+            const { data: newData, error: newError } = await supabase
+                .from('announcements')
+                .select(fieldName)
+                .eq('id', announcementId)
+                .single();
+            
+            if (newError) throw newError;
+            
+            const newValue = (newData[fieldName] || 0) + 1;
+            
+            await supabase
+                .from('announcements')
+                .update({ [fieldName]: newValue })
+                .eq('id', announcementId);
+            
+            // User interaction'ı güncelle
+            if (existingInteraction) {
+                await supabase
+                    .from('user_interactions')
+                    .update({ reaction_type: reactionType })
+                    .eq('user_ip', userIP)
+                    .eq('announcement_id', announcementId);
+            } else {
+                await supabase
+                    .from('user_interactions')
+                    .insert({
+                        user_ip: userIP,
+                        announcement_id: announcementId,
+                        reaction_type: reactionType,
+                        has_viewed: true
+                    });
+            }
+        } else {
+            // Reaksiyonu kaldırma
+            if (existingInteraction && existingInteraction.reaction_type === reactionType) {
+                const { data: currentData, error: fetchError } = await supabase
+                    .from('announcements')
+                    .select(fieldName)
+                    .eq('id', announcementId)
+                    .single();
+                
+                if (fetchError) throw fetchError;
+                
+                const currentValue = currentData[fieldName] || 0;
+                const newValue = Math.max(0, currentValue - 1);
+                
+                await supabase
+                    .from('announcements')
+                    .update({ [fieldName]: newValue })
+                    .eq('id', announcementId);
+                
+                // User interaction'dan reaksiyonu kaldır
+                await supabase
+                    .from('user_interactions')
+                    .update({ reaction_type: null })
+                    .eq('user_ip', userIP)
+                    .eq('announcement_id', announcementId);
+            }
+        }
         
-        const currentValue = currentData[fieldName] || 0;
-        const newValue = increment ? currentValue + 1 : Math.max(0, currentValue - 1);
-        
-        // Yeni değeri güncelle
-        const { data, error } = await supabase
-            .from('announcements')
-            .update({ 
-                [fieldName]: newValue
-            })
-            .eq('id', announcementId)
-            .select();
-        
-        if (error) throw error;
-        return data;
+        return { success: true };
     } catch (error) {
         console.error('Error updating announcement reaction:', error);
         throw error;
@@ -813,7 +955,14 @@ DatabaseService.updateAnnouncementReaction = async function(announcementId, reac
 
 DatabaseService.incrementAnnouncementViewCount = async function(announcementId) {
     try {
-        // Önce mevcut view_count değerini al
+        // IP tabanlı görüntüleme takibi
+        const result = await this.markAnnouncementAsViewed(announcementId);
+        
+        if (result.already_viewed) {
+            return { already_viewed: true };
+        }
+        
+        // Görüntüleme sayısını artır
         const { data: currentData, error: fetchError } = await supabase
             .from('announcements')
             .select('view_count')

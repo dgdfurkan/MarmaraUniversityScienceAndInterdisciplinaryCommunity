@@ -155,7 +155,15 @@ async function loadAnnouncements() {
             return;
         }
         
-        announcementsContainer.innerHTML = announcements.map(announcement => {
+        // Her duyuru için kullanıcı etkileşimini kontrol et
+        const announcementsWithInteractions = await Promise.all(
+            announcements.map(async (announcement) => {
+                const userInteraction = await DatabaseService.getUserInteraction(announcement.id);
+                return { ...announcement, userInteraction };
+            })
+        );
+        
+        announcementsContainer.innerHTML = announcementsWithInteractions.map(announcement => {
             const announcementDate = new Date(announcement.created_at);
             const formattedDate = announcementDate.toLocaleDateString('tr-TR', {
                 day: 'numeric',
@@ -167,8 +175,11 @@ async function loadAnnouncements() {
                 minute: '2-digit'
             });
             
-            // Otomatik görüntülenme sayısını artır
+            // Otomatik görüntülenme sayısını artır (IP tabanlı)
             incrementAnnouncementViewCount(announcement.id);
+            
+            // Kullanıcının aktif reaksiyonunu belirle
+            const activeReaction = announcement.userInteraction?.reaction_type;
             
             return `
                 <div class="announcement-card" data-announcement-id="${announcement.id}">
@@ -184,23 +195,23 @@ async function loadAnnouncements() {
                 </div>
                 <div class="announcement-footer">
                         <div class="reactions-group reactions">
-                            <div class="reaction" data-reaction="onay">
+                            <div class="reaction ${activeReaction === 'onay' ? 'active' : ''}" data-reaction="onay">
                                 <span class="emoji">👍</span>
                                 <span class="count">${announcement.reaction_onay || 0}</span>
                 </div>
-                            <div class="reaction" data-reaction="katiliyorum">
+                            <div class="reaction ${activeReaction === 'katiliyorum' ? 'active' : ''}" data-reaction="katiliyorum">
                                 <span class="emoji">✅</span>
                                 <span class="count">${announcement.reaction_katiliyorum || 0}</span>
             </div>
-                            <div class="reaction" data-reaction="katilamiyorum">
+                            <div class="reaction ${activeReaction === 'katilamiyorum' ? 'active' : ''}" data-reaction="katilamiyorum">
                                 <span class="emoji">❌</span>
                                 <span class="count">${announcement.reaction_katilamiyorum || 0}</span>
                             </div>
-                            <div class="reaction" data-reaction="sorum_var">
+                            <div class="reaction ${activeReaction === 'sorum_var' ? 'active' : ''}" data-reaction="sorum_var">
                                 <span class="emoji">🤔</span>
                                 <span class="count">${announcement.reaction_sorum_var || 0}</span>
                             </div>
-                            <div class="reaction" data-reaction="destek">
+                            <div class="reaction ${activeReaction === 'destek' ? 'active' : ''}" data-reaction="destek">
                                 <span class="emoji">👏</span>
                                 <span class="count">${announcement.reaction_destek || 0}</span>
                             </div>
@@ -1656,16 +1667,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let count = parseInt(countSpan.textContent);
 
             try {
-                if (currentlyActive && currentlyActive !== reaction) {
-                    // Başka bir reaksiyon aktifse, onu pasif yap ve sayısını azalt
-                    const activeReactionType = currentlyActive.dataset.reaction;
-                    await DatabaseService.updateAnnouncementReaction(announcementId, activeReactionType, false);
-                    
-                    const activeCountSpan = currentlyActive.querySelector('.count');
-                    activeCountSpan.textContent = parseInt(activeCountSpan.textContent) - 1;
-                    currentlyActive.classList.remove('active');
-                }
-
                 if (reaction.classList.contains('active')) {
                     // Aynı reaksiyona tekrar tıklandıysa, iptal et
                     await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, false);
@@ -1674,6 +1675,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     // Yeni bir reaksiyon seçildiyse, aktif yap ve sayısını artır
                     await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, true);
+                    
+                    // Tüm reaksiyonları pasif yap
+                    parent.querySelectorAll('.reaction').forEach(r => r.classList.remove('active'));
+                    
+                    // Yeni reaksiyonu aktif yap
                     reaction.classList.add('active');
                     countSpan.textContent = count + 1;
                     
