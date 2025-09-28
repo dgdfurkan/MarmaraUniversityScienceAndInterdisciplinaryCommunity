@@ -790,38 +790,196 @@ DatabaseService.getUserIP = async function() {
 };
 
 DatabaseService.getUserInteraction = async function(announcementId) {
-    // Geçici olarak IP takibini devre dışı bırak
-    // RLS politikaları düzeltilene kadar
-    return null;
+    try {
+        const userIP = await this.getUserIP();
+        
+        const { data, error } = await supabase
+            .from('user_interactions')
+            .select('*')
+            .eq('user_ip', userIP)
+            .eq('announcement_id', announcementId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+            if (error.code === '42P01' || error.status === 406) { // Table doesn't exist or RLS issue
+                return null;
+            }
+            throw error;
+        }
+        
+        return data || null;
+    } catch (error) {
+        if (error.status === 406) {
+            return null;
+        }
+        console.error('Error getting user interaction:', error);
+        return null;
+    }
 };
 
 DatabaseService.markAnnouncementAsViewed = async function(announcementId) {
-    // Geçici olarak IP takibini devre dışı bırak
-    // RLS politikaları düzeltilene kadar
-    return { already_viewed: true };
+    try {
+        const userIP = await this.getUserIP();
+        
+        // Önce mevcut etkileşimi kontrol et
+        const existingInteraction = await this.getUserInteraction(announcementId);
+        
+        if (existingInteraction && existingInteraction.has_viewed) {
+            return { already_viewed: true };
+        }
+        
+        // User interactions tablosu varsa güncelle
+        if (existingInteraction !== null) {
+            try {
+                if (existingInteraction) {
+                    // Mevcut etkileşimi güncelle
+                    const { data, error } = await supabase
+                        .from('user_interactions')
+                        .update({ has_viewed: true })
+                        .eq('user_ip', userIP)
+                        .eq('announcement_id', announcementId)
+                        .select();
+                    
+                    if (error) throw error;
+                    return data;
+                } else {
+                    // Yeni etkileşim oluştur
+                    const { data, error } = await supabase
+                        .from('user_interactions')
+                        .insert({
+                            user_ip: userIP,
+                            announcement_id: announcementId,
+                            has_viewed: true
+                        })
+                        .select();
+                    
+                    if (error) throw error;
+                    return data;
+                }
+            } catch (interactionError) {
+                if (interactionError.status === 406) {
+                    return { already_viewed: false };
+                }
+                console.warn('User interactions table not available, skipping view tracking');
+                return { already_viewed: false };
+            }
+        }
+        
+        return { already_viewed: false };
+    } catch (error) {
+        console.error('Error marking announcement as viewed:', error);
+        return { already_viewed: false };
+    }
 };
 
-// Announcement reactions - Simple version (no IP tracking)
+// Announcement reactions - IP tracking version
 DatabaseService.updateAnnouncementReaction = async function(announcementId, reactionType, increment = true) {
     try {
+        const userIP = await this.getUserIP();
         const fieldName = `reaction_${reactionType}`;
         
-        // Basit reaksiyon güncelleme (IP takibi olmadan)
-        const { data: currentData, error: fetchError } = await supabase
-            .from('announcements')
-            .select(fieldName)
-            .eq('id', announcementId)
-            .single();
+        // Önce mevcut etkileşimi kontrol et
+        const existingInteraction = await this.getUserInteraction(announcementId);
         
-        if (fetchError) throw fetchError;
-        
-        const currentValue = currentData[fieldName] || 0;
-        const newValue = increment ? currentValue + 1 : Math.max(0, currentValue - 1);
-        
-        await supabase
-            .from('announcements')
-            .update({ [fieldName]: newValue })
-            .eq('id', announcementId);
+        if (increment) {
+            // Yeni reaksiyon ekleme
+            if (existingInteraction && existingInteraction.reaction_type) {
+                // Eski reaksiyonu kaldır
+                const oldFieldName = `reaction_${existingInteraction.reaction_type}`;
+                const { data: oldData, error: oldError } = await supabase
+                    .from('announcements')
+                    .select(oldFieldName)
+                    .eq('id', announcementId)
+                    .single();
+                
+                if (oldError) throw oldError;
+                
+                const oldValue = oldData[oldFieldName] || 0;
+                const newOldValue = Math.max(0, oldValue - 1);
+                
+                // Eski reaksiyonu azalt
+                await supabase
+                    .from('announcements')
+                    .update({ [oldFieldName]: newOldValue })
+                    .eq('id', announcementId);
+            }
+            
+            // Yeni reaksiyonu ekle
+            const { data: newData, error: newError } = await supabase
+                .from('announcements')
+                .select(fieldName)
+                .eq('id', announcementId)
+                .single();
+            
+            if (newError) throw newError;
+            
+            const newValue = (newData[fieldName] || 0) + 1;
+            
+            await supabase
+                .from('announcements')
+                .update({ [fieldName]: newValue })
+                .eq('id', announcementId);
+            
+            // User interaction'ı güncelle
+            try {
+                if (existingInteraction) {
+                    await supabase
+                        .from('user_interactions')
+                        .update({ reaction_type: reactionType })
+                        .eq('user_ip', userIP)
+                        .eq('announcement_id', announcementId);
+                } else {
+                    await supabase
+                        .from('user_interactions')
+                        .insert({
+                            user_ip: userIP,
+                            announcement_id: announcementId,
+                            reaction_type: reactionType,
+                            has_viewed: true
+                        });
+                }
+            } catch (interactionError) {
+                if (interactionError.status === 406) {
+                    // Sessizce devam et
+                } else {
+                    console.warn('User interactions table not available:', interactionError);
+                }
+            }
+        } else {
+            // Reaksiyonu kaldırma
+            if (existingInteraction && existingInteraction.reaction_type === reactionType) {
+                const { data: currentData, error: fetchError } = await supabase
+                    .from('announcements')
+                    .select(fieldName)
+                    .eq('id', announcementId)
+                    .single();
+                
+                if (fetchError) throw fetchError;
+                
+                const currentValue = currentData[fieldName] || 0;
+                const newValue = Math.max(0, currentValue - 1);
+                
+                await supabase
+                    .from('announcements')
+                    .update({ [fieldName]: newValue })
+                    .eq('id', announcementId);
+                
+                // User interaction'dan reaksiyonu kaldır
+                try {
+                    await supabase
+                        .from('user_interactions')
+                        .update({ reaction_type: null })
+                        .eq('user_ip', userIP)
+                        .eq('announcement_id', announcementId);
+                } catch (interactionError) {
+                    if (interactionError.status === 406) {
+                        // Sessizce devam et
+                    } else {
+                        console.warn('User interactions table not available:', interactionError);
+                    }
+                }
+            }
+        }
         
         return { success: true };
     } catch (error) {
@@ -831,7 +989,39 @@ DatabaseService.updateAnnouncementReaction = async function(announcementId, reac
 };
 
 DatabaseService.incrementAnnouncementViewCount = async function(announcementId) {
-    // Geçici olarak görüntüleme sayısını artırmayalım
-    // RLS politikaları düzeltilene kadar
-    return { already_viewed: true };
+    try {
+        // IP tabanlı görüntüleme takibi
+        const result = await this.markAnnouncementAsViewed(announcementId);
+        
+        if (result.already_viewed) {
+            return { already_viewed: true };
+        }
+        
+        // Görüntüleme sayısını artır
+        const { data: currentData, error: fetchError } = await supabase
+            .from('announcements')
+            .select('view_count')
+            .eq('id', announcementId)
+            .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const currentValue = currentData.view_count || 0;
+        const newValue = currentValue + 1;
+        
+        // Yeni değeri güncelle
+        const { data, error } = await supabase
+            .from('announcements')
+            .update({ 
+                view_count: newValue
+            })
+            .eq('id', announcementId)
+            .select();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error incrementing view count:', error);
+        throw error;
+    }
 };
