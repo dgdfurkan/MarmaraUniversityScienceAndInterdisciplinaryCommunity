@@ -21,10 +21,12 @@ CREATE INDEX IF NOT EXISTS idx_user_interactions_reaction ON user_interactions(r
 ALTER TABLE user_interactions ENABLE ROW LEVEL SECURITY;
 
 -- Herkes okuyabilir (istatistikler için)
+DROP POLICY IF EXISTS "Anyone can read user interactions" ON user_interactions;
 CREATE POLICY "Anyone can read user interactions" ON user_interactions
     FOR SELECT USING (true);
 
 -- Herkes ekleyebilir/güncelleyebilir (kendi IP'si için)
+DROP POLICY IF EXISTS "Anyone can insert/update their own interactions" ON user_interactions;
 CREATE POLICY "Anyone can insert/update their own interactions" ON user_interactions
     FOR ALL USING (true);
 
@@ -37,6 +39,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_user_interactions_updated_at ON user_interactions;
 CREATE TRIGGER update_user_interactions_updated_at 
     BEFORE UPDATE ON user_interactions 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
