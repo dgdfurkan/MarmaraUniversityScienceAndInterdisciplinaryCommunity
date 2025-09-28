@@ -802,14 +802,17 @@ DatabaseService.getUserInteraction = async function(announcementId) {
         
         if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
             if (error.code === '42P01' || error.status === 406) { // Table doesn't exist or RLS issue
-                console.warn('User interactions table not available');
-                return null;
+                return null; // Sessizce null döndür, console'a yazma
             }
             throw error;
         }
         
         return data || null;
     } catch (error) {
+        // 406 hatalarını sessizce yakala
+        if (error.status === 406) {
+            return null;
+        }
         console.error('Error getting user interaction:', error);
         return null;
     }
@@ -855,6 +858,10 @@ DatabaseService.markAnnouncementAsViewed = async function(announcementId) {
                     return data;
                 }
             } catch (interactionError) {
+                // 406 hatalarını sessizce yakala
+                if (interactionError.status === 406) {
+                    return { already_viewed: false };
+                }
                 console.warn('User interactions table not available, skipping view tracking');
                 return { already_viewed: false };
             }
@@ -934,7 +941,12 @@ DatabaseService.updateAnnouncementReaction = async function(announcementId, reac
                         });
                 }
             } catch (interactionError) {
-                console.warn('User interactions table not available:', interactionError);
+                // 406 hatalarını sessizce yakala
+                if (interactionError.status === 406) {
+                    // Sessizce devam et
+                } else {
+                    console.warn('User interactions table not available:', interactionError);
+                }
             }
         } else {
             // Reaksiyonu kaldırma
@@ -963,7 +975,12 @@ DatabaseService.updateAnnouncementReaction = async function(announcementId, reac
                         .eq('user_ip', userIP)
                         .eq('announcement_id', announcementId);
                 } catch (interactionError) {
-                    console.warn('User interactions table not available:', interactionError);
+                    // 406 hatalarını sessizce yakala
+                    if (interactionError.status === 406) {
+                        // Sessizce devam et
+                    } else {
+                        console.warn('User interactions table not available:', interactionError);
+                    }
                 }
             }
         }
