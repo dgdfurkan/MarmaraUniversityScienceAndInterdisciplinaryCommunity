@@ -781,12 +781,24 @@ DatabaseService.getRecentActivities = async function(limit = 10) {
 DatabaseService.updateAnnouncementReaction = async function(announcementId, reactionType, increment = true) {
     try {
         const fieldName = `reaction_${reactionType}`;
-        const change = increment ? 1 : -1;
         
+        // Önce mevcut değeri al
+        const { data: currentData, error: fetchError } = await supabase
+            .from('announcements')
+            .select(fieldName)
+            .eq('id', announcementId)
+            .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const currentValue = currentData[fieldName] || 0;
+        const newValue = increment ? currentValue + 1 : Math.max(0, currentValue - 1);
+        
+        // Yeni değeri güncelle
         const { data, error } = await supabase
             .from('announcements')
             .update({ 
-                [fieldName]: supabase.raw(`${fieldName} + ${change}`)
+                [fieldName]: newValue
             })
             .eq('id', announcementId)
             .select();
@@ -801,10 +813,23 @@ DatabaseService.updateAnnouncementReaction = async function(announcementId, reac
 
 DatabaseService.incrementAnnouncementViewCount = async function(announcementId) {
     try {
+        // Önce mevcut view_count değerini al
+        const { data: currentData, error: fetchError } = await supabase
+            .from('announcements')
+            .select('view_count')
+            .eq('id', announcementId)
+            .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const currentValue = currentData.view_count || 0;
+        const newValue = currentValue + 1;
+        
+        // Yeni değeri güncelle
         const { data, error } = await supabase
             .from('announcements')
             .update({ 
-                view_count: supabase.raw('view_count + 1')
+                view_count: newValue
             })
             .eq('id', announcementId)
             .select();
