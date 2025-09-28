@@ -794,7 +794,7 @@ DatabaseService.getUserInteraction = async function(announcementId) {
         const userIP = await this.getUserIP();
         
         const { data, error } = await supabase
-            .from('user_interactions')
+            .from('announcement_interactions')
             .select('*')
             .eq('user_ip', userIP)
             .eq('announcement_id', announcementId)
@@ -834,7 +834,7 @@ DatabaseService.markAnnouncementAsViewed = async function(announcementId) {
                 if (existingInteraction) {
                     // Mevcut etkileşimi güncelle
                     const { data, error } = await supabase
-                        .from('user_interactions')
+                        .from('announcement_interactions')
                         .update({ has_viewed: true })
                         .eq('user_ip', userIP)
                         .eq('announcement_id', announcementId)
@@ -845,7 +845,7 @@ DatabaseService.markAnnouncementAsViewed = async function(announcementId) {
                 } else {
                     // Yeni etkileşim oluştur
                     const { data, error } = await supabase
-                        .from('user_interactions')
+                        .from('announcement_interactions')
                         .insert({
                             user_ip: userIP,
                             announcement_id: announcementId,
@@ -924,13 +924,13 @@ DatabaseService.updateAnnouncementReaction = async function(announcementId, reac
             try {
                 if (existingInteraction) {
                     await supabase
-                        .from('user_interactions')
+                        .from('announcement_interactions')
                         .update({ reaction_type: reactionType })
                         .eq('user_ip', userIP)
                         .eq('announcement_id', announcementId);
                 } else {
                     await supabase
-                        .from('user_interactions')
+                        .from('announcement_interactions')
                         .insert({
                             user_ip: userIP,
                             announcement_id: announcementId,
@@ -967,7 +967,7 @@ DatabaseService.updateAnnouncementReaction = async function(announcementId, reac
                 // User interaction'dan reaksiyonu kaldır
                 try {
                     await supabase
-                        .from('user_interactions')
+                        .from('announcement_interactions')
                         .update({ reaction_type: null })
                         .eq('user_ip', userIP)
                         .eq('announcement_id', announcementId);
