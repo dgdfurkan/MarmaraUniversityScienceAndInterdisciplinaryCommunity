@@ -853,99 +853,20 @@ DatabaseService.markAnnouncementAsViewed = async function(announcementId) {
     }
 };
 
-// Announcement reactions
+// Announcement reactions - Optimized version
 DatabaseService.updateAnnouncementReaction = async function(announcementId, reactionType, increment = true) {
     try {
         const userIP = await this.getUserIP();
-        const fieldName = `reaction_${reactionType}`;
         
-        // Önce mevcut etkileşimi kontrol et
-        const existingInteraction = await this.getUserInteraction(announcementId);
+        // Tek seferde tüm işlemleri yap
+        const { data, error } = await supabase.rpc('update_announcement_reaction', {
+            p_announcement_id: announcementId,
+            p_user_ip: userIP,
+            p_reaction_type: reactionType,
+            p_increment: increment
+        });
         
-        if (increment) {
-            // Yeni reaksiyon ekleme
-            if (existingInteraction && existingInteraction.reaction_type) {
-                // Eski reaksiyonu kaldır
-                const oldFieldName = `reaction_${existingInteraction.reaction_type}`;
-                const { data: oldData, error: oldError } = await supabase
-                    .from('announcements')
-                    .select(oldFieldName)
-                    .eq('id', announcementId)
-                    .single();
-                
-                if (oldError) throw oldError;
-                
-                const oldValue = oldData[oldFieldName] || 0;
-                const newOldValue = Math.max(0, oldValue - 1);
-                
-                // Eski reaksiyonu azalt
-                await supabase
-                    .from('announcements')
-                    .update({ [oldFieldName]: newOldValue })
-                    .eq('id', announcementId);
-            }
-            
-            // Yeni reaksiyonu ekle
-            const { data: newData, error: newError } = await supabase
-                .from('announcements')
-                .select(fieldName)
-                .eq('id', announcementId)
-                .single();
-            
-            if (newError) throw newError;
-            
-            const newValue = (newData[fieldName] || 0) + 1;
-            
-            await supabase
-                .from('announcements')
-                .update({ [fieldName]: newValue })
-                .eq('id', announcementId);
-            
-            // User interaction'ı güncelle
-            if (existingInteraction) {
-                await supabase
-                    .from('user_interactions')
-                    .update({ reaction_type: reactionType })
-                    .eq('user_ip', userIP)
-                    .eq('announcement_id', announcementId);
-            } else {
-                await supabase
-                    .from('user_interactions')
-                    .insert({
-                        user_ip: userIP,
-                        announcement_id: announcementId,
-                        reaction_type: reactionType,
-                        has_viewed: true
-                    });
-            }
-        } else {
-            // Reaksiyonu kaldırma
-            if (existingInteraction && existingInteraction.reaction_type === reactionType) {
-                const { data: currentData, error: fetchError } = await supabase
-                    .from('announcements')
-                    .select(fieldName)
-                    .eq('id', announcementId)
-                    .single();
-                
-                if (fetchError) throw fetchError;
-                
-                const currentValue = currentData[fieldName] || 0;
-                const newValue = Math.max(0, currentValue - 1);
-                
-                await supabase
-                    .from('announcements')
-                    .update({ [fieldName]: newValue })
-                    .eq('id', announcementId);
-                
-                // User interaction'dan reaksiyonu kaldır
-                await supabase
-                    .from('user_interactions')
-                    .update({ reaction_type: null })
-                    .eq('user_ip', userIP)
-                    .eq('announcement_id', announcementId);
-            }
-        }
-        
+        if (error) throw error;
         return { success: true };
     } catch (error) {
         console.error('Error updating announcement reaction:', error);

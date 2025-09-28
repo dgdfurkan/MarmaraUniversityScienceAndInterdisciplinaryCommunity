@@ -1673,13 +1673,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     reaction.classList.remove('active');
                     countSpan.textContent = count - 1;
                 } else {
-                    // Yeni bir reaksiyon seçildiyse, aktif yap ve sayısını artır
+                    // Eski aktif reaksiyonu bul ve sayısını azalt
+                    const oldActiveReaction = parent.querySelector('.reaction.active');
+                    if (oldActiveReaction && oldActiveReaction !== reaction) {
+                        const oldCountSpan = oldActiveReaction.querySelector('.count');
+                        const oldCount = parseInt(oldCountSpan.textContent);
+                        oldCountSpan.textContent = oldCount - 1;
+                        oldActiveReaction.classList.remove('active');
+                    }
+                    
+                    // Yeni reaksiyonu aktif yap ve sayısını artır
                     await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, true);
-                    
-                    // Tüm reaksiyonları pasif yap
-                    parent.querySelectorAll('.reaction').forEach(r => r.classList.remove('active'));
-                    
-                    // Yeni reaksiyonu aktif yap
                     reaction.classList.add('active');
                     countSpan.textContent = count + 1;
                     
