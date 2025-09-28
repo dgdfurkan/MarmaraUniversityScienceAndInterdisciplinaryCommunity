@@ -4,6 +4,10 @@ ALTER TABLE user_interactions ENABLE ROW LEVEL SECURITY;
 -- Mevcut politikaları sil
 DROP POLICY IF EXISTS "Anyone can read user interactions" ON user_interactions;
 DROP POLICY IF EXISTS "Anyone can insert/update their own interactions" ON user_interactions;
+DROP POLICY IF EXISTS "Enable read access for all users" ON user_interactions;
+DROP POLICY IF EXISTS "Enable insert for all users" ON user_interactions;
+DROP POLICY IF EXISTS "Enable update for all users" ON user_interactions;
+DROP POLICY IF EXISTS "Enable delete for all users" ON user_interactions;
 
 -- Yeni politikalar oluştur
 CREATE POLICY "Enable read access for all users" ON user_interactions
