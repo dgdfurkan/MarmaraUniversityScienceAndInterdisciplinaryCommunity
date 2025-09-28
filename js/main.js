@@ -1676,6 +1676,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, true);
                     reaction.classList.add('active');
                     countSpan.textContent = count + 1;
+                    
+                    // Konfeti ve ışık efektlerini tetikle
+                    triggerAnnouncementEffects(announcementCard, reactionType);
                 }
             } catch (error) {
                 console.error('Error updating reaction:', error);
@@ -1683,6 +1686,79 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+    
+    // Konfeti ve ışık efektleri
+    function triggerAnnouncementEffects(card, reactionType) {
+        const confettiColors = {
+            onay: ['#3b5998', '#ffffff', '#cfe2ff'],
+            katiliyorum: ['#28a745', '#ffffff', '#a3d9b1'],
+            katilamiyorum: ['#dc3545', '#6c757d', '#f8d7da'],
+            'sorum-var': ['#ffc107', '#ffffff', '#ffeeba'],
+            destek: ['#6c63ff', '#f5d5e4', '#dcd9ff']
+        };
+
+        // Konfeti animasyonunu tetikle
+        const container = document.createElement('div');
+        container.className = 'confetti-container';
+        card.appendChild(container);
+
+        const colors = confettiColors[reactionType] || ['#000000'];
+        const confettiCount = 250; // DAHA DA ŞEN ŞAKRAK!
+
+        for (let i = 0; i < confettiCount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            if (Math.random() > 0.3) {
+                const size = Math.random() * 10 + 5;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+            } else {
+                confetti.style.width = `${Math.random() * 4 + 3}px`;
+                confetti.style.height = `${Math.random() * 15 + 10}px`;
+                confetti.style.borderRadius = '0';
+            }
+
+            const angle = Math.random() * 2 * Math.PI;
+            const velocity = Math.random() * 300 + 200;
+            const xEnd = Math.cos(angle) * velocity;
+            const yEnd = Math.sin(angle) * velocity + (Math.random() * 150 + 200);
+            const rotation = Math.random() * 1080 - 540;
+            const duration = Math.random() * 2 + 2.5;
+
+            confetti.style.setProperty('--x-end', `${xEnd}px`);
+            confetti.style.setProperty('--y-end', `${yEnd}px`);
+            confetti.style.setProperty('--rotation', `${rotation}deg`);
+            confetti.style.animation = `confetti-burst ${duration}s cubic-bezier(0.1, 0.9, 0.2, 1) forwards`;
+            
+            container.appendChild(confetti);
+        }
+
+        // Işık animasyonunu tetikle
+        const glowClass = 'glow-' + reactionType;
+        // Önceki animasyon class'ını temizle ve yenisini ekle
+        card.className = card.className.replace(/\bglow-\w+/g, '');
+        void card.offsetWidth; // Reflow tetiklemesi animasyonun yeniden çalışmasını sağlar
+        card.classList.add(glowClass);
+
+        // Animasyon bittiğinde class'ı temizle
+        card.addEventListener('animationend', function handler(e) {
+            if (e.animationName === 'glowPulse') {
+                card.className = card.className.replace(/\bglow-\w+/g, '');
+                card.removeEventListener('animationend', handler);
+            }
+        });
+
+        // Konfeti container'ını temizle
+        setTimeout(() => {
+            if (container.parentNode) {
+                container.remove();
+            }
+        }, 4000);
+    }
 });
 
 // Add scroll effect to navbar

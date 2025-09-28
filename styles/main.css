@@ -210,10 +210,42 @@ body {
     50% { transform: scale(1.1); }
 }
 
-@keyframes emojiPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4) rotate(-10deg); }
-    100% { transform: scale(1); }
+/* Konfeti Stilleri */
+.confetti-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 3; /* En üstte olması için */
+}
+
+.confetti {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    transform-origin: center;
+}
+
+@keyframes confetti-burst {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5) rotate(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--x-end), var(--y-end)) scale(1) rotate(var(--rotation));
+        opacity: 0;
+    }
+}
+
+@keyframes glowPulse {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-100%); }
+    40% { opacity: 1; transform: translateX(-50%) translateY(-30%); }
+    70% { opacity: 1; transform: translateX(-50%) translateY(-30%); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-30%); }
 }
 
 /* Section Styles */
@@ -315,6 +347,8 @@ section {
     transform: translateY(30px);
     animation: fadeInUp 0.7s ease-out forwards;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden; /* Konfeti için önemli */
 }
 
 .announcement-card:hover {
@@ -326,11 +360,36 @@ section {
     animation: iconPulse 1.2s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
+/* Işık efekti için pseudo-element */
+.announcement-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 250%;
+    height: 900px;
+    background: radial-gradient(circle, var(--glow-color, transparent) 0%, transparent 70%);
+    transform: translateX(-50%) translateY(-100%); /* Animasyonun başlangıç noktası */
+    opacity: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Işık animasyonunu tetikleyen class'lar */
+.announcement-card.glow-onay::before { --glow-color: rgba(59, 89, 152, 0.5); animation: glowPulse 1.5s ease-out; }
+.announcement-card.glow-katiliyorum::before { --glow-color: rgba(40, 167, 69, 0.5); animation: glowPulse 1.5s ease-out; }
+.announcement-card.glow-katilamiyorum::before { --glow-color: rgba(220, 53, 69, 0.4); animation: glowPulse 1.5s ease-out; }
+.announcement-card.glow-sorum-var::before { --glow-color: rgba(255, 193, 7, 0.5); animation: glowPulse 1.5s ease-out; }
+.announcement-card.glow-destek::before { --glow-color: rgba(108, 99, 255, 0.5); animation: glowPulse 1.5s ease-out; }
+
 .announcement-header {
     display: flex;
     align-items: center;
     padding: 20px;
     border-bottom: 1px solid #dddfe2;
+    position: relative;
+    z-index: 2;
+    background-color: transparent; /* Konfetinin ve ışığın arkada görünmesi için */
 }
 
 .header-icon {
@@ -387,6 +446,9 @@ section {
     color: #333;
     max-height: 250px;
     overflow-y: auto;
+    position: relative;
+    z-index: 2;
+    background-color: transparent; /* Konfetinin ve ışığın arkada görünmesi için */
 }
 
 .announcement-content p:last-child {
@@ -1374,6 +1436,9 @@ section {
     border-top: 1px solid #dddfe2;
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
+    position: relative;
+    z-index: 2;
+    background-color: transparent; /* Konfetinin ve ışığın arkada görünmesi için */
 }
 
 .reactions-group {
