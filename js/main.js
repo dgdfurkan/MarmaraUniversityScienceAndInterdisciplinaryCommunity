@@ -79,23 +79,68 @@ async function loadBlogPosts() {
             incrementViewCount(post.id);
             
             return `
-                <div class="card" data-post-id="${post.id}" onclick="readFullBlog(${post.id})" style="cursor: pointer;">
+                <div class="card blog-card-enhanced" data-post-id="${post.id}" onclick="readFullBlog(${post.id})" style="cursor: pointer;">
                     <div class="card-img-holder">
                         <img src="${imageSrc}" alt="${post.title}">
+                        <div class="blog-overlay">
+                            <div class="blog-stats">
+                                <div class="stat-item">
+                                    <i class="fas fa-eye"></i>
+                                    <span>${post.view_count || 0}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-heart"></i>
+                                    <span>${post.like_count || 0}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="blog-title">${post.title}</h3>
-                    <span class="blog-time">${formattedDate}</span>
-                    <p class="description">
-                        ${post.excerpt || post.content.substring(0, 150) + '...'}
-                    </p>
-                    <div class="options">
-                        <span>
-                            Blog Yazısını Oku
-                        </span>
-                        <button class="btn" onclick="event.stopPropagation(); toggleLike(${post.id})">
-                            <i class="fas fa-heart" style="color: ${post.user_liked ? '#ef4444' : '#22215B'}"></i>
-                            ${post.like_count || 0}
-                        </button>
+                    <div class="blog-content">
+                        <h3 class="blog-title">${post.title}</h3>
+                        <span class="blog-time">${formattedDate}</span>
+                        <p class="description">
+                            ${post.excerpt || post.content}
+                        </p>
+                        <div class="blog-actions">
+                            <div class="reaction-buttons">
+                                <div class="reaction-group">
+                                    <button class="reaction-btn like-btn ${post.user_liked ? 'active' : ''}" 
+                                            onclick="event.stopPropagation(); toggleBlogLike(${post.id})" 
+                                            title="Beğen">
+                                        <span class="emoji">❤️</span>
+                                        <span class="count">${post.like_count || 0}</span>
+                                    </button>
+                                    <button class="reaction-btn useful-btn ${post.user_useful ? 'active' : ''}" 
+                                            onclick="event.stopPropagation(); addBlogReaction(${post.id}, 'useful')" 
+                                            title="Faydalı">
+                                        <span class="emoji">👍</span>
+                                        <span class="count">${post.useful_count || 0}</span>
+                                    </button>
+                                    <button class="reaction-btn informative-btn ${post.user_informative ? 'active' : ''}" 
+                                            onclick="event.stopPropagation(); addBlogReaction(${post.id}, 'informative')" 
+                                            title="Bilgilendirici">
+                                        <span class="emoji">💡</span>
+                                        <span class="count">${post.informative_count || 0}</span>
+                                    </button>
+                                    <button class="reaction-btn inspiring-btn ${post.user_inspiring ? 'active' : ''}" 
+                                            onclick="event.stopPropagation(); addBlogReaction(${post.id}, 'inspiring')" 
+                                            title="İlham Verici">
+                                        <span class="emoji">✨</span>
+                                        <span class="count">${post.inspiring_count || 0}</span>
+                                    </button>
+                                </div>
+                                <div class="blog-stats-summary">
+                                    <div class="stat-item">
+                                        <i class="fas fa-eye"></i>
+                                        <span>${post.view_count || 0}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <i class="fas fa-poll"></i>
+                                        <span>${(post.like_count || 0) + (post.useful_count || 0) + (post.informative_count || 0) + (post.inspiring_count || 0)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -450,7 +495,7 @@ async function incrementViewCount(postId) {
     }
 }
 
-async function toggleLike(postId) {
+async function toggleBlogLike(postId) {
     try {
         const result = await DatabaseService.toggleBlogLike(postId);
         
@@ -459,24 +504,63 @@ async function toggleLike(postId) {
             return;
         }
         
-        // Update the like count and icon color in UI
+        // Update the like count and button state in UI
         const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
         if (cardElement) {
-            const likeButton = cardElement.querySelector(`[onclick="toggleLike(${postId})"]`);
-            const icon = likeButton.querySelector('i');
+            const likeButton = cardElement.querySelector(`[onclick="toggleBlogLike(${postId})"]`);
+            const countSpan = likeButton.querySelector('.count');
             
-            // Update icon color based on action
+            // Update button state
             if (result.action === 'liked') {
-                icon.style.color = '#ef4444'; // Red for liked
+                likeButton.classList.add('active');
             } else if (result.action === 'unliked') {
-                icon.style.color = '#22215B'; // Default color for unliked
+                likeButton.classList.remove('active');
             }
+            
+            // Update count (we'll need to reload to get accurate count)
+            setTimeout(() => {
+                loadBlogPosts();
+            }, 500);
         }
         
         console.log('Like toggled:', result.action);
     } catch (error) {
         console.error('Error toggling like:', error);
         alert('Beğeni işlemi sırasında bir hata oluştu.');
+    }
+}
+
+async function addBlogReaction(postId, reactionType) {
+    try {
+        const result = await DatabaseService.addBlogReaction(postId, reactionType);
+        
+        if (result.error) {
+            console.error('Error adding reaction:', result.error);
+            return;
+        }
+        
+        // Update the reaction button state in UI
+        const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
+        if (cardElement) {
+            const reactionButton = cardElement.querySelector(`[onclick="addBlogReaction(${postId}, '${reactionType}')"]`);
+            
+            // Update button state
+            if (result.action === 'added') {
+                reactionButton.classList.add('active');
+            } else if (result.action === 'removed') {
+                reactionButton.classList.remove('active');
+            }
+            
+            // Update count (we'll need to reload to get accurate count)
+            setTimeout(() => {
+                loadBlogPosts();
+            }, 500);
+        }
+        
+        console.log('Reaction toggled:', result.action, result.reactionType);
+    } catch (error) {
+        console.error('Error adding reaction:', error);
+        alert('Reaksiyon işlemi sırasında bir hata oluştu.');
     }
 }
 

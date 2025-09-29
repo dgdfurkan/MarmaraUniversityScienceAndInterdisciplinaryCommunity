@@ -89,16 +89,31 @@ class DatabaseService {
             const userFingerprint = await this.getUserFingerprint();
             const userIP = await this.getUserIP();
 
-            // Process the data to add interaction counts and user like status
+            // Process the data to add interaction counts and user reaction status
             const processedData = (data || []).map(post => {
                 const interactions = post.blog_interactions || [];
                 const viewCount = interactions.filter(i => i.interaction_type === 'view').length;
                 const likeCount = interactions.filter(i => i.interaction_type === 'like').length;
+                const usefulCount = interactions.filter(i => i.interaction_type === 'useful').length;
+                const informativeCount = interactions.filter(i => i.interaction_type === 'informative').length;
+                const inspiringCount = interactions.filter(i => i.interaction_type === 'inspiring').length;
                 const shareCount = interactions.filter(i => i.interaction_type === 'share').length;
                 
-                // Check if current user has liked this post
+                // Check if current user has reacted to this post
                 const userLiked = interactions.some(i => 
                     i.interaction_type === 'like' && 
+                    (i.user_ip === userIP || i.user_fingerprint === userFingerprint)
+                );
+                const userUseful = interactions.some(i => 
+                    i.interaction_type === 'useful' && 
+                    (i.user_ip === userIP || i.user_fingerprint === userFingerprint)
+                );
+                const userInformative = interactions.some(i => 
+                    i.interaction_type === 'informative' && 
+                    (i.user_ip === userIP || i.user_fingerprint === userFingerprint)
+                );
+                const userInspiring = interactions.some(i => 
+                    i.interaction_type === 'inspiring' && 
                     (i.user_ip === userIP || i.user_fingerprint === userFingerprint)
                 );
 
@@ -106,8 +121,14 @@ class DatabaseService {
                     ...post,
                     view_count: viewCount,
                     like_count: likeCount,
+                    useful_count: usefulCount,
+                    informative_count: informativeCount,
+                    inspiring_count: inspiringCount,
                     share_count: shareCount,
-                    user_liked: userLiked
+                    user_liked: userLiked,
+                    user_useful: userUseful,
+                    user_informative: userInformative,
+                    user_inspiring: userInspiring
                 };
             });
 
@@ -509,6 +530,65 @@ class DatabaseService {
             
         } catch (error) {
             console.error('Error incrementing blog share:', error);
+            return { error: error.message };
+        }
+    }
+
+    static async addBlogReaction(postId, reactionType) {
+        try {
+            const userIP = await this.getUserIP();
+            const userFingerprint = await this.getUserFingerprint();
+            
+            const emojiMap = {
+                'useful': '👍',
+                'informative': '💡',
+                'inspiring': '✨'
+            };
+            
+            const emoji = emojiMap[reactionType] || '👍';
+            
+            // Check if this IP already reacted with this type
+            const { data: existingReaction, error: checkError } = await supabase
+                .from('blog_interactions')
+                .select('id')
+                .eq('blog_id', postId)
+                .eq('interaction_type', reactionType)
+                .or(`user_ip.eq.${userIP},user_fingerprint.eq.${userFingerprint}`)
+                .limit(1);
+            
+            if (checkError) throw checkError;
+            
+            if (existingReaction && existingReaction.length > 0) {
+                // Remove reaction
+                const { error: deleteError } = await supabase
+                    .from('blog_interactions')
+                    .delete()
+                    .eq('id', existingReaction[0].id);
+                
+                if (deleteError) throw deleteError;
+                
+                console.log(`Blog ${reactionType} reaction removed for IP:`, userIP);
+                return { action: 'removed', reactionType, emoji };
+            } else {
+                // Add reaction
+                const { error: insertError } = await supabase
+                    .from('blog_interactions')
+                    .insert([{
+                        blog_id: postId,
+                        interaction_type: reactionType,
+                        user_ip: userIP,
+                        user_fingerprint: userFingerprint,
+                        reaction_emoji: emoji
+                    }]);
+                
+                if (insertError) throw insertError;
+                
+                console.log(`Blog ${reactionType} reaction added for IP:`, userIP);
+                return { action: 'added', reactionType, emoji };
+            }
+            
+        } catch (error) {
+            console.error('Error adding blog reaction:', error);
             return { error: error.message };
         }
     }
