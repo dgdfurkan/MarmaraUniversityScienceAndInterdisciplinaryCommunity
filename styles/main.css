@@ -1476,6 +1476,11 @@ section {
     z-index: -1;
 }
 
+/* Initial state reset for progress bars */
+.announcement-card .reaction-progress {
+    transition: width 0s;
+}
+
 .reaction[data-reaction="onay"] .reaction-progress { background-color: #3b5998; }
 .reaction[data-reaction="katiliyorum"] .reaction-progress { background-color: #28a745; }
 .reaction[data-reaction="katilamiyorum"] .reaction-progress { background-color: #dc3545; }

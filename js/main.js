@@ -241,7 +241,14 @@ async function loadAnnouncements() {
             document.querySelectorAll('.announcement-card').forEach(card => {
                 updateVoteDisplay(card);
             });
-        }, 100);
+        }, 500);
+        
+        // Sayfa tamamen yüklendikten sonra da bir kez daha kontrol et
+        setTimeout(() => {
+            document.querySelectorAll('.announcement-card').forEach(card => {
+                updateVoteDisplay(card);
+            });
+        }, 1000);
         
     } catch (error) {
         console.error('Error loading announcements:', error);
@@ -1743,7 +1750,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
             const progressBar = reaction.querySelector('.reaction-progress');
             if (progressBar) {
+                // İlk yüklemede transition'ı geçici disable et
+                progressBar.style.transition = 'none';
                 progressBar.style.width = `${percentage}%`;
+                
+                // Kısa bir süre sonra transition'ı tekrar aktif et
+                setTimeout(() => {
+                    progressBar.style.transition = 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                }, 100);
             }
         });
     }
@@ -1856,4 +1870,13 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         observer.observe(el);
     });
+});
+
+// Sayfa tamamen yüklendikten sonra ekstra güvenlik kontrolü
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        document.querySelectorAll('.announcement-card').forEach(card => {
+            updateVoteDisplay(card);
+        });
+    }, 1500);
 });
