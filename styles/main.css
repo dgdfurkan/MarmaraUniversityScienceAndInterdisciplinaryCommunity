@@ -1471,9 +1471,12 @@ section {
     height: 100%;
     width: 0; /* JS ile ayarlanacak */
     border-radius: 20px;
-    opacity: 0.2;
+    background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255,255,255,0.4);
     transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-    z-index: -1;
+    z-index: 1;
+    opacity: 0.8;
 }
 
 /* Initial state reset for progress bars */
@@ -1481,15 +1484,32 @@ section {
     transition: width 0s;
 }
 
-.reaction[data-reaction="onay"] .reaction-progress { background-color: #3b5998; }
-.reaction[data-reaction="katiliyorum"] .reaction-progress { background-color: #28a745; }
-.reaction[data-reaction="katilamiyorum"] .reaction-progress { background-color: #dc3545; }
-.reaction[data-reaction="sorum_var"] .reaction-progress { background-color: #ffc107; }
-.reaction[data-reaction="destek"] .reaction-progress { background-color: #6c63ff; }
+.reaction[data-reaction="onay"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(59, 89, 152, 0.6) 0%, rgba(59, 89, 152, 0.3) 100%); 
+    border-color: rgba(59, 89, 152, 0.5);
+}
+.reaction[data-reaction="katiliyorum"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.6) 0%, rgba(40, 167, 69, 0.3) 100%); 
+    border-color: rgba(40, 167, 69, 0.5);
+}
+.reaction[data-reaction="katilamiyorum"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(220, 53, 69, 0.6) 0%, rgba(220, 53, 69, 0.3) 100%); 
+    border-color: rgba(220, 53, 69, 0.5);
+}
+.reaction[data-reaction="sorum_var"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.6) 0%, rgba(255, 193, 7, 0.3) 100%); 
+    border-color: rgba(255, 193, 7, 0.5);
+}
+.reaction[data-reaction="destek"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(108, 99, 255, 0.6) 0%, rgba(108, 99, 255, 0.3) 100%); 
+    border-color: rgba(108, 99, 255, 0.5);
+}
 
 .reaction .emoji {
     font-size: 1.2rem;
     transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    z-index: 2;
 }
 
 .reaction .count {
@@ -1497,6 +1517,8 @@ section {
     font-weight: 600;
     color: #606770;
     margin-left: 8px;
+    position: relative;
+    z-index: 2;
 }
 
 .reaction:hover {
@@ -1524,6 +1546,28 @@ section {
 
 .reaction.active .count {
     color: var(--primary-color, #3b5998);
+}
+
+/* Active reaction progress bars */
+.reaction.active[data-reaction="onay"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(59, 89, 152, 0.8) 0%, rgba(59, 89, 152, 0.5) 100%); 
+    opacity: 1;
+}
+.reaction.active[data-reaction="katiliyorum"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.8) 0%, rgba(40, 167, 69, 0.5) 100%); 
+    opacity: 1;
+}
+.reaction.active[data-reaction="katilamiyorum"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(220, 53, 69, 0.8) 0%, rgba(220, 53, 69, 0.5) 100%); 
+    opacity: 1;
+}
+.reaction.active[data-reaction="sorum_var"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.8) 0%, rgba(255, 193, 7, 0.5) 100%); 
+    opacity: 1;
+}
+.reaction.active[data-reaction="destek"] .reaction-progress { 
+    background: linear-gradient(90deg, rgba(108, 99, 255, 0.8) 0%, rgba(108, 99, 255, 0.5) 100%); 
+    opacity: 1;
 }
 
 .footer-stats {
