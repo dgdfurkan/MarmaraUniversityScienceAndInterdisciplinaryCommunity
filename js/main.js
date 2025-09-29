@@ -165,16 +165,25 @@ function updateVoteDisplay(announcementCard) {
         const count = parseInt(reaction.querySelector('.count').textContent);
         const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
         const progressBar = reaction.querySelector('.reaction-progress');
-        if (progressBar) {
-            // İlk yüklemede transition'ı geçici disable et
-            progressBar.style.transition = 'none';
-            progressBar.style.width = `${percentage}%`;
-            
-            // Kısa bir süre sonra transition'ı tekrar aktif et
-            setTimeout(() => {
-                progressBar.style.transition = 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            }, 100);
-        }
+            if (progressBar) {
+                // Oylar varsa göster
+                if (count > 0) {
+                    progressBar.classList.add('show');
+                    progressBar.style.opacity = '0.4';
+                } else {
+                    progressBar.classList.remove('show');
+                    progressBar.style.opacity = '0';
+                }
+                
+                // İlk yüklemede transition'ı geçici disable et
+                progressBar.style.transition = 'none';
+                progressBar.style.width = `${percentage}%`;
+                
+                // Kısa bir süre sonra transition'ı tekrar aktif et
+                setTimeout(() => {
+                    progressBar.style.transition = 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
+                }, 100);
+            }
     });
 }
 
