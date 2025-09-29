@@ -508,19 +508,19 @@ async function toggleBlogLike(postId) {
         const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
         if (cardElement) {
             const likeButton = cardElement.querySelector(`[onclick="toggleBlogLike(${postId})"]`);
-            const countSpan = likeButton.querySelector('.count');
-            
-            // Update button state
-            if (result.action === 'liked') {
-                likeButton.classList.add('active');
-            } else if (result.action === 'unliked') {
-                likeButton.classList.remove('active');
+            if (likeButton) {
+                // Update button state
+                if (result.action === 'liked') {
+                    likeButton.classList.add('active');
+                } else if (result.action === 'unliked') {
+                    likeButton.classList.remove('active');
+                }
+                
+                // Update count (we'll need to reload to get accurate count)
+                setTimeout(() => {
+                    loadBlogPosts();
+                }, 500);
             }
-            
-            // Update count (we'll need to reload to get accurate count)
-            setTimeout(() => {
-                loadBlogPosts();
-            }, 500);
         }
         
         console.log('Like toggled:', result.action);
@@ -543,18 +543,19 @@ async function addBlogReaction(postId, reactionType) {
         const cardElement = document.querySelector(`[data-post-id="${postId}"]`);
         if (cardElement) {
             const reactionButton = cardElement.querySelector(`[onclick="addBlogReaction(${postId}, '${reactionType}')"]`);
-            
-            // Update button state
-            if (result.action === 'added') {
-                reactionButton.classList.add('active');
-            } else if (result.action === 'removed') {
-                reactionButton.classList.remove('active');
+            if (reactionButton) {
+                // Update button state
+                if (result.action === 'added') {
+                    reactionButton.classList.add('active');
+                } else if (result.action === 'removed') {
+                    reactionButton.classList.remove('active');
+                }
+                
+                // Update count (we'll need to reload to get accurate count)
+                setTimeout(() => {
+                    loadBlogPosts();
+                }, 500);
             }
-            
-            // Update count (we'll need to reload to get accurate count)
-            setTimeout(() => {
-                loadBlogPosts();
-            }, 500);
         }
         
         console.log('Reaction toggled:', result.action, result.reactionType);
