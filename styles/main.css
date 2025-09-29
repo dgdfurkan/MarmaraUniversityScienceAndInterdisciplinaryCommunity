@@ -1452,13 +1452,35 @@ section {
     padding: 6px 12px;
     border-radius: 20px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.4s ease, box-shadow 0.4s ease;
     background-color: #e4e6eb;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    border: 2px solid transparent;
 }
 
 .reaction:not(:last-child) {
     margin-right: 10px;
 }
+
+.reaction-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0; /* JS ile ayarlanacak */
+    border-radius: 20px;
+    opacity: 0.2;
+    transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: -1;
+}
+
+.reaction[data-reaction="onay"] .reaction-progress { background-color: #3b5998; }
+.reaction[data-reaction="katiliyorum"] .reaction-progress { background-color: #28a745; }
+.reaction[data-reaction="katilamiyorum"] .reaction-progress { background-color: #dc3545; }
+.reaction[data-reaction="sorum_var"] .reaction-progress { background-color: #ffc107; }
+.reaction[data-reaction="destek"] .reaction-progress { background-color: #6c63ff; }
 
 .reaction .emoji {
     font-size: 1.2rem;
@@ -1481,19 +1503,31 @@ section {
 }
 
 .reaction.active {
-    background-color: #cfe2ff;
     font-weight: 700;
 }
+
+/* Aktif oy parlaması */
+.reaction[data-reaction="onay"].active { background-color: #cfe2ff; border-color: rgba(59, 89, 152, 0.7); box-shadow: 0 0 10px rgba(59, 89, 152, 0.6); }
+.reaction[data-reaction="katiliyorum"].active { background-color: #d4edda; border-color: rgba(40, 167, 69, 0.7); box-shadow: 0 0 10px rgba(40, 167, 69, 0.6); }
+.reaction[data-reaction="katilamiyorum"].active { background-color: #f8d7da; border-color: rgba(220, 53, 69, 0.7); box-shadow: 0 0 10px rgba(220, 53, 69, 0.6); }
+.reaction[data-reaction="sorum_var"].active { background-color: #fff3cd; border-color: rgba(255, 193, 7, 0.7); box-shadow: 0 0 10px rgba(255, 193, 7, 0.6); }
+.reaction[data-reaction="destek"].active { background-color: #e2e0ff; border-color: rgba(108, 99, 255, 0.7); box-shadow: 0 0 10px rgba(108, 99, 255, 0.6); }
 
 .reaction.active .emoji {
     animation: emojiPop 0.5s cubic-bezier(0.1, 0.8, 0.5, 1.5);
 }
 
 .reaction.active .count {
-    color: #3b5998;
+    color: var(--primary-color, #3b5998);
 }
 
-.view-count {
+.footer-stats {
+    display: flex;
+    flex-direction: column; /* Dikey hizalama */
+    align-items: flex-start; /* Sola hizalama */
+}
+
+.view-count, .total-votes {
     display: flex;
     align-items: center;
     font-size: 0.8rem;
@@ -1501,7 +1535,11 @@ section {
     color: #606770;
 }
 
-.view-count i {
+.view-count {
+    margin-bottom: 5px; /* Alt alta boşluk */
+}
+
+.view-count i, .total-votes i {
     margin-right: 6px;
 }
 

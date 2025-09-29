@@ -196,34 +196,52 @@ async function loadAnnouncements() {
                 <div class="announcement-footer">
                         <div class="reactions-group reactions">
                             <div class="reaction ${activeReaction === 'onay' ? 'active' : ''}" data-reaction="onay">
+                                <div class="reaction-progress"></div>
                                 <span class="emoji">👍</span>
                                 <span class="count">${announcement.reaction_onay || 0}</span>
                 </div>
                             <div class="reaction ${activeReaction === 'katiliyorum' ? 'active' : ''}" data-reaction="katiliyorum">
+                                <div class="reaction-progress"></div>
                                 <span class="emoji">✅</span>
                                 <span class="count">${announcement.reaction_katiliyorum || 0}</span>
             </div>
                             <div class="reaction ${activeReaction === 'katilamiyorum' ? 'active' : ''}" data-reaction="katilamiyorum">
+                                <div class="reaction-progress"></div>
                                 <span class="emoji">❌</span>
                                 <span class="count">${announcement.reaction_katilamiyorum || 0}</span>
                             </div>
                             <div class="reaction ${activeReaction === 'sorum_var' ? 'active' : ''}" data-reaction="sorum_var">
+                                <div class="reaction-progress"></div>
                                 <span class="emoji">🤔</span>
                                 <span class="count">${announcement.reaction_sorum_var || 0}</span>
                             </div>
                             <div class="reaction ${activeReaction === 'destek' ? 'active' : ''}" data-reaction="destek">
+                                <div class="reaction-progress"></div>
                                 <span class="emoji">👏</span>
                                 <span class="count">${announcement.reaction_destek || 0}</span>
                             </div>
                         </div>
-                        <div class="view-count">
-                            <i class="fas fa-eye"></i>
-                            <span>${announcement.view_count || 0}</span>
+                        <div class="footer-stats">
+                            <div class="view-count">
+                                <i class="fas fa-eye"></i>
+                                <span>${announcement.view_count || 0}</span>
+                            </div>
+                            <div class="total-votes">
+                                <i class="fas fa-poll"></i>
+                                <span id="total-votes-count-${announcement.id}">${(announcement.reaction_onay || 0) + (announcement.reaction_katiliyorum || 0) + (announcement.reaction_katilamiyorum || 0) + (announcement.reaction_sorum_var || 0) + (announcement.reaction_destek || 0)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
         }).join('');
+        
+        // Sayfa yüklendiğinde progress bar'ları ayarla
+        setTimeout(() => {
+            document.querySelectorAll('.announcement-card').forEach(card => {
+                updateVoteDisplay(card);
+            });
+        }, 100);
         
     } catch (error) {
         console.error('Error loading announcements:', error);
@@ -1690,12 +1708,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Konfeti ve ışık efektlerini tetikle
                     triggerAnnouncementEffects(announcementCard, reactionType);
                 }
+                
+                // Total votes'u ve progress bar'ları güncelle
+                updateVoteDisplay(announcementCard);
+                
             } catch (error) {
                 console.error('Error updating reaction:', error);
                 alert('Reaksiyon güncellenirken bir hata oluştu.');
             }
         }
     });
+    
+    // Vote display güncelleme fonksiyonu
+    function updateVoteDisplay(announcementCard) {
+        const announcementId = announcementCard.dataset.announcementId;
+        const reactions = announcementCard.querySelectorAll('.reaction');
+        
+        // Total votes'u hesapla
+        let totalVotes = 0;
+        reactions.forEach(reaction => {
+            const count = parseInt(reaction.querySelector('.count').textContent);
+            totalVotes += count;
+        });
+        
+        // Total votes span'ini güncelle
+        const totalVotesSpan = announcementCard.querySelector(`#total-votes-count-${announcementId}`);
+        if (totalVotesSpan) {
+            totalVotesSpan.textContent = totalVotes;
+        }
+        
+        // Progress bar'ları güncelle
+        reactions.forEach(reaction => {
+            const count = parseInt(reaction.querySelector('.count').textContent);
+            const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+            const progressBar = reaction.querySelector('.reaction-progress');
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+        });
+    }
     
     // Konfeti ve ışık efektleri
     function triggerAnnouncementEffects(card, reactionType) {
