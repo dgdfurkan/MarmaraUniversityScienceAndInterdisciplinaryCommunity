@@ -142,6 +142,42 @@ async function incrementAnnouncementViewCount(announcementId) {
     }
 }
 
+// Global updateVoteDisplay fonksiyonu
+function updateVoteDisplay(announcementCard) {
+    const announcementId = announcementCard.dataset.announcementId;
+    const reactions = announcementCard.querySelectorAll('.reaction');
+    
+    // Total votes'u hesapla
+    let totalVotes = 0;
+    reactions.forEach(reaction => {
+        const count = parseInt(reaction.querySelector('.count').textContent);
+        totalVotes += count;
+    });
+    
+    // Total votes span'ini güncelle
+    const totalVotesSpan = announcementCard.querySelector(`#total-votes-count-${announcementId}`);
+    if (totalVotesSpan) {
+        totalVotesSpan.textContent = totalVotes;
+    }
+    
+    // Progress bar'ları güncelle
+    reactions.forEach(reaction => {
+        const count = parseInt(reaction.querySelector('.count').textContent);
+        const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+        const progressBar = reaction.querySelector('.reaction-progress');
+        if (progressBar) {
+            // İlk yüklemede transition'ı geçici disable et
+            progressBar.style.transition = 'none';
+            progressBar.style.width = `${percentage}%`;
+            
+            // Kısa bir süre sonra transition'ı tekrar aktif et
+            setTimeout(() => {
+                progressBar.style.transition = 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            }, 100);
+        }
+    });
+}
+
 // Load announcements dynamically
 async function loadAnnouncements() {
     const announcementsContainer = document.getElementById('announcements-container');
@@ -1725,42 +1761,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-    
-    // Vote display güncelleme fonksiyonu
-    function updateVoteDisplay(announcementCard) {
-        const announcementId = announcementCard.dataset.announcementId;
-        const reactions = announcementCard.querySelectorAll('.reaction');
-        
-        // Total votes'u hesapla
-        let totalVotes = 0;
-        reactions.forEach(reaction => {
-            const count = parseInt(reaction.querySelector('.count').textContent);
-            totalVotes += count;
-        });
-        
-        // Total votes span'ini güncelle
-        const totalVotesSpan = announcementCard.querySelector(`#total-votes-count-${announcementId}`);
-        if (totalVotesSpan) {
-            totalVotesSpan.textContent = totalVotes;
-        }
-        
-        // Progress bar'ları güncelle
-        reactions.forEach(reaction => {
-            const count = parseInt(reaction.querySelector('.count').textContent);
-            const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
-            const progressBar = reaction.querySelector('.reaction-progress');
-            if (progressBar) {
-                // İlk yüklemede transition'ı geçici disable et
-                progressBar.style.transition = 'none';
-                progressBar.style.width = `${percentage}%`;
-                
-                // Kısa bir süre sonra transition'ı tekrar aktif et
-                setTimeout(() => {
-                    progressBar.style.transition = 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                }, 100);
-            }
-        });
-    }
     
     // Konfeti ve ışık efektleri
     function triggerAnnouncementEffects(card, reactionType) {
