@@ -432,6 +432,14 @@ class DatabaseService {
             
             if (insertError) throw insertError;
             
+            // Update view count in blog_posts table
+            const { error: updateError } = await supabase
+                .from('blog_posts')
+                .update({ view_count: supabase.raw('view_count + 1') })
+                .eq('id', postId);
+            
+            if (updateError) throw updateError;
+            
             console.log('Blog view incremented for IP:', userIP);
             return { success: true };
             
@@ -466,6 +474,14 @@ class DatabaseService {
                 
                 if (deleteError) throw deleteError;
                 
+                // Update like count in blog_posts table
+                const { error: updateError } = await supabase
+                    .from('blog_posts')
+                    .update({ like_count: supabase.raw('like_count - 1') })
+                    .eq('id', postId);
+                
+                if (updateError) throw updateError;
+                
                 console.log('Blog like removed for IP:', userIP);
                 return { action: 'unliked', success: true };
             } else {
@@ -476,10 +492,19 @@ class DatabaseService {
                         blog_id: postId,
                         interaction_type: 'like',
                         user_ip: userIP,
-                        user_fingerprint: userFingerprint
+                        user_fingerprint: userFingerprint,
+                        reaction_emoji: '❤️'
                     }]);
                 
                 if (insertError) throw insertError;
+                
+                // Update like count in blog_posts table
+                const { error: updateError } = await supabase
+                    .from('blog_posts')
+                    .update({ like_count: supabase.raw('like_count + 1') })
+                    .eq('id', postId);
+                
+                if (updateError) throw updateError;
                 
                 console.log('Blog like added for IP:', userIP);
                 return { action: 'liked', success: true };
@@ -567,6 +592,15 @@ class DatabaseService {
                 
                 if (deleteError) throw deleteError;
                 
+                // Update reaction count in blog_posts table
+                const countColumn = `${reactionType}_count`;
+                const { error: updateError } = await supabase
+                    .from('blog_posts')
+                    .update({ [countColumn]: supabase.raw(`${countColumn} - 1`) })
+                    .eq('id', postId);
+                
+                if (updateError) throw updateError;
+                
                 console.log(`Blog ${reactionType} reaction removed for IP:`, userIP);
                 return { action: 'removed', reactionType, emoji };
             } else {
@@ -582,6 +616,15 @@ class DatabaseService {
                     }]);
                 
                 if (insertError) throw insertError;
+                
+                // Update reaction count in blog_posts table
+                const countColumn = `${reactionType}_count`;
+                const { error: updateError } = await supabase
+                    .from('blog_posts')
+                    .update({ [countColumn]: supabase.raw(`${countColumn} + 1`) })
+                    .eq('id', postId);
+                
+                if (updateError) throw updateError;
                 
                 console.log(`Blog ${reactionType} reaction added for IP:`, userIP);
                 return { action: 'added', reactionType, emoji };
