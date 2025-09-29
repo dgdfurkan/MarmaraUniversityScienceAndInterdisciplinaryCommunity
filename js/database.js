@@ -434,9 +434,10 @@ class DatabaseService {
             
             // Update view count in blog_posts table
             const { error: updateError } = await supabase
-                .from('blog_posts')
-                .update({ view_count: supabase.raw('view_count + 1') })
-                .eq('id', postId);
+                .rpc('update_blog_view_count', { 
+                    blog_id: postId, 
+                    increment: true 
+                });
             
             if (updateError) throw updateError;
             
@@ -476,9 +477,11 @@ class DatabaseService {
                 
                 // Update like count in blog_posts table
                 const { error: updateError } = await supabase
-                    .from('blog_posts')
-                    .update({ like_count: supabase.raw('like_count - 1') })
-                    .eq('id', postId);
+                    .rpc('update_blog_reaction_count', { 
+                        blog_id: postId, 
+                        reaction_type: 'like',
+                        increment: false 
+                    });
                 
                 if (updateError) throw updateError;
                 
@@ -500,9 +503,11 @@ class DatabaseService {
                 
                 // Update like count in blog_posts table
                 const { error: updateError } = await supabase
-                    .from('blog_posts')
-                    .update({ like_count: supabase.raw('like_count + 1') })
-                    .eq('id', postId);
+                    .rpc('update_blog_reaction_count', { 
+                        blog_id: postId, 
+                        reaction_type: 'like',
+                        increment: true 
+                    });
                 
                 if (updateError) throw updateError;
                 
@@ -593,11 +598,12 @@ class DatabaseService {
                 if (deleteError) throw deleteError;
                 
                 // Update reaction count in blog_posts table
-                const countColumn = `${reactionType}_count`;
                 const { error: updateError } = await supabase
-                    .from('blog_posts')
-                    .update({ [countColumn]: supabase.raw(`${countColumn} - 1`) })
-                    .eq('id', postId);
+                    .rpc('update_blog_reaction_count', { 
+                        blog_id: postId, 
+                        reaction_type: reactionType,
+                        increment: false 
+                    });
                 
                 if (updateError) throw updateError;
                 
@@ -618,11 +624,12 @@ class DatabaseService {
                 if (insertError) throw insertError;
                 
                 // Update reaction count in blog_posts table
-                const countColumn = `${reactionType}_count`;
                 const { error: updateError } = await supabase
-                    .from('blog_posts')
-                    .update({ [countColumn]: supabase.raw(`${countColumn} + 1`) })
-                    .eq('id', postId);
+                    .rpc('update_blog_reaction_count', { 
+                        blog_id: postId, 
+                        reaction_type: reactionType,
+                        increment: true 
+                    });
                 
                 if (updateError) throw updateError;
                 
