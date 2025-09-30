@@ -18,7 +18,85 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.style.overflow = 'hidden';
     // Sayfa yenilendiğinde en üste dön
     window.scrollTo(0, 0);
+    
+    // Daktilo animasyonunu başlat
+    startTypewriterAnimation();
 });
+
+// Daktilo animasyonu
+function startTypewriterAnimation() {
+    const line1Element = document.getElementById('line1');
+    const line2Element = document.getElementById('line2');
+
+    if (!line1Element || !line2Element) return;
+
+    // Yazılacak metinler
+    const text1 = "Bilimi Keşfet,";
+    const text2 = "Geleceği Şekillendir!";
+
+    // Efekt hızları (milisaniye cinsinden)
+    const typingSpeed = 100;
+    const deletingSpeed = 60;
+    const delayBetweenLines = 500;
+    const delayBeforeDelete = 2000;
+
+    // Belirtilen süre kadar beklemeyi sağlayan yardımcı fonksiyon
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Yazma (daktilo) işlemini yapan asenkron fonksiyon
+    async function typeWriter(element, text) {
+        element.classList.add('typing');
+        element.style.borderRight = '3px solid #fff';
+        for (let i = 0; i < text.length; i++) {
+            element.textContent += text.charAt(i);
+            await sleep(typingSpeed);
+        }
+        element.classList.remove('typing');
+        element.style.borderRight = 'none';
+    }
+
+    // Silme işlemini yapan asenkron fonksiyon
+    async function deleteWriter(element) {
+        const text = element.textContent;
+        element.classList.add('typing');
+        element.style.borderRight = '3px solid #fff';
+        for (let i = text.length; i > 0; i--) {
+            element.textContent = text.substring(0, i - 1);
+            await sleep(deletingSpeed);
+        }
+        element.classList.remove('typing');
+        element.style.borderRight = 'none';
+    }
+
+    // Tüm animasyon akışını yöneten ana fonksiyon
+    async function startAnimation() {
+        // Animasyon döngüsü
+        while (true) {
+            // 1. Birinci satırı yaz
+            await typeWriter(line1Element, text1);
+            await sleep(delayBetweenLines);
+
+            // 2. İkinci satırı yaz
+            await typeWriter(line2Element, text2);
+            await sleep(delayBeforeDelete);
+
+            // 3. İkinci satırı sil
+            await deleteWriter(line2Element);
+            await sleep(delayBetweenLines);
+
+            // 4. Birinci satırı sil
+            await deleteWriter(line1Element);
+            
+            // Animasyonun tekrar başlaması için bekleme süresi
+            await sleep(1000);
+        }
+    }
+    
+    // Animasyonu başlat
+    startAnimation();
+}
 
 // Mobile Navigation
 const hamburger = document.querySelector('.hamburger');
