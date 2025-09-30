@@ -1,3 +1,25 @@
+// Preloader
+const preloader = document.getElementById('preloader');
+
+// Hide preloader function
+function hidePreloader() {
+    if (preloader) {
+        preloader.classList.add('hide');
+        // Preloader tamamen kapandıktan sonra kaydırmayı etkinleştir
+        setTimeout(() => {
+            preloader.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }, 800);
+    }
+}
+
+// Sayfa yüklendiğinde preloader açıkken kaydırmayı engelle ve en üste dön
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.style.overflow = 'hidden';
+    // Sayfa yenilendiğinde en üste dön
+    window.scrollTo(0, 0);
+});
+
 // Mobile Navigation
 const hamburger = document.querySelector('.hamburger');
 const navMenu = document.querySelector('.nav-menu');
@@ -57,6 +79,8 @@ async function loadBlogPosts() {
         
         if (posts.length === 0) {
             blogContainer.innerHTML = '<p class="no-posts">Henüz blog yazısı bulunmuyor. Yakında yeni yazılar eklenecek!</p>';
+            // Preloader'ı gizle
+            hidePreloader();
             return;
         }
         
@@ -146,9 +170,14 @@ async function loadBlogPosts() {
             `;
         }).join('');
         
+        // Preloader'ı gizle
+        hidePreloader();
+        
     } catch (error) {
         console.error('Error loading blog posts:', error);
         blogContainer.innerHTML = '<p class="no-posts">Blog yazıları yüklenirken bir hata oluştu.</p>';
+        // Preloader'ı gizle
+        hidePreloader();
     }
 }
 
@@ -252,6 +281,9 @@ async function loadAnnouncements() {
                 return { ...announcement, userInteraction };
             })
         );
+        
+        // Preloader'ı gizle
+        hidePreloader();
         
         announcementsContainer.innerHTML = announcementsWithInteractions.map(announcement => {
             const announcementDate = new Date(announcement.created_at);
