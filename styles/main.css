@@ -228,6 +228,16 @@ body {
     color: #2563eb;
     font-size: 1.5rem;
     font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-logo-img {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
 }
 
 .nav-logo span {
@@ -296,6 +306,18 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
     align-items: center;
+}
+
+.hero-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.hero-logo-img {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
 }
 
 .hero-content h1 {
@@ -2210,6 +2232,27 @@ section {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 2rem;
     margin-bottom: 2rem;
+}
+
+.footer-logo h3 {
+    color: #f9fafb;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-logo-img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
+.footer-logo p {
+    color: #d1d5db;
+    margin: 0;
+    font-size: 0.9rem;
 }
 
 .footer-section h3,
