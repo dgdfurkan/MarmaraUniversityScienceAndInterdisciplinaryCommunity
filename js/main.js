@@ -1975,91 +1975,67 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Modern Navbar Scroll Behavior - Hide on scroll down, Show on scroll up
-let lastScrollY = 0;
-let scrollTimeout = null;
-const SCROLL_THRESHOLD = 10; // Minimum scroll distance to trigger hide/show
-const SCROLL_DELAY = 150; // Debounce delay for smooth performance
+// Modern Navbar Scroll Behavior - Hide on scroll down, Show on scroll up or hover (ANLIK/REAL-TIME)
+let lastScrollY = window.scrollY || 0;
+let ticking = false;
 
 function handleNavbarScroll() {
-    const navbar = document.querySelector('.navbar');
-    const navMenu = document.querySelector('.nav-menu');
-    const currentScrollY = window.scrollY;
-    const scrollDifference = Math.abs(currentScrollY - lastScrollY);
-    
-    // Don't hide navbar if mobile menu is open
-    const isMenuOpen = navMenu && navMenu.classList.contains('active');
-    if (isMenuOpen) {
-        return;
-    }
-    
-    // Clear existing timeout
-    if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
-    }
-    
-    // Only process if scroll difference is significant
-    if (scrollDifference < SCROLL_THRESHOLD) {
-        return;
-    }
-    
-    // Debounce scroll events for smooth performance
-    scrollTimeout = setTimeout(() => {
-        // Determine scroll direction
-        const scrollingDown = currentScrollY > lastScrollY;
-        const scrollingUp = currentScrollY < lastScrollY;
-        
-        // Only apply hide/show behavior on mobile or when scrolled past hero section
-        const isMobile = window.innerWidth <= 968;
-        const isPastHero = currentScrollY > 200;
-        
-        if (isMobile || isPastHero) {
-            if (scrollingDown && currentScrollY > 100) {
-                // Scrolling down - hide navbar smoothly
-                navbar.classList.remove('visible', 'scrolled');
-                navbar.classList.add('hidden');
-            } else if (scrollingUp) {
-                // Scrolling up - show navbar smoothly
+    if (!ticking) {
+        window.requestAnimationFrame(() => {
+            const navbar = document.querySelector('.navbar');
+            const navMenu = document.querySelector('.nav-menu');
+            const currentScrollY = window.scrollY;
+            
+            // Don't hide navbar if mobile menu is open
+            const isMenuOpen = navMenu && navMenu.classList.contains('active');
+            if (isMenuOpen) {
+                ticking = false;
+                return;
+            }
+            
+            // Always keep shrunk and scrolled classes (navbar always small)
+            navbar.classList.add('shrunk', 'scrolled');
+            
+            // Determine scroll direction - ANLIK (real-time)
+            const scrollingDown = currentScrollY > lastScrollY;
+            const scrollingUp = currentScrollY < lastScrollY;
+            
+            // Hide/show behavior: ANLIK olarak işle
+            if (currentScrollY <= 50) {
+                // At top of page - always visible
                 navbar.classList.remove('hidden');
                 navbar.classList.add('visible');
-                
-                // Add scrolled class if past threshold for shadow effect
-                if (currentScrollY > 100) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
-                }
+            } else if (scrollingDown) {
+                // Scrolling down - ANLIK gizle
+                navbar.classList.remove('visible');
+                navbar.classList.add('hidden');
+            } else if (scrollingUp) {
+                // Scrolling up - ANLIK göster
+                navbar.classList.remove('hidden');
+                navbar.classList.add('visible');
             }
-        } else {
-            // At top of page or desktop - always show
-            navbar.classList.remove('hidden');
-            navbar.classList.add('visible');
             
-            // Add scrolled class for shadow if scrolled
-            if (currentScrollY > 100) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        }
+            // Update last scroll position
+            lastScrollY = currentScrollY;
+            ticking = false;
+        });
         
-        // Update last scroll position
-        lastScrollY = currentScrollY;
-    }, SCROLL_DELAY);
+        ticking = true;
+    }
 }
 
-// Main scroll event listener
+// Main scroll event listener - ANLIK işleme
 window.addEventListener('scroll', handleNavbarScroll, { passive: true });
 
-// Reset navbar when at top of page
-window.addEventListener('scroll', () => {
+// Show navbar on hover
+document.addEventListener('DOMContentLoaded', () => {
     const navbar = document.querySelector('.navbar');
-    if (window.scrollY <= 50) {
-        navbar.classList.remove('hidden', 'scrolled');
+    
+    navbar.addEventListener('mouseenter', () => {
+        navbar.classList.remove('hidden');
         navbar.classList.add('visible');
-        lastScrollY = 0;
-    }
-}, { passive: true });
+    });
+});
 
 // Handle window resize - reset scroll behavior
 let resizeTimeout;
@@ -2067,38 +2043,55 @@ window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
         const navbar = document.querySelector('.navbar');
-        // Reset navbar state on resize
+        // Always keep shrunk and scrolled
+        navbar.classList.add('shrunk', 'scrolled');
+        // Reset navbar visibility state on resize
         if (window.scrollY <= 50) {
-            navbar.classList.remove('hidden', 'scrolled');
+            navbar.classList.remove('hidden');
             navbar.classList.add('visible');
         }
-        lastScrollY = window.scrollY;
+        lastScrollY = window.scrollY || 0;
     }, 250);
 }, { passive: true });
 
-// Intersection Observer for animations
+// Intersection Observer for Scroll Reveal Animations
 const observerOptions = {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
 };
 
-const observer = new IntersectionObserver((entries) => {
+const scrollObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
+            entry.target.classList.add('revealed');
+            // Legacy support for old animation style
+            if (entry.target.style.opacity === '0') {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
         }
     });
 }, observerOptions);
 
-// Observe elements for animation
+// Observe elements for scroll reveal animation
 document.addEventListener('DOMContentLoaded', () => {
+    // New scroll reveal classes
+    const scrollRevealElements = document.querySelectorAll(
+        '.scroll-reveal, .scroll-reveal-left, .scroll-reveal-right, .scroll-reveal-scale'
+    );
+    scrollRevealElements.forEach(el => {
+        scrollObserver.observe(el);
+    });
+    
+    // Legacy animated elements
     const animatedElements = document.querySelectorAll('.about-card, .event-card, .blog-card');
     animatedElements.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(el);
+        if (!el.classList.contains('scroll-reveal')) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            scrollObserver.observe(el);
+        }
     });
 });
 

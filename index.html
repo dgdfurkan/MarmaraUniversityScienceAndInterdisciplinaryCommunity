@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MUSIC - Marmara Üniversitesi Bilim ve Disiplinlerarası Topluluğu</title>
     <link rel="stylesheet" href="styles/main.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -27,24 +27,32 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="navbar">
+    <nav class="navbar shrunk scrolled visible">
         <div class="nav-container">
             <div class="nav-logo">
                 <img src="images/music_logo_cropped.png" alt="MUSIC Logo" class="nav-logo-img">
                 <span class="nav-logo-text">Marmara Üniversitesi Bilim ve Disiplinlerarası Topluluğu</span>
             </div>
             <ul class="nav-menu">
-                <li><a href="#home">Ana Sayfa</a></li>
-                <li><a href="#about">Hakkımızda</a></li>
-                <li><a href="#announcements">Duyurular</a></li>
-                <li><a href="#events">Etkinlikler</a></li>
-                <li><a href="#blog">Blog</a></li>
-                <li><a href="#contact">İletişim</a></li>
+                <li><a href="#home"><i class="fas fa-home"></i><span>Ana Sayfa</span></a></li>
+                <li><a href="#about"><i class="fas fa-info-circle"></i><span>Hakkımızda</span></a></li>
+                <li><a href="#announcements"><i class="fas fa-bullhorn"></i><span>Duyurular</span></a></li>
+                <li><a href="#events"><i class="fas fa-calendar-alt"></i><span>Etkinlikler</span></a></li>
+                <li><a href="#blog"><i class="fas fa-blog"></i><span>Blog</span></a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i><span>İletişim</span></a></li>
             </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
+            <div class="nav-actions">
+                <button class="nav-icon-btn" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="nav-icon-btn" aria-label="Profile">
+                    <i class="fas fa-user"></i>
+                </button>
+                <div class="hamburger" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </div>
         </div>
     </nav>
