@@ -1975,15 +1975,106 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Add scroll effect to navbar
+// Modern Navbar Scroll Behavior - Hide on scroll down, Show on scroll up
+let lastScrollY = 0;
+let scrollTimeout = null;
+const SCROLL_THRESHOLD = 10; // Minimum scroll distance to trigger hide/show
+const SCROLL_DELAY = 150; // Debounce delay for smooth performance
+
+function handleNavbarScroll() {
+    const navbar = document.querySelector('.navbar');
+    const navMenu = document.querySelector('.nav-menu');
+    const currentScrollY = window.scrollY;
+    const scrollDifference = Math.abs(currentScrollY - lastScrollY);
+    
+    // Don't hide navbar if mobile menu is open
+    const isMenuOpen = navMenu && navMenu.classList.contains('active');
+    if (isMenuOpen) {
+        return;
+    }
+    
+    // Clear existing timeout
+    if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+    }
+    
+    // Only process if scroll difference is significant
+    if (scrollDifference < SCROLL_THRESHOLD) {
+        return;
+    }
+    
+    // Debounce scroll events for smooth performance
+    scrollTimeout = setTimeout(() => {
+        // Determine scroll direction
+        const scrollingDown = currentScrollY > lastScrollY;
+        const scrollingUp = currentScrollY < lastScrollY;
+        
+        // Only apply hide/show behavior on mobile or when scrolled past hero section
+        const isMobile = window.innerWidth <= 968;
+        const isPastHero = currentScrollY > 200;
+        
+        if (isMobile || isPastHero) {
+            if (scrollingDown && currentScrollY > 100) {
+                // Scrolling down - hide navbar smoothly
+                navbar.classList.remove('visible', 'scrolled');
+                navbar.classList.add('hidden');
+            } else if (scrollingUp) {
+                // Scrolling up - show navbar smoothly
+                navbar.classList.remove('hidden');
+                navbar.classList.add('visible');
+                
+                // Add scrolled class if past threshold for shadow effect
+                if (currentScrollY > 100) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+        } else {
+            // At top of page or desktop - always show
+            navbar.classList.remove('hidden');
+            navbar.classList.add('visible');
+            
+            // Add scrolled class for shadow if scrolled
+            if (currentScrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        }
+        
+        // Update last scroll position
+        lastScrollY = currentScrollY;
+    }, SCROLL_DELAY);
+}
+
+// Main scroll event listener
+window.addEventListener('scroll', handleNavbarScroll, { passive: true });
+
+// Reset navbar when at top of page
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
-    if (window.scrollY > 100) {
-        navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-    } else {
-        navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+    if (window.scrollY <= 50) {
+        navbar.classList.remove('hidden', 'scrolled');
+        navbar.classList.add('visible');
+        lastScrollY = 0;
     }
-});
+}, { passive: true });
+
+// Handle window resize - reset scroll behavior
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        const navbar = document.querySelector('.navbar');
+        // Reset navbar state on resize
+        if (window.scrollY <= 50) {
+            navbar.classList.remove('hidden', 'scrolled');
+            navbar.classList.add('visible');
+        }
+        lastScrollY = window.scrollY;
+    }, 250);
+}, { passive: true });
 
 // Intersection Observer for animations
 const observerOptions = {
