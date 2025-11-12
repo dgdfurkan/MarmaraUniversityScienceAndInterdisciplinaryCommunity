@@ -14,10 +14,16 @@ function hidePreloader() {
 }
 
 // Sayfa yüklendiğinde preloader açıkken kaydırmayı engelle ve en üste dön
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     document.body.style.overflow = 'hidden';
     // Sayfa yenilendiğinde en üste dön
     window.scrollTo(0, 0);
+    
+    // Check user login status and update UI
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        await updateUserUI(user);
+    }
     
     // Scroll indicator click handler
     const scrollIndicator = document.querySelector('.scroll-arrow');
@@ -33,28 +39,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Typewriter animation removed - using static text with CSS animations instead
 
-// Mobile Navigation
-const hamburger = document.querySelector('.hamburger');
-const navMenu = document.querySelector('.nav-menu');
-
-hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navMenu.classList.toggle('active');
-});
-
-// Close mobile menu when clicking on a link
-document.querySelectorAll('.nav-menu a').forEach(link => {
-    link.addEventListener('click', () => {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    });
-});
+// Mobile Navigation - Hamburger kaldırıldı, artık gerek yok
 
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
+        const href = this.getAttribute('href');
+        // Boş hash veya sadece # kontrolü
+        if (!href || href === '#' || href.length <= 1) {
+            return;
+        }
+        const target = document.querySelector(href);
         if (target) {
             target.scrollIntoView({
                 behavior: 'smooth',
@@ -96,6 +92,9 @@ async function loadBlogPosts() {
             hidePreloader();
             return;
         }
+        
+        // Sort by created_at DESC (newest first)
+        posts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
         blogContainer.innerHTML = posts.map(post => {
             const postDate = new Date(post.created_at);
@@ -287,6 +286,9 @@ async function loadAnnouncements() {
             return;
         }
         
+        // Sort by created_at DESC (newest first)
+        announcements.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
         // Her duyuru için kullanıcı etkileşimini kontrol et
         const announcementsWithInteractions = await Promise.all(
             announcements.map(async (announcement) => {
@@ -404,7 +406,9 @@ async function loadEvents() {
             return;
         }
         
-        // En yeni etkinliği en sola koymak için reverse kullanıyoruz
+        // Sort by date DESC (newest first)
+        events.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
         eventsGrid.innerHTML = events.map(event => {
             const eventDate = new Date(event.date);
             const eventId = event.id;
@@ -500,11 +504,88 @@ async function loadEvents() {
 }
 
 // Event card flip functions
-function flipEventCard(eventId) {
+async function flipEventCard(eventId) {
     const card = document.querySelector(`[data-event-id="${eventId}"]`);
     if (card) {
         card.classList.add('is-flipped');
         setupCustomDropdowns(eventId);
+        // Auto-fill form if user is logged in
+        await autoFillEventForm(eventId);
+    }
+}
+
+// Auto-fill event registration form with user data
+async function autoFillEventForm(eventId) {
+    try {
+        // Check if user is logged in
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+            return; // User not logged in, skip auto-fill
+        }
+        
+        // Fetch user member data
+        const { data: memberData, error: memberError } = await supabase
+            .from('members')
+            .select('first_name, last_name, email, university, department')
+            .eq('user_id', user.id)
+            .single();
+        
+        if (memberError || !memberData) {
+            return; // No member data found, skip auto-fill
+        }
+        
+        // Find the form in the flipped card
+        const form = document.querySelector(`[data-event-id="${eventId}"] .event-registration-form`);
+        if (!form) return;
+        
+        // Fill form fields
+        const fullnameInput = form.querySelector('input[name="fullname"]');
+        const emailInput = form.querySelector('input[name="email"]');
+        const universityInput = form.querySelector('input[name="university"]');
+        const departmentInput = form.querySelector('input[name="department"]');
+        
+        if (fullnameInput && memberData.first_name && memberData.last_name) {
+            fullnameInput.value = `${memberData.first_name} ${memberData.last_name}`;
+            fullnameInput.classList.add('has-value');
+            fullnameInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        if (emailInput && memberData.email) {
+            emailInput.value = memberData.email;
+            emailInput.classList.add('has-value');
+            emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        if (universityInput && memberData.university) {
+            universityInput.value = memberData.university;
+            universityInput.classList.add('has-value');
+            universityInput.dispatchEvent(new Event('input', { bubbles: true }));
+            // Trigger dropdown setup if needed
+            setTimeout(() => {
+                const dropdown = form.querySelector('.university-dropdown');
+                if (dropdown && universities) {
+                    setupCustomDropdown(universityInput, dropdown, universities);
+                }
+            }, 200);
+        }
+        
+        if (departmentInput && memberData.department) {
+            departmentInput.value = memberData.department;
+            departmentInput.classList.add('has-value');
+            departmentInput.dispatchEvent(new Event('input', { bubbles: true }));
+            // Trigger dropdown setup if needed
+            setTimeout(() => {
+                const dropdown = form.querySelector('.department-dropdown');
+                if (dropdown && departments) {
+                    setupCustomDropdown(departmentInput, dropdown, departments);
+                }
+            }, 200);
+        }
+        
+    } catch (error) {
+        console.error('Error auto-filling event form:', error);
+        // Silently fail - user can still fill manually
     }
 }
 
@@ -1744,6 +1825,31 @@ const departments = [
     "Zootekni"
 ];
 
+// Phone country codes
+const phoneCountries = [
+    { display: '🇹🇷 +90', value: '+90' },
+    { display: '🇺🇸 +1', value: '+1' },
+    { display: '🇬🇧 +44', value: '+44' },
+    { display: '🇩🇪 +49', value: '+49' },
+    { display: '🇫🇷 +33', value: '+33' },
+    { display: '🇮🇹 +39', value: '+39' },
+    { display: '🇪🇸 +34', value: '+34' },
+    { display: '🇳🇱 +31', value: '+31' },
+    { display: '🇧🇪 +32', value: '+32' },
+    { display: '🇨🇭 +41', value: '+41' },
+    { display: '🇦🇹 +43', value: '+43' },
+    { display: '🇸🇪 +46', value: '+46' },
+    { display: '🇳🇴 +47', value: '+47' },
+    { display: '🇩🇰 +45', value: '+45' },
+    { display: '🇫🇮 +358', value: '+358' },
+    { display: '🇷🇺 +7', value: '+7' },
+    { display: '🇨🇳 +86', value: '+86' },
+    { display: '🇯🇵 +81', value: '+81' },
+    { display: '🇰🇷 +82', value: '+82' },
+    { display: '🇦🇪 +971', value: '+971' },
+    { display: '🇸🇦 +966', value: '+966' }
+];
+
 // Custom dropdown setup function
 function setupCustomDropdowns(eventId) {
     const card = document.querySelector(`[data-event-id="${eventId}"]`);
@@ -1763,7 +1869,7 @@ function setupCustomDropdowns(eventId) {
     }
 }
 
-function setupCustomDropdown(input, dropdown, data) {
+function setupCustomDropdown(input, dropdown, data, valueMapper = null) {
     function renderItems(filter = '') {
         dropdown.innerHTML = '';
         const filteredData = data.filter(item => item.toLowerCase().includes(filter.toLowerCase()));
@@ -1773,6 +1879,15 @@ function setupCustomDropdown(input, dropdown, data) {
             div.className = 'custom-dropdown-item';
             div.addEventListener('click', () => {
                 input.value = item;
+                // Add has-value class when item is selected
+                if (input.value.trim()) {
+                    input.classList.add('has-value');
+                }
+                // If valueMapper provided, set a data attribute with the mapped value
+                if (valueMapper) {
+                    const mappedValue = valueMapper(item);
+                    input.setAttribute('data-value', mappedValue);
+                }
                 input.dispatchEvent(new Event('input', { bubbles: true }));
                 dropdown.style.display = 'none';
             });
@@ -1780,14 +1895,31 @@ function setupCustomDropdown(input, dropdown, data) {
         });
     }
 
-    input.addEventListener('focus', () => {
+    let isUserInteraction = false;
+    
+    input.addEventListener('mousedown', () => {
+        isUserInteraction = true;
+    });
+    
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab' || e.key === 'Enter') {
+            isUserInteraction = true;
+        }
+    });
+    
+    input.addEventListener('focus', (e) => {
+        // Only open dropdown if it's a real user interaction
+        if (isUserInteraction) {
         renderItems(input.value);
         dropdown.style.display = 'block';
+        }
+        isUserInteraction = false;
     });
     
     input.addEventListener('input', () => {
+        // Only show dropdown on input if it's already open or user is typing
+        if (dropdown.style.display === 'block' || isUserInteraction) {
         renderItems(input.value);
-        if (dropdown.style.display !== 'block') {
             dropdown.style.display = 'block';
         }
     });
@@ -1982,8 +2114,9 @@ let ticking = false;
 function handleNavbarScroll() {
     if (!ticking) {
         window.requestAnimationFrame(() => {
-            const navbar = document.querySelector('.navbar');
+    const navbar = document.querySelector('.navbar');
             const navMenu = document.querySelector('.nav-menu');
+            const notificationsPanel = document.getElementById('notificationsPanel');
             const currentScrollY = window.scrollY;
             
             // Don't hide navbar if mobile menu is open
@@ -1995,6 +2128,11 @@ function handleNavbarScroll() {
             
             // Always keep shrunk and scrolled classes (navbar always small)
             navbar.classList.add('shrunk', 'scrolled');
+            
+            // Update notifications panel position based on navbar state
+            if (notificationsPanel) {
+                notificationsPanel.style.top = '56px';
+            }
             
             // Determine scroll direction - ANLIK (real-time)
             const scrollingDown = currentScrollY > lastScrollY;
@@ -2026,6 +2164,14 @@ function handleNavbarScroll() {
 
 // Main scroll event listener - ANLIK işleme
 window.addEventListener('scroll', handleNavbarScroll, { passive: true });
+
+// Close notifications panel on scroll
+window.addEventListener('scroll', () => {
+    const notificationsPanel = document.getElementById('notificationsPanel');
+    if (notificationsPanel && notificationsPanel.classList.contains('active')) {
+        notificationsPanel.classList.remove('active');
+    }
+}, { passive: true });
 
 // Show navbar on hover
 document.addEventListener('DOMContentLoaded', () => {
@@ -2066,8 +2212,8 @@ const scrollObserver = new IntersectionObserver((entries) => {
             entry.target.classList.add('revealed');
             // Legacy support for old animation style
             if (entry.target.style.opacity === '0') {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
             }
         }
     });
@@ -2087,9 +2233,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const animatedElements = document.querySelectorAll('.about-card, .event-card, .blog-card');
     animatedElements.forEach(el => {
         if (!el.classList.contains('scroll-reveal')) {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(30px)';
-            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
             scrollObserver.observe(el);
         }
     });
@@ -2103,3 +2249,1930 @@ window.addEventListener('load', () => {
         });
     }, 1500);
 });
+
+// ============================================
+// NOTIFICATIONS SYSTEM - IP/USER BASED
+// ============================================
+
+let notifications = [];
+let unreadCount = 0;
+let userIdentifier = null; // IP veya user ID
+let visitedSections = new Set(); // Ziyaret edilen bölümler
+let clickedItems = new Set(); // Tıklanan öğeler (blog post, event, announcement)
+
+// Get user identifier (IP or user ID)
+async function getUserIdentifier() {
+    if (userIdentifier) return userIdentifier;
+    
+    try {
+        // Check if user is logged in - use global supabase from database.js
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+            userIdentifier = `user-${user.id}`;
+        } else {
+            // Get IP from localStorage or generate fingerprint
+            userIdentifier = localStorage.getItem('userFingerprint');
+            if (!userIdentifier) {
+                const fingerprint = await DatabaseService.getUserFingerprint();
+                userIdentifier = `ip-${fingerprint}`;
+                localStorage.setItem('userFingerprint', userIdentifier);
+            }
+        }
+        
+        return userIdentifier;
+    } catch (error) {
+        console.error('Error getting user identifier:', error);
+        return 'anonymous';
+    }
+}
+
+// Load visited sections and clicked items from localStorage
+function loadUserState() {
+    if (!userIdentifier) return;
+    const savedVisited = localStorage.getItem(`visitedSections-${userIdentifier}`);
+    const savedClicked = localStorage.getItem(`clickedItems-${userIdentifier}`);
+    
+    if (savedVisited) {
+        visitedSections = new Set(JSON.parse(savedVisited));
+    }
+    if (savedClicked) {
+        clickedItems = new Set(JSON.parse(savedClicked));
+    }
+}
+
+// Save user state to localStorage
+function saveUserState() {
+    if (!userIdentifier) return;
+    localStorage.setItem(`visitedSections-${userIdentifier}`, JSON.stringify([...visitedSections]));
+    localStorage.setItem(`clickedItems-${userIdentifier}`, JSON.stringify([...clickedItems]));
+}
+
+// Check if section is visited using Intersection Observer
+function setupSectionObserver() {
+    const sections = {
+        'announcements': document.querySelector('#announcements'),
+        'events': document.querySelector('#events'),
+        'blog': document.querySelector('#blog')
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+                const sectionId = entry.target.id;
+                visitedSections.add(sectionId);
+                saveUserState();
+                
+                // Mark related notifications as read
+                markNotificationsAsReadBySection(sectionId);
+            }
+        });
+    }, {
+        threshold: 0.3,
+        rootMargin: '0px'
+    });
+    
+    Object.values(sections).forEach(section => {
+        if (section) observer.observe(section);
+    });
+}
+
+// Mark notifications as read when section is visited
+function markNotificationsAsReadBySection(sectionId) {
+    let marked = false;
+    notifications.forEach(notif => {
+        if (notif.unread && notif.link === `#${sectionId}`) {
+            notif.unread = false;
+            unreadCount = Math.max(0, unreadCount - 1);
+            marked = true;
+        }
+    });
+    
+    if (marked) {
+        updateNotificationBadge();
+        renderNotifications();
+    }
+}
+
+// Track clicks on blog posts, events, announcements
+function setupClickTracking() {
+    // Blog posts
+    document.addEventListener('click', (e) => {
+        const blogCard = e.target.closest('.blog-card');
+        if (blogCard) {
+            const blogId = blogCard.dataset.blogId;
+            if (blogId) {
+                clickedItems.add(`blog-${blogId}`);
+                saveUserState();
+                markNotificationAsRead(`blog-${blogId}`);
+            }
+        }
+        
+        // Announcements
+        const announcementCard = e.target.closest('.announcement-card');
+        if (announcementCard) {
+            const announcementId = announcementCard.dataset.announcementId;
+            if (announcementId) {
+                clickedItems.add(`announcement-${announcementId}`);
+                saveUserState();
+                markNotificationAsRead(`announcement-${announcementId}`);
+            }
+        }
+        
+        // Events
+        const eventCard = e.target.closest('.event-card');
+        if (eventCard) {
+            const eventId = eventCard.dataset.eventId;
+            if (eventId) {
+                clickedItems.add(`event-${eventId}`);
+                saveUserState();
+                markNotificationAsRead(`event-${eventId}`);
+            }
+        }
+    });
+}
+
+// Notifications Panel Toggle
+const notificationsBtn = document.querySelector('.notifications-btn');
+const notificationsPanel = document.getElementById('notificationsPanel');
+const notificationsClose = document.querySelector('.notifications-close');
+const notificationsList = document.getElementById('notificationsList');
+const notificationBadge = document.querySelector('.notification-badge');
+
+if (notificationsBtn && notificationsPanel) {
+    notificationsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notificationsPanel.classList.toggle('active');
+    });
+
+    if (notificationsClose) {
+        notificationsClose.addEventListener('click', () => {
+            notificationsPanel.classList.remove('active');
+        });
+    }
+
+    // Close panel when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!notificationsPanel.contains(e.target) && !notificationsBtn.contains(e.target)) {
+            notificationsPanel.classList.remove('active');
+        }
+    });
+}
+
+// Check for new notifications
+async function checkNotifications() {
+    try {
+        await getUserIdentifier();
+        loadUserState();
+        
+        // Get new announcements, events, and blog posts
+        const announcements = await DatabaseService.getAnnouncements();
+        const events = await DatabaseService.getEvents();
+        const blogPosts = await DatabaseService.getBlogPosts();
+        
+        const newNotifications = [];
+        
+        // Check announcements
+        announcements.forEach(announcement => {
+            const notifId = `announcement-${announcement.id}`;
+            const isClicked = clickedItems.has(notifId);
+            const isVisited = visitedSections.has('announcements');
+            
+            // Only add if not clicked and section not visited
+            if (!isClicked && !isVisited) {
+                newNotifications.push({
+                    id: notifId,
+                    type: 'announcement',
+                    title: 'Yeni Duyuru',
+                    message: announcement.title,
+                    icon: 'fa-bullhorn',
+                    time: announcement.created_at,
+                    link: '#announcements',
+                    itemId: announcement.id
+                });
+            }
+        });
+        
+        // Check events
+        events.forEach(event => {
+            const notifId = `event-${event.id}`;
+            const isClicked = clickedItems.has(notifId);
+            const isVisited = visitedSections.has('events');
+            
+            if (!isClicked && !isVisited) {
+                newNotifications.push({
+                    id: notifId,
+                    type: 'event',
+                    title: 'Yeni Etkinlik',
+                    message: event.title,
+                    icon: 'fa-calendar-alt',
+                    time: event.created_at,
+                    link: '#events',
+                    itemId: event.id
+                });
+            }
+        });
+        
+        // Check blog posts
+        blogPosts.forEach(post => {
+            const notifId = `blog-${post.id}`;
+            const isClicked = clickedItems.has(notifId);
+            const isVisited = visitedSections.has('blog');
+            
+            if (!isClicked && !isVisited) {
+                newNotifications.push({
+                    id: notifId,
+                    type: 'blog',
+                    title: 'Yeni Blog',
+                    message: post.title,
+                    icon: 'fa-blog',
+                    time: post.created_at,
+                    link: '#blog',
+                    itemId: post.id
+                });
+            }
+        });
+        
+        // Add new notifications (only if not already exists)
+        newNotifications.forEach(notif => {
+            if (!notifications.find(n => n.id === notif.id)) {
+                notif.unread = true;
+                notifications.unshift(notif);
+                unreadCount++;
+            }
+        });
+        
+        // Update UI
+        updateNotificationBadge();
+        renderNotifications();
+        
+    } catch (error) {
+        console.error('Error checking notifications:', error);
+    }
+}
+
+// Update notification badge
+function updateNotificationBadge() {
+    if (notificationBadge) {
+        if (unreadCount > 0) {
+            notificationBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            notificationBadge.classList.add('show');
+            notificationBadge.classList.add('pulse');
+            setTimeout(() => {
+                notificationBadge.classList.remove('pulse');
+            }, 600);
+        } else {
+            notificationBadge.classList.remove('show');
+        }
+    }
+}
+
+// Render notifications
+function renderNotifications() {
+    if (!notificationsList) return;
+    
+    if (notifications.length === 0) {
+        notificationsList.innerHTML = `
+            <div class="notification-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>Henüz bildirim yok</p>
+            </div>
+        `;
+        return;
+    }
+    
+    notificationsList.innerHTML = notifications.map(notif => {
+        const timeAgo = getTimeAgo(notif.time);
+        const unreadClass = notif.unread ? 'unread' : '';
+        return `
+            <div class="notification-item ${unreadClass}" data-notification-id="${notif.id}">
+                <div class="notification-icon">
+                    <i class="fas ${notif.icon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${notif.title}</div>
+                    <div class="notification-message">${notif.message}</div>
+                    <div class="notification-time">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Add click handlers
+    notificationsList.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const notifId = item.dataset.notificationId;
+            const notif = notifications.find(n => n.id === notifId);
+            if (notif && notif.link) {
+                // Scroll to section
+                const targetSection = document.querySelector(notif.link);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Mark as read after scroll
+                    setTimeout(() => {
+                        markNotificationAsRead(notifId);
+                    }, 500);
+                }
+            }
+        });
+    });
+}
+
+// Mark notification as read
+function markNotificationAsRead(notifId) {
+    const notif = notifications.find(n => n.id === notifId);
+    if (notif && notif.unread) {
+        notif.unread = false;
+        unreadCount = Math.max(0, unreadCount - 1);
+        updateNotificationBadge();
+        renderNotifications();
+    }
+}
+
+// Get time ago string
+function getTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Az önce';
+    if (diffMins < 60) return `${diffMins} dk`;
+    if (diffHours < 24) return `${diffHours} sa`;
+    if (diffDays < 7) return `${diffDays} gün`;
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+}
+
+// Initialize notifications on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await getUserIdentifier();
+    loadUserState();
+    setupSectionObserver();
+    setupClickTracking();
+    checkNotifications();
+    // Check for new notifications every 5 minutes
+    setInterval(checkNotifications, 5 * 60 * 1000);
+});
+
+// ============================================
+// PROFILE MODAL - AUTHENTICATION SYSTEM
+// ============================================
+
+const profileBtn = document.querySelector('.profile-btn');
+const profileModal = document.getElementById('profileModal');
+const profileModalBackdrop = document.getElementById('profileModalBackdrop');
+const profileModalClose = document.getElementById('profileModalClose');
+const profileModalTitle = document.getElementById('profileModalTitle');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const showSignup = document.getElementById('showSignup');
+const showLogin = document.getElementById('showLogin');
+const loginFormElement = document.getElementById('loginFormElement');
+const signupFormElement = document.getElementById('signupFormElement');
+
+// Open/Close Profile Modal
+if (profileBtn && profileModal) {
+    profileBtn.addEventListener('click', async () => {
+        // Check if user is logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+            // User is logged in - show profile page
+            showProfilePage(user);
+        } else {
+            // User is not logged in - show login/signup
+            showAuthForms();
+        }
+        
+        profileModal.classList.add('active');
+        profileModalBackdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    });
+
+    function closeProfileModal() {
+        // Close avatar selection modal if open
+        if (avatarSelectionModal && avatarSelectionModal.style.display !== 'none') {
+            avatarSelectionModal.style.display = 'none';
+        }
+        
+        profileModal.classList.remove('active');
+        profileModalBackdrop.classList.remove('active');
+        document.body.style.overflow = '';
+        
+        // Scroll profile page to top AFTER modal closes (user won't see the scroll)
+        setTimeout(() => {
+            const profilePage = document.getElementById('profilePage');
+            if (profilePage && profilePage.style.display !== 'none') {
+                const profilePageContainer = profilePage.closest('.modal-body');
+                if (profilePageContainer) {
+                    profilePageContainer.scrollTop = 0;
+                }
+            }
+        }, 300); // Wait for modal close animation to complete
+    }
+
+    if (profileModalClose) {
+        profileModalClose.addEventListener('click', closeProfileModal);
+    }
+
+    if (profileModalBackdrop) {
+        profileModalBackdrop.addEventListener('click', closeProfileModal);
+    }
+
+    // Switch between login and signup
+    if (showSignup) {
+        showSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            profileModalTitle.textContent = 'Üye Ol';
+            // Setup dropdowns when signup form is shown
+            setTimeout(() => {
+                setupProfileDropdowns();
+            }, 100);
+        });
+    }
+
+    if (showLogin) {
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            signupForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            profileModalTitle.textContent = 'Giriş Yap';
+        });
+    }
+    
+    // Setup dropdowns when profile modal opens
+    profileBtn.addEventListener('click', () => {
+        setTimeout(() => {
+            if (signupForm.style.display !== 'none') {
+                setupProfileDropdowns();
+            }
+        }, 100);
+    });
+    
+    // Setup profile dropdowns
+    function setupProfileDropdowns() {
+        const universityInput = document.getElementById('signupUniversity');
+        const departmentInput = document.getElementById('signupDepartment');
+        const universityDropdown = document.querySelector('.university-dropdown-profile');
+        const departmentDropdown = document.querySelector('.department-dropdown-profile');
+        
+        if (universityInput && universityDropdown) {
+            setupCustomDropdown(universityInput, universityDropdown, universities);
+        }
+        
+        if (departmentInput && departmentDropdown) {
+            setupCustomDropdown(departmentInput, departmentDropdown, departments);
+        }
+    }
+    
+    // Setup all input fields for has-value class (label animation) - global setup
+    function setupInputLabelAnimations(container = document) {
+        const allInputs = container.querySelectorAll('.animated-form-control input');
+        allInputs.forEach(input => {
+            // Skip if already has listener (check for data attribute)
+            if (input.dataset.hasLabelListener === 'true') return;
+            
+            // Mark as having listener
+            input.dataset.hasLabelListener = 'true';
+            
+            // For password and tel inputs, always start without has-value (they should be empty)
+            if (input.type === 'password' || input.type === 'tel') {
+                input.classList.remove('has-value');
+                // Ensure label is in default position if empty
+                if (!input.value.trim()) {
+                    input.dispatchEvent(new Event('blur', { bubbles: true }));
+                }
+            } else {
+                // Check initial value for other inputs
+                if (input.value.trim()) {
+                    input.classList.add('has-value');
+                } else {
+                    input.classList.remove('has-value');
+                }
+            }
+            
+            // Add event listener for input changes
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.add('has-value');
+                } else {
+                    this.classList.remove('has-value');
+                }
+            });
+            
+            // Also handle focus/blur for readonly inputs
+            if (input.readOnly && input.value.trim()) {
+                input.classList.add('has-value');
+            }
+        });
+    }
+    
+    // Setup input animations when modal opens
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            setTimeout(() => {
+                setupInputLabelAnimations(profileModal);
+            }, 100);
+        });
+    }
+    
+    // Setup input animations on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        setupInputLabelAnimations();
+    });
+
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const targetId = toggle.dataset.target;
+            const input = document.getElementById(targetId);
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggle.classList.remove('fa-eye');
+                    toggle.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    toggle.classList.remove('fa-eye-slash');
+                    toggle.classList.add('fa-eye');
+                }
+            }
+        });
+    });
+    
+    // Handle select change for label animation
+    const signupGrade = document.getElementById('signupGrade');
+    if (signupGrade) {
+        signupGrade.addEventListener('change', function() {
+            // Add/remove class to trigger label animation
+            if (this.value) {
+                this.classList.add('has-value');
+            } else {
+                this.classList.remove('has-value');
+            }
+        });
+    }
+
+    // Login Form Submit
+    if (loginFormElement) {
+        let isLoginSubmitting = false; // Prevent double submission
+        
+        loginFormElement.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Prevent double submission
+            if (isLoginSubmitting) {
+                return;
+            }
+            
+            const loginSubmitButton = loginFormElement.querySelector('button[type="submit"]');
+            const originalLoginButtonText = loginSubmitButton ? loginSubmitButton.innerHTML : '';
+            
+            // Disable button and show loading state
+            if (loginSubmitButton) {
+                loginSubmitButton.disabled = true;
+                loginSubmitButton.setAttribute('aria-busy', 'true');
+                loginSubmitButton.classList.add('disabled');
+                loginSubmitButton.style.transform = 'none';
+                loginSubmitButton.style.boxShadow = 'none';
+                loginSubmitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş yapılıyor...';
+            }
+            
+            isLoginSubmitting = true;
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                // Supabase authentication - use global supabase from database.js
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                // Success - show beautiful notification
+                const { data: memberData } = await supabase
+                    .from('members')
+                    .select('first_name, last_name')
+                    .eq('user_id', data.user.id)
+                    .single();
+                
+                const userName = memberData ? `${memberData.first_name} ${memberData.last_name}` : data.user?.email?.split('@')[0] || 'Kullanıcı';
+                showAlert('success', '🎉 Giriş Başarılı!', `Hoş geldiniz, ${userName}! Hesabınıza başarıyla giriş yaptınız.`);
+                closeProfileModal();
+                loginFormElement.reset();
+                
+                // Update UI to show logged in state
+                await updateUserUI(data.user);
+                
+                // Re-enable button
+                if (loginSubmitButton) {
+                    loginSubmitButton.disabled = false;
+                    loginSubmitButton.removeAttribute('aria-busy');
+                    loginSubmitButton.classList.remove('disabled');
+                    loginSubmitButton.style.transform = '';
+                    loginSubmitButton.style.boxShadow = '';
+                    loginSubmitButton.innerHTML = originalLoginButtonText;
+                }
+                isLoginSubmitting = false;
+                
+            } catch (error) {
+                let errorMessage = 'E-posta veya şifre hatalı.';
+                if (error.message) {
+                    if (error.message.includes('Invalid login credentials')) {
+                        errorMessage = 'E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMessage = 'E-posta adresinizi doğrulamanız gerekiyor. Lütfen e-postanızı kontrol edin.';
+                    } else {
+                        errorMessage = error.message;
+                    }
+                }
+                showAlert('error', '❌ Giriş Hatası', errorMessage);
+                
+                // Re-enable button on error
+                if (loginSubmitButton) {
+                    loginSubmitButton.disabled = false;
+                    loginSubmitButton.removeAttribute('aria-busy');
+                    loginSubmitButton.classList.remove('disabled');
+                    loginSubmitButton.style.transform = '';
+                    loginSubmitButton.style.boxShadow = '';
+                    loginSubmitButton.innerHTML = originalLoginButtonText;
+                }
+                isLoginSubmitting = false;
+            }
+        });
+    }
+
+    // Signup Form Submit
+    if (signupFormElement) {
+        let isSubmitting = false; // Prevent double submission
+        
+        signupFormElement.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Prevent double submission
+            if (isSubmitting) {
+                return;
+            }
+            
+            const submitButton = signupFormElement.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton ? submitButton.innerHTML : '';
+            
+            // Disable button and show loading state
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.setAttribute('aria-busy', 'true');
+                submitButton.classList.add('disabled');
+                submitButton.style.transform = 'none';
+                submitButton.style.boxShadow = 'none';
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
+            }
+            
+            isSubmitting = true;
+            
+            const password = document.getElementById('signupPassword').value;
+            const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
+            
+                if (password !== passwordConfirm) {
+                    showAlert('error', 'Şifre hatası', 'Şifreler eşleşmiyor.');
+                    // Re-enable button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.removeAttribute('aria-busy');
+                        submitButton.classList.remove('disabled');
+                        submitButton.style.transform = '';
+                        submitButton.style.boxShadow = '';
+                        submitButton.innerHTML = originalButtonText;
+                    }
+                    isSubmitting = false;
+                    return;
+                }
+            
+            // Get and validate email (sadece format kontrolü, domain'e karışmıyoruz)
+            const emailInput = document.getElementById('signupEmail');
+            const emailValue = emailInput.value.trim();
+            
+            // Sadece temel format kontrolü (boşluk, @ işareti, nokta kontrolü)
+            // Domain validasyonu yapmıyoruz - her domain geçerli olabilir
+            if (!emailValue || !emailValue.includes('@') || !emailValue.includes('.')) {
+                showAlert('error', '❌ Geçersiz E-posta Formatı', 'Lütfen geçerli bir e-posta formatı girin. Örnek: kullanici@domain.com');
+                emailInput.focus();
+                return;
+            }
+            
+            // HTML5 native validation'a güveniyoruz (type="email" zaten var)
+            if (!emailInput.checkValidity()) {
+                showAlert('error', '❌ Geçersiz E-posta Formatı', emailInput.validationMessage || 'Lütfen geçerli bir e-posta adresi girin.');
+                emailInput.focus();
+                return;
+            }
+            
+            const formData = {
+                email: emailValue,
+                password: password,
+                firstName: document.getElementById('signupFirstName').value.trim(),
+                lastName: document.getElementById('signupLastName').value.trim(),
+                phone: document.getElementById('signupPhone').value.trim(),
+                university: document.getElementById('signupUniversity').value.trim(),
+                department: document.getElementById('signupDepartment').value.trim()
+            };
+            
+            try {
+                // E-posta doğrulama sistemi tamamen kapatıldı
+                // Artık e-posta doğrulama yapılmıyor - direkt kayıt ve giriş
+                const emailVerificationEnabled = false; // Her zaman kapalı
+                
+                console.log('📧 E-posta doğrulama durumu: KAPALI (sistem iptal edildi)');
+                
+                // Create user in Supabase Auth - use global supabase from database.js
+                // If email verification is disabled, we need to set email_confirm to true
+                const signUpOptions = {
+                    email: formData.email,
+                    password: formData.password
+                };
+                
+                // If email verification is disabled, we can try to auto-confirm
+                // Note: This might require Supabase dashboard settings
+                if (!emailVerificationEnabled) {
+                    // Try to sign up without email confirmation requirement
+                    signUpOptions.options = {
+                        emailRedirectTo: undefined,
+                        data: {
+                            email_verified: true
+                        }
+                    };
+                }
+                
+                const { data: authData, error: authError } = await supabase.auth.signUp(signUpOptions);
+                
+                if (authError) throw authError;
+                
+                console.log('👤 Auth Data:', {
+                    user: authData.user ? 'Var' : 'Yok',
+                    session: authData.session ? 'Var' : 'Yok',
+                    needsEmailConfirmation: authData.user && !authData.session
+                });
+                
+                // Save user details to members table (if table exists)
+                // Upsert kullanarak email zaten kayıtlıysa güncelle, yoksa ekle
+                try {
+                    const { error: dbError } = await supabase
+                        .from('members')
+                        .upsert([{
+                            email: formData.email,
+                            first_name: formData.firstName,
+                            last_name: formData.lastName,
+                            phone: formData.phone,
+                            university: formData.university,
+                            department: formData.department,
+                            user_id: authData.user?.id
+                        }], {
+                            onConflict: 'email',
+                            ignoreDuplicates: false
+                        });
+                    
+                    if (dbError) {
+                        // 409 conflict hatası normal (email zaten kayıtlı), diğer hataları logla
+                        if (dbError.code !== '23505') { // Unique violation
+                            console.warn('Members table error:', dbError);
+                        }
+                        // Continue anyway - user created in auth
+                    }
+                } catch (dbErr) {
+                    console.warn('Could not save to members table:', dbErr);
+                    // Continue anyway - user created in auth
+                }
+                
+                // Check if user is already signed in (session exists)
+                // If email verification is disabled and user has session, they're already logged in
+                if (!emailVerificationEnabled && authData.session) {
+                    // User is already logged in, show success and close modal
+                    showAlert('success', '🎉 Kayıt Başarılı!', `Hoş geldiniz, ${formData.firstName}! Hesabınız başarıyla oluşturuldu ve giriş yaptınız.`);
+                    closeProfileModal();
+                    signupFormElement.reset();
+                    
+                    // Update UI to show logged in state
+                    await updateUserUI(authData.user);
+                    
+                    // Re-enable button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.removeAttribute('aria-busy');
+                        submitButton.classList.remove('disabled');
+                        submitButton.style.transform = '';
+                        submitButton.style.boxShadow = '';
+                        submitButton.innerHTML = originalButtonText;
+                    }
+                    isSubmitting = false;
+                    return;
+                }
+                
+                // E-posta doğrulama sistemi tamamen kapatıldı - direkt giriş akışı
+                // E-posta doğrulama formu gösterilmiyor, direkt login formuna yönlendiriliyor
+                // Kullanıcı oluşturuldu, şimdi giriş yapmayı dene
+                // Supabase'de e-posta doğrulama kapalı olsa bile, bazen session oluşmuyor
+                // Bu durumda manuel olarak giriş yapmayı deneyelim
+                
+                let loggedIn = false;
+                
+                // Eğer session varsa, zaten giriş yapılmış
+                if (authData.session) {
+                    loggedIn = true;
+                    showAlert('success', '🎉 Kayıt Başarılı!', `Hoş geldiniz, ${formData.firstName}! Hesabınız başarıyla oluşturuldu ve giriş yaptınız.`);
+                    closeProfileModal();
+                    signupFormElement.reset();
+                    await updateUserUI(authData.user);
+                } else {
+                    // Session yoksa, manuel olarak giriş yapmayı dene
+                    try {
+                        console.log('🔄 Oturum yok, manuel giriş deneniyor...');
+                        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                            email: formData.email,
+                            password: formData.password
+                        });
+                        
+                        if (signInError) {
+                            console.warn('⚠️ Otomatik giriş başarısız:', signInError);
+                            // Giriş başarısız, kullanıcıyı login formuna yönlendir
+                            loggedIn = false;
+                        } else {
+                            console.log('✅ Manuel giriş başarılı!');
+                            loggedIn = true;
+                            showAlert('success', '🎉 Kayıt Başarılı!', `Hoş geldiniz, ${formData.firstName}! Hesabınız başarıyla oluşturuldu ve giriş yaptınız.`);
+                            closeProfileModal();
+                            signupFormElement.reset();
+                            await updateUserUI(signInData.user);
+                        }
+                    } catch (signInErr) {
+                        console.warn('⚠️ Giriş hatası:', signInErr);
+                        loggedIn = false;
+                    }
+                }
+                
+                // Eğer giriş yapılamadıysa, login formuna yönlendir
+                if (!loggedIn) {
+                    // Hide signup form and show login form with email pre-filled
+                    signupForm.style.display = 'none';
+                    const emailVerificationForm = document.getElementById('emailVerificationForm');
+                    if (emailVerificationForm) {
+                        emailVerificationForm.style.display = 'none';
+                    }
+                    loginForm.style.display = 'block';
+                    profileModalTitle.textContent = 'Giriş Yap';
+                    
+                    // Pre-fill email in login form
+                    const loginEmailInput = document.getElementById('loginEmail');
+                    if (loginEmailInput) {
+                        loginEmailInput.value = formData.email;
+                        // Trigger label animation if needed
+                        if (loginEmailInput.value) {
+                            loginEmailInput.classList.add('has-value');
+                        }
+                    }
+                    
+                    // Reset signup form
+                    signupFormElement.reset();
+                    
+                    // Show success message
+                    showAlert('success', '🎉 Kayıt Başarılı!', `Hoş geldiniz, ${formData.firstName}! Hesabınız başarıyla oluşturuldu. Şifrenizi girerek giriş yapabilirsiniz.`);
+                    
+                    // Focus on password field
+                    setTimeout(() => {
+                        const loginPasswordInput = document.getElementById('loginPassword');
+                        if (loginPasswordInput) {
+                            loginPasswordInput.focus();
+                        }
+                    }, 300);
+                }
+                
+                // Re-enable button
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.removeAttribute('aria-busy');
+                    submitButton.classList.remove('disabled');
+                    submitButton.style.transform = '';
+                    submitButton.style.boxShadow = '';
+                    submitButton.innerHTML = originalButtonText;
+                }
+                isSubmitting = false;
+                
+            } catch (error) {
+                console.error('❌ Kayıt hatası detayları:', error);
+                let errorMessage = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+                if (error.message) {
+                    if (error.message.includes('Signups not allowed') || error.message.includes('signups not allowed')) {
+                        errorMessage = 'Yeni kullanıcı kayıtları şu anda kapalı. Lütfen site yöneticisi ile iletişime geçin veya daha sonra tekrar deneyin.';
+                    } else if (error.message.includes('User already registered') || error.message.includes('already registered')) {
+                        errorMessage = 'Bu e-posta adresi zaten kayıtlı. Lütfen giriş yapmayı deneyin.';
+                    } else if (error.message.includes('Password') || error.message.includes('password')) {
+                        errorMessage = 'Şifre çok zayıf. Lütfen daha güçlü bir şifre seçin (en az 6 karakter).';
+                    } else if (error.message.includes('Email') || error.message.includes('email') || error.message.includes('invalid')) {
+                        // E-posta validasyon hatası - daha genel mesaj
+                        errorMessage = `E-posta adresi kabul edilmedi: "${formData.email}". Lütfen farklı bir e-posta adresi deneyin.`;
+                    } else if (error.message.includes('rate limit') || error.message.includes('too many')) {
+                        errorMessage = 'Çok fazla deneme yaptınız. Lütfen birkaç dakika sonra tekrar deneyin.';
+                    } else {
+                        errorMessage = `Hata: ${error.message}`;
+                    }
+                }
+                showAlert('error', '❌ Kayıt Hatası', errorMessage);
+                
+                // Re-enable button on error
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.style.opacity = '1';
+                    submitButton.style.cursor = 'pointer';
+                    submitButton.innerHTML = originalButtonText;
+                }
+                isSubmitting = false;
+            }
+        });
+    }
+    
+    // Back to signup button
+    const backToSignupBtn = document.getElementById('backToSignupBtn');
+    if (backToSignupBtn) {
+        backToSignupBtn.addEventListener('click', () => {
+            document.getElementById('emailVerificationForm').style.display = 'none';
+            signupForm.style.display = 'block';
+            profileModalTitle.textContent = 'Üye Ol';
+        });
+    }
+    
+    // Email verification form submit
+    const emailVerificationFormElement = document.getElementById('emailVerificationFormElement');
+    if (emailVerificationFormElement) {
+        emailVerificationFormElement.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const codeInputs = document.querySelectorAll('.code-input');
+            const code = Array.from(codeInputs).map(input => input.value).join('');
+            
+            if (code.length !== 6) {
+                showAlert('error', '❌ Hata', 'Lütfen 6 haneli kodu eksiksiz girin.');
+                return;
+            }
+            
+            if (!window.pendingVerification) {
+                showAlert('error', '❌ Hata', 'Doğrulama bilgileri bulunamadı. Lütfen tekrar kayıt olun.');
+                return;
+            }
+            
+            try {
+                const result = await DatabaseService.verifyCode(window.pendingVerification.email, code);
+                
+                if (result.valid) {
+                    // Confirm email in Supabase Auth
+                    const { error: confirmError } = await supabase.auth.updateUser({
+                        email: window.pendingVerification.email
+                    });
+                    
+                    // Mark user as verified in members table if exists
+                    if (window.pendingVerification.userId) {
+                        try {
+                            await supabase
+                                .from('members')
+                                .update({ email_verified: true })
+                                .eq('user_id', window.pendingVerification.userId);
+                        } catch (err) {
+                            console.warn('Could not update members table:', err);
+                        }
+                    }
+                    
+                    showAlert('success', '🎉 Doğrulama Başarılı!', `Merhaba ${window.pendingVerification.firstName}! E-posta adresiniz doğrulandı. Artık giriş yapabilirsiniz.`);
+                    
+                    document.getElementById('emailVerificationForm').style.display = 'none';
+                    loginForm.style.display = 'block';
+                    profileModalTitle.textContent = 'Giriş Yap';
+                    emailVerificationFormElement.reset();
+                    window.pendingVerification = null;
+                    
+                } else {
+                    showAlert('error', '❌ Geçersiz Kod', result.error || 'Girdiğiniz kod hatalı veya süresi dolmuş.');
+                    // Clear inputs
+                    codeInputs.forEach(input => input.value = '');
+                    codeInputs[0].focus();
+                }
+            } catch (error) {
+                showAlert('error', '❌ Hata', 'Kod doğrulama sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+            }
+        });
+    }
+    
+    // Code input auto-focus and paste handling
+    // This will be set up when verification form is shown
+    let codeInputsSetup = false;
+    function setupCodeInputs() {
+        if (codeInputsSetup) return; // Already set up
+        const codeInputs = document.querySelectorAll('.code-input');
+        if (codeInputs.length === 0) return;
+        
+        codeInputsSetup = true;
+        codeInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            if (e.inputType === 'insertFromPaste') {
+                const pastedData = e.clipboardData.getData('text').slice(0, 6);
+                pastedData.split('').forEach((char, i) => {
+                    if (codeInputs[i] && /[0-9]/.test(char)) {
+                        codeInputs[i].value = char;
+                    }
+                });
+                codeInputs[Math.min(pastedData.length - 1, 5)].focus();
+                return;
+            }
+            
+            if (/[0-9]/.test(input.value)) {
+                if (index < codeInputs.length - 1) {
+                    codeInputs[index + 1].focus();
+                }
+            } else {
+                input.value = '';
+            }
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !input.value && index > 0) {
+                codeInputs[index - 1].focus();
+            }
+        });
+        }); // Close forEach
+    }
+    
+    // Setup code inputs when verification form is shown
+    const originalEmailVerificationDisplay = document.getElementById('emailVerificationForm');
+    if (originalEmailVerificationDisplay) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const form = document.getElementById('emailVerificationForm');
+                    if (form && form.style.display !== 'none') {
+                        setTimeout(() => {
+                            setupCodeInputs();
+                            // Focus first input
+                            const firstInput = document.querySelector('.code-input');
+                            if (firstInput) firstInput.focus();
+                        }, 100);
+                    }
+                }
+            });
+        });
+        observer.observe(originalEmailVerificationDisplay, { attributes: true });
+    }
+    
+    // Resend code button
+    const resendCodeBtn = document.getElementById('resendCodeBtn');
+    if (resendCodeBtn) {
+        resendCodeBtn.addEventListener('click', async () => {
+            if (!window.pendingVerification) return;
+            
+            try {
+                const verificationData = await DatabaseService.generateVerificationCode(
+                    window.pendingVerification.email, 
+                    window.pendingVerification.userId
+                );
+                
+                if (typeof window.sendVerificationEmail === 'function') {
+                    await window.sendVerificationEmail(
+                        window.pendingVerification.email, 
+                        window.pendingVerification.firstName, 
+                        verificationData.code
+                    );
+                } else {
+                    console.log(`📧 Yeni Doğrulama Kodu: ${verificationData.code}`);
+                }
+                
+                showAlert('success', '✅ Kod Tekrar Gönderildi', 'Yeni doğrulama kodu e-posta adresinize gönderildi.');
+                startVerificationTimer(600); // Reset timer
+            } catch (error) {
+                showAlert('error', '❌ Hata', 'Kod gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
+            }
+        });
+    }
+}
+
+// Verification timer function
+function startVerificationTimer(seconds) {
+    const timerElement = document.getElementById('verificationTimer');
+    if (!timerElement) return;
+    
+    let remaining = seconds;
+    const updateTimer = () => {
+        const minutes = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        timerElement.textContent = `Kod ${minutes}:${secs.toString().padStart(2, '0')} dakika geçerlidir`;
+        
+        if (remaining <= 0) {
+            timerElement.textContent = 'Kodun süresi doldu. Yeni kod göndermek için "Kodu Tekrar Gönder" butonuna tıklayın.';
+            timerElement.style.color = 'var(--color-accent-error)';
+            return;
+        }
+        
+        remaining--;
+        setTimeout(updateTimer, 1000);
+    };
+    
+    timerElement.style.color = 'var(--color-text-secondary)';
+    updateTimer();
+}
+
+// Update user UI after login
+async function updateUserUI(user) {
+    if (user) {
+        const profileBtn = document.querySelector('.profile-btn');
+        if (profileBtn) {
+            // Get user data from members table
+            const { data: memberData, error: memberError } = await supabase
+                .from('members')
+                .select('first_name, last_name, avatar_url')
+                .eq('user_id', user.id)
+                .maybeSingle();
+            
+            // Ignore errors if column doesn't exist yet (migration not run)
+            if (memberError && memberError.code !== 'PGRST204' && memberError.code !== 'PGRST116') {
+                console.warn('Error fetching member data:', memberError);
+            }
+            
+            const userName = memberData ? `${memberData.first_name} ${memberData.last_name}` : user.email?.split('@')[0] || 'Kullanıcı';
+            profileBtn.setAttribute('aria-label', `Profil - ${userName}`);
+            
+            // Update profile button with avatar or icon
+            const profileIcon = profileBtn.querySelector('i');
+            let profileAvatar = profileBtn.querySelector('.profile-avatar-img');
+            
+            if (memberData?.avatar_url) {
+                // Show avatar
+                if (profileIcon) profileIcon.style.display = 'none';
+                if (!profileAvatar) {
+                    const img = document.createElement('img');
+                    img.src = memberData.avatar_url;
+                    img.alt = userName;
+                    img.className = 'profile-avatar-img';
+                    profileBtn.appendChild(img);
+                } else {
+                    profileAvatar.src = memberData.avatar_url;
+                }
+                profileBtn.classList.add('has-avatar');
+            } else {
+                // Show icon with logged in indicator
+                if (profileIcon) profileIcon.style.display = 'block';
+                if (profileAvatar) profileAvatar.remove();
+                profileBtn.classList.add('logged-in');
+                profileBtn.classList.remove('has-avatar');
+            }
+        }
+    } else {
+        // User logged out - reset button
+        const profileBtn = document.querySelector('.profile-btn');
+        if (profileBtn) {
+            const profileIcon = profileBtn.querySelector('i');
+            const profileAvatar = profileBtn.querySelector('.profile-avatar-img');
+            if (profileIcon) profileIcon.style.display = 'block';
+            if (profileAvatar) profileAvatar.remove();
+            profileBtn.classList.remove('logged-in', 'has-avatar');
+            profileBtn.setAttribute('aria-label', 'Profil');
+        }
+    }
+}
+
+// Show profile page (when logged in)
+async function showProfilePage(user) {
+    // Hide auth forms
+    loginForm.style.display = 'none';
+    signupForm.style.display = 'none';
+    const emailVerificationForm = document.getElementById('emailVerificationForm');
+    if (emailVerificationForm) {
+        emailVerificationForm.style.display = 'none';
+    }
+    
+    // Show profile page
+    const profilePage = document.getElementById('profilePage');
+    if (profilePage) {
+        profilePage.style.display = 'block';
+        profileModalTitle.textContent = 'Profil';
+        
+        // Load user data
+        const { data: memberData } = await supabase
+            .from('members')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+        
+        // Populate form
+        if (memberData) {
+            const firstNameInput = document.getElementById('profileFirstName');
+            const lastNameInput = document.getElementById('profileLastName');
+            const emailInput = document.getElementById('profileEmail');
+            const phoneInput = document.getElementById('profilePhone');
+            const universityInput = document.getElementById('profileUniversity');
+            const departmentInput = document.getElementById('profileDepartment');
+            
+            if (firstNameInput) {
+                firstNameInput.value = memberData.first_name || '';
+                if (firstNameInput.value.trim()) {
+                    firstNameInput.classList.add('has-value');
+                }
+                firstNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (lastNameInput) {
+                lastNameInput.value = memberData.last_name || '';
+                if (lastNameInput.value.trim()) {
+                    lastNameInput.classList.add('has-value');
+                }
+                lastNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (emailInput) {
+                emailInput.value = memberData.email || user.email || '';
+                // Trigger animation for readonly email
+                if (emailInput.value.trim()) {
+                    emailInput.classList.add('has-value');
+                }
+                emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                emailInput.dispatchEvent(new Event('focus', { bubbles: true }));
+                emailInput.blur();
+            }
+            if (phoneInput) {
+                const phoneValue = memberData.phone || '';
+                // Extract country code if exists
+                if (phoneValue.startsWith('+')) {
+                    const parts = phoneValue.split(' ');
+                    if (parts.length > 1) {
+                        const countryCode = parts[0];
+                        const phoneNumber = parts.slice(1).join(' ');
+                        const countryInput = document.getElementById('profilePhoneCountry');
+                        if (countryInput) {
+                            // Find matching country display
+                            const country = phoneCountries.find(c => c.value === countryCode);
+                            if (country) {
+                                countryInput.value = country.display;
+                                countryInput.setAttribute('data-value', country.value);
+                            } else {
+                                countryInput.value = countryCode;
+                                countryInput.setAttribute('data-value', countryCode);
+                            }
+                        }
+                        phoneInput.value = phoneNumber;
+                    } else {
+                        phoneInput.value = phoneValue;
+                    }
+                } else {
+                    phoneInput.value = phoneValue;
+                }
+                // Trigger label animation if value exists
+                if (phoneInput.value && phoneInput.value.trim()) {
+                    phoneInput.classList.add('has-value');
+                    phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+                } else {
+                    phoneInput.classList.remove('has-value');
+                    // Ensure label is in default position
+                    phoneInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                }
+            }
+            if (universityInput) {
+                universityInput.value = memberData.university || '';
+                if (universityInput.value.trim()) {
+                    universityInput.classList.add('has-value');
+                }
+                // Don't trigger input event to avoid opening dropdown
+            }
+            if (departmentInput) {
+                departmentInput.value = memberData.department || '';
+                if (departmentInput.value.trim()) {
+                    departmentInput.classList.add('has-value');
+                }
+                // Don't trigger input event to avoid opening dropdown
+            }
+            
+            // Update header
+            const userNameEl = document.getElementById('profileUserName');
+            const userEmailEl = document.getElementById('profileUserEmail');
+            if (userNameEl) userNameEl.textContent = `${memberData.first_name} ${memberData.last_name}`;
+            if (userEmailEl) userEmailEl.textContent = memberData.email || user.email || '';
+            
+            // Update avatar preview
+            if (memberData.avatar_url) {
+                const avatarPreviewImg = document.getElementById('avatarPreviewImg');
+                const avatarPreviewIcon = document.getElementById('avatarPreviewIcon');
+                if (avatarPreviewImg) {
+                    avatarPreviewImg.src = memberData.avatar_url;
+                    avatarPreviewImg.style.display = 'block';
+                }
+                if (avatarPreviewIcon) avatarPreviewIcon.style.display = 'none';
+            }
+        } else {
+            // Fallback to user email
+            const userNameEl = document.getElementById('profileUserName');
+            const userEmailEl = document.getElementById('profileUserEmail');
+            if (userNameEl) userNameEl.textContent = user.email?.split('@')[0] || 'Kullanıcı';
+            if (userEmailEl) userEmailEl.textContent = user.email || '';
+            const emailInput = document.getElementById('profileEmail');
+            if (emailInput) emailInput.value = user.email || '';
+        }
+        
+        // Setup dropdowns
+        setTimeout(() => {
+            setupProfileEditDropdowns();
+        }, 100);
+        
+        // Setup all input fields for has-value class (label animation)
+        const allInputs = profilePage.querySelectorAll('.animated-form-control input');
+        allInputs.forEach(input => {
+            // Skip if already has listener (check for data attribute)
+            if (input.dataset.hasLabelListener === 'true') return;
+            
+            // Mark as having listener
+            input.dataset.hasLabelListener = 'true';
+            
+            // For password and tel inputs, always start without has-value (they should be empty)
+            if (input.type === 'password' || input.type === 'tel') {
+                input.classList.remove('has-value');
+                // Ensure label is in default position
+                if (!input.value.trim()) {
+                    input.dispatchEvent(new Event('blur', { bubbles: true }));
+                }
+            } else {
+                // Check initial value for other inputs
+                if (input.value.trim()) {
+                    input.classList.add('has-value');
+                } else {
+                    input.classList.remove('has-value');
+                }
+            }
+            
+            // Add event listener for input changes
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.add('has-value');
+                } else {
+                    this.classList.remove('has-value');
+                }
+            });
+            
+            // Also handle focus/blur for readonly inputs
+            if (input.readOnly && input.value.trim()) {
+                input.classList.add('has-value');
+            }
+        });
+    }
+}
+
+// Show auth forms (when not logged in)
+function showAuthForms() {
+    const profilePage = document.getElementById('profilePage');
+    if (profilePage) profilePage.style.display = 'none';
+    loginForm.style.display = 'block';
+    signupForm.style.display = 'none';
+    const emailVerificationForm = document.getElementById('emailVerificationForm');
+    if (emailVerificationForm) emailVerificationForm.style.display = 'none';
+    profileModalTitle.textContent = 'Giriş Yap';
+}
+
+// ============================================
+// PROFILE PAGE FUNCTIONALITY
+// ============================================
+
+// Avatar listesi - kulübe uygun avatarlar (mutlu ve deneysel bilimler)
+// Not: DiceBear API'de mutlu yüzler için özel seed'ler kullanıyoruz
+const AVATAR_LIST = [
+    // Mutlu Genel Avatarlar (pozitif seed'ler)
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile1',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile2',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile3',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile4',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile5',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile6',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile7',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=smile8',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=happy1',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=happy2',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=happy3',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=happy4',
+    
+    // Biyoloji Temalı (gözlüklü, bilimsel görünüm)
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology1&accessories=prescription02',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology2&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology3&accessories=prescription01',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology4&accessories=prescription02',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology5&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology6&accessories=prescription01',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology7&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=biology8&accessories=prescription02',
+    
+    // Fizik Temalı (çeşitli saç stilleri, bilimsel)
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics1&accessories=prescription01',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics2&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics3&accessories=prescription02',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics4&accessories=prescription01',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics5&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics6&accessories=prescription02',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics7&accessories=prescription01',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=physics8&accessories=round',
+    
+    // Kimya Temalı (laboratuvar görünümü)
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry1&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry2&accessories=prescription01',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry3&accessories=prescription02',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry4&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry5&accessories=prescription01',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry6&accessories=prescription02',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry7&accessories=round',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=chemistry8&accessories=prescription01',
+    
+    // Müzik/Bilim Topluluğu Temalı (çeşitli)
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music1',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music2',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music3',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music4',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music5',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music6',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music7',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music8',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music9',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music10',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music11',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=music12'
+];
+
+// Setup profile edit dropdowns
+function setupProfileEditDropdowns() {
+    const universityInput = document.getElementById('profileUniversity');
+    const departmentInput = document.getElementById('profileDepartment');
+    const universityDropdown = document.querySelector('.university-dropdown-profile-edit');
+    const departmentDropdown = document.querySelector('.department-dropdown-profile-edit');
+    const phoneCountryInput = document.getElementById('profilePhoneCountry');
+    const phoneCountryDropdown = document.querySelector('.phone-country-dropdown');
+    
+    if (universityInput && universityDropdown) {
+        setupCustomDropdown(universityInput, universityDropdown, universities);
+    }
+    
+    if (departmentInput && departmentDropdown) {
+        setupCustomDropdown(departmentInput, departmentDropdown, departments);
+    }
+    
+    // Setup phone country dropdown
+    if (phoneCountryInput && phoneCountryDropdown) {
+        setupPhoneCountryDropdown(phoneCountryInput, phoneCountryDropdown);
+    }
+}
+
+// Setup phone country dropdown
+function setupPhoneCountryDropdown(input, dropdown) {
+    let isOpen = false;
+    
+    function renderItems(filter = '') {
+        dropdown.innerHTML = '';
+        const filteredData = phoneCountries.filter(item => 
+            item.display.toLowerCase().includes(filter.toLowerCase()) ||
+            item.value.includes(filter)
+        );
+        
+        filteredData.forEach(item => {
+            const div = document.createElement('div');
+            div.textContent = item.display;
+            div.className = 'custom-dropdown-item';
+            div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                input.value = item.display;
+                input.setAttribute('data-value', item.value);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                dropdown.style.display = 'none';
+                isOpen = false;
+            });
+            dropdown.appendChild(div);
+        });
+    }
+    
+    // Make input clickable to open dropdown (readonly input can still be clicked)
+    input.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Use setTimeout to ensure click event is processed
+        setTimeout(() => {
+            if (isOpen) {
+                dropdown.style.display = 'none';
+                isOpen = false;
+            } else {
+                renderItems('');
+                dropdown.style.display = 'block';
+                isOpen = true;
+            }
+        }, 0);
+    });
+    
+    input.addEventListener('focus', (e) => {
+        e.preventDefault();
+        if (!isOpen) {
+            renderItems('');
+            dropdown.style.display = 'block';
+            isOpen = true;
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (event) => {
+        if (!input.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = 'none';
+            isOpen = false;
+        }
+    });
+    
+    // Also close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isOpen) {
+            dropdown.style.display = 'none';
+            isOpen = false;
+        }
+    });
+}
+
+// Avatar selection
+const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+const avatarSelectionModal = document.getElementById('avatarSelectionModal');
+const avatarGrid = document.getElementById('avatarGrid');
+const avatarSelectionClose = document.getElementById('avatarSelectionClose');
+
+if (changeAvatarBtn && avatarSelectionModal) {
+    changeAvatarBtn.addEventListener('click', () => {
+        avatarSelectionModal.style.display = 'block';
+        loadAvatarGrid();
+    });
+}
+
+if (avatarSelectionClose) {
+    avatarSelectionClose.addEventListener('click', () => {
+        avatarSelectionModal.style.display = 'none';
+        // Scroll profile page to top AFTER modal closes (user won't see the scroll)
+        setTimeout(() => {
+            const profilePage = document.getElementById('profilePage');
+            if (profilePage && profilePage.style.display !== 'none') {
+                const profilePageContainer = profilePage.closest('.modal-body');
+                if (profilePageContainer) {
+                    profilePageContainer.scrollTop = 0;
+                }
+            }
+        }, 300);
+    });
+}
+
+// Close avatar modal when clicking outside
+if (avatarSelectionModal) {
+    document.addEventListener('click', (e) => {
+        if (avatarSelectionModal.style.display !== 'none' && 
+            !avatarSelectionModal.contains(e.target) && 
+            !changeAvatarBtn.contains(e.target)) {
+            avatarSelectionModal.style.display = 'none';
+            // Scroll profile page to top AFTER modal closes (user won't see the scroll)
+            setTimeout(() => {
+                const profilePage = document.getElementById('profilePage');
+                if (profilePage && profilePage.style.display !== 'none') {
+                    const profilePageContainer = profilePage.closest('.modal-body');
+                    if (profilePageContainer) {
+                        profilePageContainer.scrollTop = 0;
+                    }
+                }
+            }, 300);
+        }
+    });
+}
+
+// Load avatar grid
+async function loadAvatarGrid() {
+    if (!avatarGrid) return;
+    
+    // Get current user's avatar
+    const { data: { user } } = await supabase.auth.getUser();
+    let currentAvatarUrl = null;
+    
+    if (user) {
+        const { data: memberData } = await supabase
+            .from('members')
+            .select('avatar_url')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        
+        if (memberData?.avatar_url) {
+            currentAvatarUrl = memberData.avatar_url;
+        }
+    }
+    
+    avatarGrid.innerHTML = '';
+    
+    AVATAR_LIST.forEach((avatarUrl, index) => {
+        const avatarItem = document.createElement('div');
+        const isSelected = currentAvatarUrl === avatarUrl;
+        avatarItem.className = `avatar-item ${isSelected ? 'selected' : ''}`;
+        avatarItem.innerHTML = `
+            <img src="${avatarUrl}" alt="Avatar ${index + 1}" loading="lazy">
+            <div class="avatar-item-overlay">
+                <i class="fas fa-check"></i>
+            </div>
+            ${isSelected ? '<div class="avatar-item-selected-badge"><i class="fas fa-check-circle"></i></div>' : ''}
+        `;
+        
+        avatarItem.addEventListener('click', async () => {
+            await selectAvatar(avatarUrl);
+        });
+        
+        avatarGrid.appendChild(avatarItem);
+    });
+}
+
+// Select avatar
+async function selectAvatar(avatarUrl) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        showAlert('error', '❌ Hata', 'Giriş yapmanız gerekiyor.');
+        return;
+    }
+    
+    try {
+        // First check if member record exists
+        const { data: existingMember, error: checkError } = await supabase
+            .from('members')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        
+        if (checkError && checkError.code !== 'PGRST116') {
+            // PGRST116 = no rows returned, which is fine
+            throw checkError;
+        }
+        
+        if (existingMember) {
+            // Update existing member
+            const { error } = await supabase
+                .from('members')
+                .update({ avatar_url: avatarUrl })
+                .eq('user_id', user.id);
+            
+            if (error) {
+                // Check if it's because avatar_url column doesn't exist
+                if (error.code === 'PGRST204' || error.message?.includes('avatar_url')) {
+                    showAlert('error', '❌ Veritabanı Hatası', 'Avatar kolonu henüz eklenmemiş. Lütfen Supabase Dashboard\'da migration dosyasını çalıştırın: database-migrations/add-avatar-url-to-members.sql');
+                    return;
+                }
+                throw error;
+            }
+        } else {
+            // Create member record if it doesn't exist
+            const { error: insertError } = await supabase
+                .from('members')
+                .insert({
+                    user_id: user.id,
+                    email: user.email || '',
+                    first_name: user.email?.split('@')[0] || 'Kullanıcı',
+                    last_name: '',
+                    avatar_url: avatarUrl
+                });
+            
+            if (insertError) {
+                // Check if it's because avatar_url column doesn't exist
+                if (insertError.code === 'PGRST204' || insertError.message?.includes('avatar_url')) {
+                    showAlert('error', '❌ Veritabanı Hatası', 'Avatar kolonu henüz eklenmemiş. Lütfen Supabase Dashboard\'da migration dosyasını çalıştırın: database-migrations/add-avatar-url-to-members.sql');
+                    return;
+                }
+                throw insertError;
+            }
+        }
+        
+        // Update preview
+        const avatarPreviewImg = document.getElementById('avatarPreviewImg');
+        const avatarPreviewIcon = document.getElementById('avatarPreviewIcon');
+        if (avatarPreviewImg) {
+            avatarPreviewImg.src = avatarUrl;
+            avatarPreviewImg.style.display = 'block';
+        }
+        if (avatarPreviewIcon) avatarPreviewIcon.style.display = 'none';
+        
+        // Update navbar
+        await updateUserUI(user);
+        
+        // Reload avatar grid to show selected badge
+        await loadAvatarGrid();
+        
+        // Close modal
+        avatarSelectionModal.style.display = 'none';
+        
+        // Scroll profile page to top AFTER modal closes (user won't see the scroll)
+        setTimeout(() => {
+            const profilePage = document.getElementById('profilePage');
+            if (profilePage && profilePage.style.display !== 'none') {
+                const profilePageContainer = profilePage.closest('.modal-body');
+                if (profilePageContainer) {
+                    profilePageContainer.scrollTop = 0;
+                }
+            }
+        }, 300);
+        
+        showAlert('success', '✅ Avatar Güncellendi', 'Avatarınız başarıyla güncellendi!');
+    } catch (error) {
+        console.error('Avatar güncelleme hatası:', error);
+        let errorMessage = 'Avatar güncellenirken bir hata oluştu.';
+        
+        if (error.code === 'PGRST204' || error.message?.includes('avatar_url')) {
+            errorMessage = 'Avatar kolonu henüz eklenmemiş. Lütfen Supabase Dashboard\'da migration dosyasını çalıştırın: database-migrations/add-avatar-url-to-members.sql';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showAlert('error', '❌ Hata', errorMessage);
+    }
+}
+
+// Profile edit form submit
+const profileEditForm = document.getElementById('profileEditForm');
+if (profileEditForm) {
+    profileEditForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            showAlert('error', '❌ Hata', 'Giriş yapmanız gerekiyor.');
+            return;
+        }
+        
+        const submitButton = profileEditForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
+        
+        try {
+            // Get phone with country code
+            const phoneInput = document.getElementById('profilePhone');
+            const countryInput = document.getElementById('profilePhoneCountry');
+            let phoneValue = phoneInput.value.trim();
+            
+            // Validate phone number
+            if (phoneValue) {
+                // Remove all non-digit characters for validation
+                const digitsOnly = phoneValue.replace(/\D/g, '');
+                
+                // Basic validation: at least 10 digits
+                if (digitsOnly.length < 10) {
+                    showAlert('error', '❌ Geçersiz Telefon', 'Telefon numarası en az 10 haneli olmalıdır.');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                    return;
+                }
+                
+                // Get country code from data-value attribute or default to +90
+                const countryCode = countryInput ? (countryInput.getAttribute('data-value') || '+90') : '+90';
+                phoneValue = `${countryCode} ${phoneValue}`;
+            }
+            
+            const formData = {
+                first_name: document.getElementById('profileFirstName').value.trim(),
+                last_name: document.getElementById('profileLastName').value.trim(),
+                phone: phoneValue,
+                university: document.getElementById('profileUniversity').value.trim(),
+                department: document.getElementById('profileDepartment').value.trim()
+            };
+            
+            // Update members table
+            const { error: memberError } = await supabase
+                .from('members')
+                .update(formData)
+                .eq('user_id', user.id);
+            
+            if (memberError) throw memberError;
+            
+            // Update password if provided
+            const currentPassword = document.getElementById('profileCurrentPassword').value;
+            const newPassword = document.getElementById('profileNewPassword').value;
+            
+            if (newPassword && currentPassword) {
+                // Verify current password first
+                const { error: verifyError } = await supabase.auth.signInWithPassword({
+                    email: user.email,
+                    password: currentPassword
+                });
+                
+                if (verifyError) {
+                    throw new Error('Mevcut şifre hatalı.');
+                }
+                
+                // Update password
+                const { error: passwordError } = await supabase.auth.updateUser({
+                    password: newPassword
+                });
+                
+                if (passwordError) throw passwordError;
+            }
+            
+            // Update UI
+            await updateUserUI(user);
+            await showProfilePage(user);
+            
+            showAlert('success', '✅ Profil Güncellendi', 'Profil bilgileriniz başarıyla güncellendi!');
+            
+            // Clear password fields
+            const currentPasswordInput = document.getElementById('profileCurrentPassword');
+            const newPasswordInput = document.getElementById('profileNewPassword');
+            if (currentPasswordInput) {
+                currentPasswordInput.value = '';
+                currentPasswordInput.classList.remove('has-value');
+            }
+            if (newPasswordInput) {
+                newPasswordInput.value = '';
+                newPasswordInput.classList.remove('has-value');
+            }
+            
+        } catch (error) {
+            console.error('Profil güncelleme hatası:', error);
+            showAlert('error', '❌ Hata', error.message || 'Profil güncellenirken bir hata oluştu.');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+        }
+    });
+}
+
+// Logout
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await supabase.auth.signOut();
+            await updateUserUI(null);
+            closeProfileModal();
+            showAlert('success', '👋 Çıkış Yapıldı', 'Başarıyla çıkış yaptınız.');
+        } catch (error) {
+            console.error('Çıkış hatası:', error);
+            showAlert('error', '❌ Hata', 'Çıkış yapılırken bir hata oluştu.');
+        }
+    });
+}
+
+// Modern & Beautiful Alert helper function
+function showAlert(type, title, message) {
+    // Remove existing alerts first with smooth animation
+    document.querySelectorAll('.alert').forEach(existingAlert => {
+        existingAlert.style.animation = 'alertSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        setTimeout(() => existingAlert.remove(), 300);
+    });
+    
+    // Create alert element
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    
+    const icons = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    };
+    
+    alert.innerHTML = `
+        <div class="alert-icon">
+            <i class="fas ${icons[type] || icons.info}"></i>
+        </div>
+        <div class="alert-content">
+            <div class="alert-title">${title}</div>
+            <div class="alert-message">${message}</div>
+        </div>
+        <button class="alert-close" aria-label="Kapat" type="button">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Insert at top of body
+    document.body.insertBefore(alert, document.body.firstChild);
+    
+    // Trigger animation after a tiny delay for smooth entrance
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            alert.style.animation = 'alertSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        });
+    });
+    
+    // Auto remove after 6 seconds (success) or 8 seconds (error)
+    const autoRemoveTime = type === 'success' ? 6000 : type === 'error' ? 8000 : 7000;
+    const autoRemoveTimeout = setTimeout(() => {
+        alert.style.animation = 'alertSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 300);
+    }, autoRemoveTime);
+    
+    // Close button handler
+    const closeBtn = alert.querySelector('.alert-close');
+    closeBtn.addEventListener('click', () => {
+        clearTimeout(autoRemoveTimeout);
+        alert.style.animation = 'alertSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 300);
+    });
+}

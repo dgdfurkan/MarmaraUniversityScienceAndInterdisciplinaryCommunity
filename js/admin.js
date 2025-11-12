@@ -71,6 +71,9 @@ function loadSectionData(sectionId) {
         case 'media':
             loadMedia();
             break;
+        case 'settings':
+            loadSiteSettings();
+            break;
     }
 }
 
@@ -443,14 +446,57 @@ async function handleEventSubmit(e) {
     }
 }
 
-function handleSettingsSubmit(e) {
+async function handleSettingsSubmit(e) {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
     
-    console.log('Settings data:', data);
-    
-    alert('Ayarlar başarıyla kaydedildi!');
+    try {
+        // E-posta doğrulama sistemi kaldırıldı - artık bu ayar yok
+        // Sadece genel ayarları kaydediyoruz (site_title, site_description, vb.)
+        const formData = new FormData(e.target);
+        const settingsUpdates = {};
+        
+        // Genel ayarları topla (e-posta doğrulama hariç)
+        for (const [key, value] of formData.entries()) {
+            if (key !== 'email_verification_enabled') {
+                settingsUpdates[key] = value;
+            }
+        }
+        
+        console.log('Saving settings:', settingsUpdates);
+        
+        // Update site settings (eğer varsa)
+        if (Object.keys(settingsUpdates).length > 0) {
+            await DatabaseService.updateSiteSettings(settingsUpdates);
+            
+            // Log activity
+            await DatabaseService.logActivity('update', 'site_settings', null, 'Site ayarları güncellendi', null, settingsUpdates);
+        }
+        
+        alert('Ayarlar başarıyla kaydedildi!');
+        
+        // Reload settings to reflect changes
+        loadSiteSettings();
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        alert('Ayarlar kaydedilirken bir hata oluştu: ' + error.message);
+    }
+}
+
+// Load site settings into form
+async function loadSiteSettings() {
+    try {
+        const settings = await DatabaseService.getSiteSettings();
+        
+        // E-posta doğrulama sistemi kaldırıldı - toggle artık yok
+        // const emailVerificationToggle = document.getElementById('email_verification_enabled');
+        // if (emailVerificationToggle) {
+        //     emailVerificationToggle.checked = settings.email_verification_enabled !== false;
+        // }
+        
+        console.log('Site settings loaded:', settings);
+    } catch (error) {
+        console.error('Error loading site settings:', error);
+    }
 }
 
 // Data Loading Functions

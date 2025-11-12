@@ -656,6 +656,74 @@ class DatabaseService {
     }
 
     // Helper function to get user fingerprint (browser + device info)
+    // Email Verification - 6 haneli kod sistemi
+    static async generateVerificationCode(email, userId = null) {
+        try {
+            // 6 haneli rastgele kod üret
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // 10 dakika geçerli
+            const expiresAt = new Date();
+            expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+            
+            // Eski kodları temizle
+            await supabase
+                .from('email_verification_codes')
+                .delete()
+                .eq('email', email)
+                .or('used.eq.true,expires_at.lt.' + new Date().toISOString());
+            
+            // Yeni kodu kaydet
+            const { data, error } = await supabase
+                .from('email_verification_codes')
+                .insert([{
+                    email: email,
+                    code: code,
+                    user_id: userId,
+                    expires_at: expiresAt.toISOString()
+                }])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            return { code, expiresAt: expiresAt.toISOString() };
+        } catch (error) {
+            console.error('Error generating verification code:', error);
+            throw error;
+        }
+    }
+    
+    static async verifyCode(email, code) {
+        try {
+            const { data, error } = await supabase
+                .from('email_verification_codes')
+                .select('*')
+                .eq('email', email)
+                .eq('code', code)
+                .eq('used', false)
+                .gt('expires_at', new Date().toISOString())
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+            
+            if (error || !data) {
+                return { valid: false, error: 'Geçersiz veya süresi dolmuş kod.' };
+            }
+            
+            // Kodu kullanıldı olarak işaretle
+            await supabase
+                .from('email_verification_codes')
+                .update({ used: true })
+                .eq('id', data.id);
+            
+            return { valid: true, userId: data.user_id };
+        } catch (error) {
+            console.error('Error verifying code:', error);
+            return { valid: false, error: 'Kod doğrulama hatası.' };
+        }
+    }
+    
     static async getUserFingerprint() {
         try {
             const canvas = document.createElement('canvas');
@@ -1149,6 +1217,117 @@ DatabaseService.incrementAnnouncementViewCount = async function(announcementId) 
         return data;
     } catch (error) {
         console.error('Error incrementing view count:', error);
+        throw error;
+    }
+};
+
+// ============================================
+// SITE SETTINGS (Site Ayarları)
+// ============================================
+
+// Get all site settings
+DatabaseService.getSiteSettings = async function() {
+    try {
+        const { data, error } = await supabase
+            .from('site_settings')
+            .select('*')
+            .order('category', { ascending: true });
+        
+        if (error) throw error;
+        
+        // Convert array to object for easier access
+        const settings = {};
+        (data || []).forEach(setting => {
+            // Convert value based on type
+            if (setting.setting_type === 'boolean') {
+                settings[setting.setting_key] = setting.setting_value === 'true';
+            } else if (setting.setting_type === 'number') {
+                settings[setting.setting_key] = parseFloat(setting.setting_value) || 0;
+            } else {
+                settings[setting.setting_key] = setting.setting_value;
+            }
+        });
+        
+        return settings;
+    } catch (error) {
+        console.error('Error fetching site settings:', error);
+        return {};
+    }
+};
+
+// Get a single setting value
+DatabaseService.getSiteSetting = async function(key, defaultValue = null) {
+    try {
+        const { data, error } = await supabase
+            .from('site_settings')
+            .select('setting_value, setting_type')
+            .eq('setting_key', key)
+            .single();
+        
+        if (error) {
+            // Setting not found, return default
+            return defaultValue;
+        }
+        
+        // Convert value based on type
+        if (data.setting_type === 'boolean') {
+            return data.setting_value === 'true';
+        } else if (data.setting_type === 'number') {
+            return parseFloat(data.setting_value) || defaultValue;
+        } else {
+            return data.setting_value || defaultValue;
+        }
+    } catch (error) {
+        console.error(`Error fetching site setting ${key}:`, error);
+        return defaultValue;
+    }
+};
+
+// Update a site setting
+DatabaseService.updateSiteSetting = async function(key, value) {
+    try {
+        const valueString = value.toString();
+        
+        const { data, error } = await supabase
+            .from('site_settings')
+            .upsert([{
+                setting_key: key,
+                setting_value: valueString,
+                updated_at: new Date().toISOString()
+            }], {
+                onConflict: 'setting_key'
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error(`Error updating site setting ${key}:`, error);
+        throw error;
+    }
+};
+
+// Update multiple site settings
+DatabaseService.updateSiteSettings = async function(settings) {
+    try {
+        const updates = Object.entries(settings).map(([key, value]) => ({
+            setting_key: key,
+            setting_value: value.toString(),
+            updated_at: new Date().toISOString()
+        }));
+        
+        const { data, error } = await supabase
+            .from('site_settings')
+            .upsert(updates, {
+                onConflict: 'setting_key'
+            })
+            .select();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error updating site settings:', error);
         throw error;
     }
 };

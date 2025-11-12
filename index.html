@@ -42,17 +42,13 @@
                 <li><a href="#contact"><i class="fas fa-envelope"></i><span>İletişim</span></a></li>
             </ul>
             <div class="nav-actions">
-                <button class="nav-icon-btn" aria-label="Notifications">
+                <button class="nav-icon-btn notifications-btn" aria-label="Bildirimler">
                     <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
                 </button>
-                <button class="nav-icon-btn" aria-label="Profile">
+                <button class="nav-icon-btn profile-btn" aria-label="Profil">
                     <i class="fas fa-user"></i>
                 </button>
-                <div class="hamburger" aria-label="Menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
             </div>
         </div>
     </nav>
@@ -110,24 +106,6 @@
                 </div>
             </div>
             <div class="hero-visual">
-                <div class="science-icons">
-                    <div class="icon-card">
-                        <i class="fas fa-atom"></i>
-                        <span>Fizik</span>
-                    </div>
-                    <div class="icon-card">
-                        <i class="fas fa-flask"></i>
-                        <span>Kimya</span>
-                    </div>
-                    <div class="icon-card">
-                        <i class="fas fa-microscope"></i>
-                        <span>Biyoloji</span>
-                    </div>
-                    <div class="icon-card">
-                        <i class="fas fa-dna"></i>
-                        <span>Genetik</span>
-                    </div>
-                </div>
             </div>
         </div>
         <div class="hero-scroll-indicator">
@@ -293,8 +271,301 @@
         </div>
     </footer>
 
+    <!-- Notifications Panel -->
+    <div class="notifications-panel" id="notificationsPanel">
+        <div class="notifications-header">
+            <h3>Bildirimler</h3>
+            <button class="notifications-close" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="notifications-list" id="notificationsList">
+            <div class="notification-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>Henüz bildirim yok</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-backdrop" id="profileModalBackdrop"></div>
+    <div class="modal profile-modal" id="profileModal">
+        <div class="modal-header">
+            <h3 id="profileModalTitle">Giriş Yap</h3>
+            <button class="modal-close" id="profileModalClose" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Login Form -->
+            <div class="auth-form" id="loginForm">
+                <form id="loginFormElement">
+                    <div class="animated-form-control">
+                        <input type="email" id="loginEmail" name="email" required>
+                        <label for="loginEmail">
+                            <span style="transition-delay:0ms">E</span><span style="transition-delay:50ms">-</span><span style="transition-delay:100ms">p</span><span style="transition-delay:150ms">o</span><span style="transition-delay:200ms">s</span><span style="transition-delay:250ms">t</span><span style="transition-delay:300ms">a</span>
+                        </label>
+                    </div>
+                    <div class="animated-form-control">
+                        <div class="input-icon-wrapper">
+                            <input type="password" id="loginPassword" name="password" required>
+                            <label for="loginPassword">
+                                <span style="transition-delay:0ms">Ş</span><span style="transition-delay:50ms">i</span><span style="transition-delay:100ms">f</span><span style="transition-delay:150ms">r</span><span style="transition-delay:200ms">e</span>
+                            </label>
+                            <i class="fas fa-eye toggle-password" data-target="loginPassword"></i>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-full">Giriş Yap</button>
+                    </div>
+                    <div class="auth-switch">
+                        <p>Hesabınız yok mu? <a href="#" id="showSignup">Üye Ol</a></p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Email Verification Form (6 haneli kod) -->
+            <div class="auth-form" id="emailVerificationForm" style="display: none;">
+                <div class="verification-header">
+                    <div class="verification-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3>E-posta Doğrulama</h3>
+                    <p class="verification-subtitle">E-posta adresinize gönderilen 6 haneli doğrulama kodunu girin</p>
+                </div>
+                <form id="emailVerificationFormElement">
+                    <div class="verification-code-inputs">
+                        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                        <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                    </div>
+                    <div class="verification-info">
+                        <p id="verificationEmail" class="verification-email"></p>
+                        <button type="button" id="resendCodeBtn" class="btn-link">Kodu Tekrar Gönder</button>
+                        <p class="verification-timer" id="verificationTimer"></p>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="backToSignupBtn">Geri</button>
+                        <button type="submit" class="btn btn-primary">Doğrula</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="auth-form" id="signupForm" style="display: none;">
+                <form id="signupFormElement">
+                    <div class="animated-form-control">
+                        <input type="text" id="signupFirstName" name="firstName" required>
+                        <label for="signupFirstName">
+                            <span style="transition-delay:0ms">A</span><span style="transition-delay:50ms">d</span>
+                        </label>
+                    </div>
+                    <div class="animated-form-control">
+                        <input type="text" id="signupLastName" name="lastName" required>
+                        <label for="signupLastName">
+                            <span style="transition-delay:0ms">S</span><span style="transition-delay:50ms">o</span><span style="transition-delay:100ms">y</span><span style="transition-delay:150ms">a</span><span style="transition-delay:200ms">d</span>
+                        </label>
+                    </div>
+                    <div class="animated-form-control">
+                        <input type="email" id="signupEmail" name="email" required>
+                        <label for="signupEmail">
+                            <span style="transition-delay:0ms">E</span><span style="transition-delay:50ms">-</span><span style="transition-delay:100ms">p</span><span style="transition-delay:150ms">o</span><span style="transition-delay:200ms">s</span><span style="transition-delay:250ms">t</span><span style="transition-delay:300ms">a</span>
+                        </label>
+                    </div>
+                    <div class="animated-form-control">
+                        <input type="tel" id="signupPhone" name="phone" required>
+                        <label for="signupPhone">
+                            <span style="transition-delay:0ms">T</span><span style="transition-delay:50ms">e</span><span style="transition-delay:100ms">l</span><span style="transition-delay:150ms">e</span><span style="transition-delay:200ms">f</span><span style="transition-delay:250ms">o</span><span style="transition-delay:300ms">n</span>
+                        </label>
+                    </div>
+                    <div class="animated-form-control">
+                        <input type="text" id="signupUniversity" name="university" autocomplete="off" required>
+                        <label for="signupUniversity">
+                            <span style="transition-delay:0ms">Ü</span><span style="transition-delay:50ms">n</span><span style="transition-delay:100ms">i</span><span style="transition-delay:150ms">v</span><span style="transition-delay:200ms">e</span><span style="transition-delay:250ms">r</span><span style="transition-delay:300ms">s</span><span style="transition-delay:350ms">i</span><span style="transition-delay:400ms">t</span><span style="transition-delay:450ms">e</span>
+                        </label>
+                        <div class="custom-dropdown university-dropdown-profile"></div>
+                    </div>
+                    <div class="animated-form-control">
+                        <input type="text" id="signupDepartment" name="department" autocomplete="off" required>
+                        <label for="signupDepartment">
+                            <span style="transition-delay:0ms">B</span><span style="transition-delay:50ms">ö</span><span style="transition-delay:100ms">l</span><span style="transition-delay:150ms">ü</span><span style="transition-delay:200ms">m</span>
+                        </label>
+                        <div class="custom-dropdown department-dropdown-profile"></div>
+                    </div>
+                    <div class="animated-form-control">
+                        <div class="input-icon-wrapper">
+                            <input type="password" id="signupPassword" name="password" required minlength="6">
+                            <label for="signupPassword">
+                                <span style="transition-delay:0ms">Ş</span><span style="transition-delay:50ms">i</span><span style="transition-delay:100ms">f</span><span style="transition-delay:150ms">r</span><span style="transition-delay:200ms">e</span>
+                            </label>
+                            <i class="fas fa-eye toggle-password" data-target="signupPassword"></i>
+                        </div>
+                        <span class="input-helper">Minimum 6 karakter</span>
+                    </div>
+                    <div class="animated-form-control">
+                        <div class="input-icon-wrapper">
+                            <input type="password" id="signupPasswordConfirm" name="passwordConfirm" required>
+                            <label for="signupPasswordConfirm">
+                                <span style="transition-delay:0ms">Ş</span><span style="transition-delay:50ms">i</span><span style="transition-delay:100ms">f</span><span style="transition-delay:150ms">r</span><span style="transition-delay:200ms">e</span><span style="transition-delay:250ms"> </span><span style="transition-delay:300ms">T</span><span style="transition-delay:350ms">e</span><span style="transition-delay:400ms">k</span><span style="transition-delay:450ms">r</span><span style="transition-delay:500ms">a</span><span style="transition-delay:550ms">r</span>
+                            </label>
+                            <i class="fas fa-eye toggle-password" data-target="signupPasswordConfirm"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="signupPrivacy" name="privacy" required>
+                            <span>Gizlilik politikasını kabul ediyorum</span>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-full">Üye Ol</button>
+                    </div>
+                    <div class="auth-switch">
+                        <p>Zaten hesabınız var mı? <a href="#" id="showLogin">Giriş Yap</a></p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Profile Page (Giriş yapılmışsa gösterilecek) -->
+            <div class="profile-page" id="profilePage" style="display: none;">
+                <div class="profile-header">
+                    <div class="profile-avatar-section">
+                        <div class="avatar-preview" id="avatarPreview">
+                            <img id="avatarPreviewImg" src="" alt="Avatar" style="display: none;">
+                            <i class="fas fa-user" id="avatarPreviewIcon"></i>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" id="changeAvatarBtn">
+                            <i class="fas fa-camera"></i> Avatar Değiştir
+                        </button>
+                    </div>
+                    <div class="profile-info-header">
+                        <h2 id="profileUserName">Kullanıcı Adı</h2>
+                        <p id="profileUserEmail" class="profile-email"></p>
+                    </div>
+                </div>
+
+                <!-- Avatar Selection Modal -->
+                <div class="avatar-selection-modal" id="avatarSelectionModal" style="display: none;">
+                    <div class="avatar-selection-header">
+                        <h3>Avatar Seç</h3>
+                        <button type="button" class="avatar-selection-close" id="avatarSelectionClose">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="avatar-grid" id="avatarGrid">
+                        <!-- Avatarlar buraya dinamik olarak eklenecek -->
+                    </div>
+                </div>
+
+                <!-- Profile Edit Form -->
+                <form id="profileEditForm" class="profile-edit-form">
+                    <div class="form-section">
+                        <h3 class="form-section-title">Kişisel Bilgiler</h3>
+                        
+                        <div class="animated-form-control">
+                            <input type="text" id="profileFirstName" name="firstName" required>
+                            <label for="profileFirstName">
+                                <span style="transition-delay:0ms">A</span><span style="transition-delay:50ms">d</span>
+                            </label>
+                        </div>
+                        
+                        <div class="animated-form-control">
+                            <input type="text" id="profileLastName" name="lastName" required>
+                            <label for="profileLastName">
+                                <span style="transition-delay:0ms">S</span><span style="transition-delay:50ms">o</span><span style="transition-delay:100ms">y</span><span style="transition-delay:150ms">a</span><span style="transition-delay:200ms">d</span>
+                            </label>
+                        </div>
+                        
+                        <div class="animated-form-control">
+                            <input type="email" id="profileEmail" name="email" required readonly>
+                            <label for="profileEmail">
+                                <span style="transition-delay:0ms">E</span><span style="transition-delay:50ms">-</span><span style="transition-delay:100ms">p</span><span style="transition-delay:150ms">o</span><span style="transition-delay:200ms">s</span><span style="transition-delay:250ms">t</span><span style="transition-delay:300ms">a</span>
+                            </label>
+                        </div>
+                        
+                        <div class="phone-input-wrapper">
+                            <div class="animated-form-control phone-country-control">
+                                <div class="phone-country-wrapper">
+                                    <input type="text" id="profilePhoneCountry" name="phoneCountry" class="phone-country-input" autocomplete="off" value="🇹🇷 +90" readonly data-value="+90">
+                                    <div class="custom-dropdown phone-country-dropdown"></div>
+                                </div>
+                                <label for="profilePhoneCountry">
+                                    <span style="transition-delay:0ms">A</span><span style="transition-delay:50ms">l</span><span style="transition-delay:100ms">a</span><span style="transition-delay:150ms">n</span><span style="transition-delay:200ms"> </span><span style="transition-delay:250ms">K</span><span style="transition-delay:300ms">o</span><span style="transition-delay:350ms">d</span><span style="transition-delay:400ms">u</span>
+                                </label>
+                            </div>
+                            <div class="animated-form-control phone-number-control">
+                                <input type="tel" id="profilePhone" name="phone" pattern="[0-9\s]+">
+                                <label for="profilePhone">
+                                    <span style="transition-delay:0ms">T</span><span style="transition-delay:50ms">e</span><span style="transition-delay:100ms">l</span><span style="transition-delay:150ms">e</span><span style="transition-delay:200ms">f</span><span style="transition-delay:250ms">o</span><span style="transition-delay:300ms">n</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Üniversite Bilgileri</h3>
+                        
+                        <div class="animated-form-control">
+                            <input type="text" id="profileUniversity" name="university" autocomplete="off">
+                            <label for="profileUniversity">
+                                <span style="transition-delay:0ms">Ü</span><span style="transition-delay:50ms">n</span><span style="transition-delay:100ms">i</span><span style="transition-delay:150ms">v</span><span style="transition-delay:200ms">e</span><span style="transition-delay:250ms">r</span><span style="transition-delay:300ms">s</span><span style="transition-delay:350ms">i</span><span style="transition-delay:400ms">t</span><span style="transition-delay:450ms">e</span>
+                            </label>
+                            <div class="custom-dropdown university-dropdown-profile-edit"></div>
+                        </div>
+                        
+                        <div class="animated-form-control">
+                            <input type="text" id="profileDepartment" name="department" autocomplete="off">
+                            <label for="profileDepartment">
+                                <span style="transition-delay:0ms">B</span><span style="transition-delay:50ms">ö</span><span style="transition-delay:100ms">l</span><span style="transition-delay:150ms">ü</span><span style="transition-delay:200ms">m</span>
+                            </label>
+                            <div class="custom-dropdown department-dropdown-profile-edit"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Şifre Değiştir</h3>
+                        
+                        <div class="animated-form-control">
+                            <div class="input-icon-wrapper">
+                                <input type="password" id="profileCurrentPassword" name="currentPassword">
+                                <label for="profileCurrentPassword">
+                                    <span style="transition-delay:0ms">M</span><span style="transition-delay:50ms">e</span><span style="transition-delay:100ms">v</span><span style="transition-delay:150ms">c</span><span style="transition-delay:200ms">u</span><span style="transition-delay:250ms">t</span><span style="transition-delay:300ms"> </span><span style="transition-delay:350ms">Ş</span><span style="transition-delay:400ms">i</span><span style="transition-delay:450ms">f</span><span style="transition-delay:500ms">r</span><span style="transition-delay:550ms">e</span>
+                                </label>
+                                <i class="fas fa-eye toggle-password" data-target="profileCurrentPassword"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="animated-form-control">
+                            <div class="input-icon-wrapper">
+                                <input type="password" id="profileNewPassword" name="newPassword" minlength="6">
+                                <label for="profileNewPassword">
+                                    <span style="transition-delay:0ms">Y</span><span style="transition-delay:50ms">e</span><span style="transition-delay:100ms">n</span><span style="transition-delay:150ms">i</span><span style="transition-delay:200ms"> </span><span style="transition-delay:250ms">Ş</span><span style="transition-delay:300ms">i</span><span style="transition-delay:350ms">f</span><span style="transition-delay:400ms">r</span><span style="transition-delay:450ms">e</span>
+                                </label>
+                                <i class="fas fa-eye toggle-password" data-target="profileNewPassword"></i>
+                            </div>
+                            <span class="input-helper">Boş bırakırsanız şifre değişmez</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Çıkış Yap
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Değişiklikleri Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/database.js"></script>
+    <script src="js/email-service.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
