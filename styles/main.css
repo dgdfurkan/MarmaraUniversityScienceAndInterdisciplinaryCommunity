@@ -595,8 +595,57 @@ small, .text-sm {
     height: 48px;
     width: auto;
     object-fit: contain;
-    transition: height var(--transition-base) var(--easing-ease);
+    transition: height var(--transition-base) var(--easing-ease), width var(--transition-base) var(--easing-ease);
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Kademeli küçültme - 968px altı */
+@media (max-width: 968px) {
+    .nav-logo-img {
+        height: 44px;
+    }
+    
+    .navbar.shrunk .nav-logo-img {
+        height: 38px;
+    }
+}
+
+/* Kademeli küçültme - 768px altı */
+@media (max-width: 768px) {
+    .nav-logo-img {
+        height: 40px;
+    }
+    
+    .navbar.shrunk .nav-logo-img {
+        height: 34px;
+    }
+    
+    .nav-actions {
+        gap: var(--spacing-xs);
+    }
+    
+    .nav-icon-btn {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+    }
+    
+    .nav-icon-btn i {
+        font-size: 0.95rem;
+    }
+    
+    /* Profile button with avatar - 768px altı (%25 küçük) */
+    .profile-btn.has-avatar {
+        width: 31.5px !important;
+        height: 31.5px !important;
+        min-width: 31.5px !important;
+        border: 1px solid var(--color-white);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+    }
+    
+    .profile-btn.has-avatar:hover {
+        box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2), 0 0 0 0.5px var(--color-accent-primary);
+    }
 }
 
 .nav-logo-text {
@@ -950,6 +999,210 @@ small, .text-sm {
     }
 }
 
+/* İki Satırlı Navbar - 435px ve altı */
+@media (max-width: 435px) {
+    .navbar {
+        padding: 8px 0;
+    }
+    
+    .nav-container {
+        flex-direction: column;
+        height: auto;
+        padding: 0 var(--spacing-xs);
+        gap: 0;
+        position: relative;
+    }
+    
+    /* Üst satır: Logo (solda) ve Actions (sağda) - yan yana */
+    .nav-logo {
+        order: 1;
+        flex: 0 0 auto;
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding-bottom: 8px;
+    }
+    
+    /* nav-actions'ı nav-container'ın sağına taşı (üst satırda) */
+    .nav-actions {
+        order: 1;
+        flex: 0 0 auto;
+        position: absolute;
+        right: var(--spacing-xs);
+        top: 8px;
+        margin-left: 0;
+    }
+    
+    /* Alt satır: Sadece Nav Menu */
+    .nav-menu {
+        order: 2;
+        flex: 0 0 auto;
+        width: 100%;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px 0 0 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 0;
+    }
+    
+    .nav-menu a {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+    }
+    
+    .nav-menu a i {
+        font-size: 0.9rem;
+    }
+    
+    /* Logo küçültme */
+    .nav-logo-img {
+        height: 32px !important;
+    }
+    
+    .navbar.shrunk .nav-logo-img {
+        height: 28px !important;
+    }
+    
+    /* Nav actions küçültme */
+    .nav-icon-btn {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+    }
+    
+    .nav-icon-btn i {
+        font-size: 0.9rem;
+    }
+    
+    /* Profile button with avatar - 435px altı */
+    .profile-btn.has-avatar {
+        width: 28.5px !important;
+        height: 28.5px !important;
+        min-width: 28.5px !important;
+    }
+}
+
+/* Kompakt Mod - 450px ve altı (435px'ten büyükse) */
+@media (min-width: 436px) and (max-width: 450px) {
+    .nav-container {
+        padding: 0 var(--spacing-xs);
+        height: 48px;
+    }
+    
+    /* Logo küçültme */
+    .nav-logo {
+        flex: 0 0 auto;
+        gap: var(--spacing-xs);
+    }
+    
+    .nav-logo-img {
+        height: 28px !important;
+    }
+    
+    .navbar.shrunk .nav-logo-img {
+        height: 24px !important;
+    }
+    
+    .nav-logo-text {
+        display: none !important;
+    }
+    
+    /* Nav menu iconları kompakt - daha yakın */
+    .nav-menu {
+        gap: 0;
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 0 2px;
+    }
+    
+    .nav-menu li {
+        margin: 0;
+    }
+    
+    .nav-menu a {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+    
+    .nav-menu a i {
+        font-size: 0.875rem;
+    }
+    
+    /* Nav actions (bildirim ve profil) küçültme */
+    .nav-actions {
+        gap: 3px;
+        flex: 0 0 auto;
+    }
+    
+    .nav-icon-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+    
+    .nav-icon-btn i {
+        font-size: 0.875rem;
+    }
+    
+    /* Profile button with avatar küçültme - %25 daha küçük (border dahil) */
+    .profile-btn.has-avatar {
+        width: 27px !important;
+        height: 27px !important;
+        min-width: 27px !important;
+        border: 1px solid var(--color-white);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+        padding: 0;
+    }
+    
+    .profile-btn.has-avatar:hover {
+        box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2), 0 0 0 0.5px var(--color-accent-primary);
+        transform: scale(1.02);
+    }
+    
+    .profile-btn.has-avatar .profile-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--radius-full);
+        display: block;
+    }
+    
+    /* Notification badge küçültme */
+    .notification-badge {
+        min-width: 16px;
+        height: 16px;
+        font-size: 0.65rem;
+        top: 2px;
+        right: 2px;
+        padding: 0 4px;
+    }
+    
+    /* Logged in indicator küçültme */
+    .profile-btn.logged-in::after {
+        width: 10px;
+        height: 10px;
+        bottom: 1px;
+        right: 1px;
+        border: 1.5px solid var(--color-white);
+    }
+    
+    /* Navbar padding küçültme */
+    .navbar {
+        padding: 6px 0;
+    }
+    
+    .navbar.scrolled {
+        padding: 6px 0;
+    }
+    
+    .navbar.shrunk {
+        padding: 6px 0;
+    }
+}
+
 @media (max-width: 640px) {
     .nav-container {
         padding: 0 var(--spacing-sm);
@@ -957,6 +1210,55 @@ small, .text-sm {
     
     .nav-logo-text {
         display: none;
+    }
+    
+    /* Logo küçültme başlangıcı */
+    .nav-logo-img {
+        height: 40px;
+    }
+    
+    .navbar.shrunk .nav-logo-img {
+        height: 36px;
+    }
+    
+    /* Nav menu iconları biraz küçült */
+    .nav-menu a {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+    }
+    
+    .nav-menu a i {
+        font-size: 0.95rem;
+    }
+    
+    /* Nav actions küçültme başlangıcı */
+    .nav-icon-btn {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+    }
+    
+    .nav-icon-btn i {
+        font-size: 0.95rem;
+    }
+    
+    /* Profile button with avatar - 640px altı (%25 küçük) */
+    .profile-btn.has-avatar {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        border: 1px solid var(--color-white);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+    }
+    
+    .profile-btn.has-avatar:hover {
+        box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2), 0 0 0 0.5px var(--color-accent-primary);
+    }
+    
+    /* Nav menu gap küçült */
+    .nav-menu {
+        gap: 2px;
     }
 }
 
@@ -5786,14 +6088,17 @@ section {
 .profile-btn.has-avatar {
     position: relative;
     overflow: visible;
-    border: 3px solid var(--color-white);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 2px var(--color-accent-primary);
+    width: 33px !important;
+    height: 33px !important;
+    min-width: 33px !important;
+    border: 2px solid var(--color-white);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--color-accent-primary);
     transition: all var(--transition-base) var(--easing-ease);
 }
 
 .profile-btn.has-avatar:hover {
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3), 0 0 0 2px var(--color-accent-primary);
-    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25), 0 0 0 1px var(--color-accent-primary);
+    transform: scale(1.03);
 }
 
 .profile-btn.has-avatar .profile-avatar-img {
