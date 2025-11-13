@@ -64,13 +64,12 @@ function setupBottomNavigation() {
 }
 
 // Navigation - Initialize after DOM loads - sidebar_2.txt mantığı
-let navItems, contentSections, sidebar, hamburgerMenu, sidebarOverlay;
+let navItems, contentSections, sidebar, sidebarOverlay;
 
 document.addEventListener('DOMContentLoaded', () => {
     navItems = document.querySelectorAll('.nav-item');
     contentSections = document.querySelectorAll('.content-section');
     sidebar = document.querySelector('.sidebar');
-    hamburgerMenu = document.getElementById('hamburgerMenu');
     sidebarOverlay = document.getElementById('sidebarOverlay');
 
     // Sidebar_2.txt mantığı: hover ile açılır/kapanır
@@ -86,18 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mouse leave - daralt
         sidebar.addEventListener('mouseleave', () => {
             sidebar.classList.add('close');
-        });
-    }
-
-    // Hamburger menu toggle for mobile
-    if (hamburgerMenu && sidebar) {
-        hamburgerMenu.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            sidebar.classList.toggle('mobile-open');
-            if (sidebarOverlay) {
-                sidebarOverlay.classList.toggle('active');
-            }
         });
     }
 
@@ -2253,7 +2240,7 @@ function renderMembersTable() {
                         <img src="${avatarUrl}" alt="${fullName}" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}'">
                     </div>
                 </td>
-                <td><strong>${fullName}</strong> ${isAdmin ? '<span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin</span>' : ''}</td>
+                <td><strong>${fullName}</strong> ${member.is_admin ? '<span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin</span>' : ''}</td>
                 <td>${member.email || '-'}</td>
                 <td>${phone}</td>
                 <td>${university}</td>
@@ -2264,7 +2251,7 @@ function renderMembersTable() {
                         <button class="btn btn-sm btn-primary" onclick="openMemberDetailModal('${member.user_id || member.id}')" title="Detaylar">
                             <i class="fas fa-eye"></i>
                         </button>
-                        ${!isAdmin ? `<button class="btn btn-sm btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName}')" title="Admin Yap">
+                        ${!member.is_admin ? `<button class="btn btn-sm btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName}')" title="Admin Yap">
                             <i class="fas fa-user-shield"></i>
                         </button>` : ''}
                     </div>
