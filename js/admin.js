@@ -1443,7 +1443,8 @@ async function openAllActivitiesModal() {
         const allActivities = await DatabaseService.getRecentActivities(100); // Get more activities
         
         const modal = document.createElement('div');
-        modal.className = 'modal all-activities-modal';
+        modal.className = 'modal all-activities-modal active';
+        modal.id = 'all-activities-modal';
         modal.innerHTML = `
             <div class="modal-content modal-large">
                 <div class="modal-header">
@@ -1538,12 +1539,16 @@ async function openAllActivitiesModal() {
 }
 
 function closeAllActivitiesModal() {
-    const modal = document.querySelector('.all-activities-modal');
+    const modal = document.getElementById('all-activities-modal') || document.querySelector('.all-activities-modal');
     if (modal) {
         modal.remove();
         document.body.style.overflow = '';
     }
 }
+
+// Make functions global
+window.openAllActivitiesModal = openAllActivitiesModal;
+window.closeAllActivitiesModal = closeAllActivitiesModal;
 
 // Load admin members for settings page
 async function loadAdminMembers() {
