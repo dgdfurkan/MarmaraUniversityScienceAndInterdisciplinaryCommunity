@@ -144,6 +144,11 @@ function showSection(sectionId) {
     
     // Load section data
     loadSectionData(sectionId);
+    
+    // Load admin members if settings section
+    if (sectionId === 'settings') {
+        loadAdminMembers();
+    }
 }
 
 function updatePageTitle(sectionId) {
@@ -2350,9 +2355,6 @@ function renderMembersTable() {
                         <button class="btn btn-sm btn-primary" onclick="openMemberDetailModal('${member.user_id || member.id}')" title="Detaylar">
                             <i class="fas fa-eye"></i>
                         </button>
-                        ${!member.is_admin ? `<button class="btn btn-sm btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName}')" title="Admin Yap">
-                            <i class="fas fa-user-shield"></i>
-                        </button>` : ''}
                     </div>
                 </td>
             </tr>
