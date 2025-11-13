@@ -140,12 +140,14 @@ body {
     border-radius: 4px;
     align-items: center;
     margin: 4px 8px;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: background-color, transform, opacity;
 }
 
 .sidebar .links li:hover {
     cursor: pointer;
     background: rgba(255, 255, 255, 0.3);
+    transform: translateX(2px);
 }
 
 .sidebar .links li.nav-item.active {
@@ -281,6 +283,40 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Logout Button */
+.sidebar .user-profile .user-profile-logout {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', sans-serif;
+    gap: 6px;
+    margin-left: auto;
+    will-change: transform, background-color;
+}
+
+.sidebar:hover .user-profile .user-profile-logout {
+    display: flex;
+}
+
+.sidebar .user-profile .user-profile-logout:hover {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-2px);
+}
+
+.sidebar .user-profile .user-profile-logout i {
+    font-size: 0.9rem;
 }
 
 .view-site i {
