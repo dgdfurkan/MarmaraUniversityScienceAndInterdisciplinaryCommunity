@@ -1331,3 +1331,332 @@ DatabaseService.updateSiteSettings = async function(settings) {
         throw error;
     }
 };
+
+// ============================================
+// USER CONTENT VIEWS - Unified tracking system
+// ============================================
+
+// Get content views for a user (logged-in or anonymous)
+DatabaseService.getUserContentViews = async function(userId = null, contentType = null) {
+    try {
+        const userIP = userId ? null : await this.getUserIP();
+        
+        let query = supabase
+            .from('user_content_views')
+            .select('*');
+        
+        if (userId) {
+            query = query.eq('user_id', userId);
+        } else if (userIP) {
+            query = query.eq('user_ip', userIP);
+        }
+        
+        if (contentType) {
+            query = query.eq('content_type', contentType);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error getting user content views:', error);
+        return [];
+    }
+};
+
+// Mark content as viewed
+DatabaseService.markContentAsViewed = async function(userId = null, contentType, contentId) {
+    try {
+        const userIP = userId ? null : await this.getUserIP();
+        
+        // Check if view already exists
+        let checkQuery = supabase
+            .from('user_content_views')
+            .select('id')
+            .eq('content_type', contentType)
+            .eq('content_id', contentId);
+        
+        if (userId) {
+            checkQuery = checkQuery.eq('user_id', userId).is('user_ip', null);
+        } else if (userIP) {
+            checkQuery = checkQuery.eq('user_ip', userIP).is('user_id', null);
+        }
+        
+        const { data: existing, error: checkError } = await checkQuery.single();
+        
+        if (checkError && checkError.code === 'PGRST116') {
+            // If view doesn't exist, create it
+            const insertData = {
+                content_type: contentType,
+                content_id: contentId,
+                has_viewed: true
+            };
+            
+            if (userId) {
+                insertData.user_id = userId;
+            } else if (userIP) {
+                insertData.user_ip = userIP;
+            }
+            
+            const { data, error } = await supabase
+                .from('user_content_views')
+                .insert([insertData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return data;
+        }
+        
+        // Update existing view
+        const updateData = {
+            has_viewed: true,
+            viewed_at: new Date().toISOString()
+        };
+        
+        let updateQuery = supabase
+            .from('user_content_views')
+            .update(updateData)
+            .eq('content_type', contentType)
+            .eq('content_id', contentId);
+        
+        if (userId) {
+            updateQuery = updateQuery.eq('user_id', userId).is('user_ip', null);
+        } else if (userIP) {
+            updateQuery = updateQuery.eq('user_ip', userIP).is('user_id', null);
+        }
+        
+        const { data, error } = await updateQuery.select().single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error marking content as viewed:', error);
+        // Return null on error (table might not exist yet)
+        return null;
+    }
+};
+
+// Get unviewed content for a user since last visit
+DatabaseService.getUnviewedContent = async function(userId = null, lastVisit = null) {
+    try {
+        const userIP = userId ? null : await this.getUserIP();
+        
+        // Get all viewed content IDs
+        const viewedContent = await this.getUserContentViews(userId);
+        const viewedMap = new Map();
+        
+        viewedContent.forEach(view => {
+            const key = `${view.content_type}-${view.content_id}`;
+            viewedMap.set(key, true);
+        });
+        
+        // Get all content created after last visit
+        const unviewedContent = {
+            announcements: [],
+            events: [],
+            blog: []
+        };
+        
+        // Get announcements
+        const announcements = await this.getAnnouncements();
+        announcements.forEach(ann => {
+            const key = `announcement-${ann.id}`;
+            if (!viewedMap.has(key)) {
+                if (!lastVisit || new Date(ann.created_at) > new Date(lastVisit)) {
+                    unviewedContent.announcements.push(ann);
+                }
+            }
+        });
+        
+        // Get events
+        const events = await this.getEvents();
+        events.forEach(event => {
+            const key = `event-${event.id}`;
+            if (!viewedMap.has(key)) {
+                if (!lastVisit || new Date(event.created_at) > new Date(lastVisit)) {
+                    unviewedContent.events.push(event);
+                }
+            }
+        });
+        
+        // Get blog posts
+        const blogPosts = await this.getBlogPosts();
+        blogPosts.forEach(post => {
+            const key = `blog-${post.id}`;
+            if (!viewedMap.has(key)) {
+                if (!lastVisit || new Date(post.created_at) > new Date(lastVisit)) {
+                    unviewedContent.blog.push(post);
+                }
+            }
+        });
+        
+        return unviewedContent;
+    } catch (error) {
+        console.error('Error getting unviewed content:', error);
+        return { announcements: [], events: [], blog: [] };
+    }
+};
+
+// ============================================
+// USER REACTIONS - Unified reaction tracking
+// ============================================
+
+// Get all reactions by a user
+DatabaseService.getUserReactions = async function(userId = null, contentType = null) {
+    try {
+        const userIP = userId ? null : await this.getUserIP();
+        
+        let query = supabase
+            .from('user_reactions')
+            .select('*');
+        
+        if (userId) {
+            query = query.eq('user_id', userId);
+        } else if (userIP) {
+            query = query.eq('user_ip', userIP);
+        }
+        
+        if (contentType) {
+            query = query.eq('content_type', contentType);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error getting user reactions:', error);
+        return [];
+    }
+};
+
+// Save a user reaction
+DatabaseService.saveUserReaction = async function(userId = null, contentType, contentId, reactionType) {
+    try {
+        const userIP = userId ? null : await this.getUserIP();
+        
+        // Check if reaction already exists
+        let checkQuery = supabase
+            .from('user_reactions')
+            .select('id')
+            .eq('content_type', contentType)
+            .eq('content_id', contentId)
+            .eq('reaction_type', reactionType);
+        
+        if (userId) {
+            checkQuery = checkQuery.eq('user_id', userId).is('user_ip', null);
+        } else if (userIP) {
+            checkQuery = checkQuery.eq('user_ip', userIP).is('user_id', null);
+        }
+        
+        const { data: existing, error: checkError } = await checkQuery.single();
+        
+        if (checkError && checkError.code === 'PGRST116') {
+            // Reaction doesn't exist, create it
+            const insertData = {
+                content_type: contentType,
+                content_id: contentId,
+                reaction_type: reactionType
+            };
+            
+            if (userId) {
+                insertData.user_id = userId;
+            } else if (userIP) {
+                insertData.user_ip = userIP;
+            }
+            
+            const { data, error } = await supabase
+                .from('user_reactions')
+                .insert([insertData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return data;
+        }
+        
+        // Reaction already exists
+        return existing;
+    } catch (error) {
+        console.error('Error saving user reaction:', error);
+        // Return null on error (table might not exist yet)
+        return null;
+    }
+};
+
+// ============================================
+// MEMBER MANAGEMENT - Admin panel functions
+// ============================================
+
+// Get all members
+DatabaseService.getAllMembers = async function() {
+    try {
+        const { data, error } = await supabase
+            .from('members')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error getting all members:', error);
+        return [];
+    }
+};
+
+// Get member by ID
+DatabaseService.getMemberById = async function(memberId) {
+    try {
+        const { data, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('id', memberId)
+            .single();
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error getting member by ID:', error);
+        return null;
+    }
+};
+
+// Get content views for a specific member
+DatabaseService.getMemberContentViews = async function(memberId) {
+    try {
+        if (!memberId) return [];
+        
+        const { data, error } = await supabase
+            .from('user_content_views')
+            .select('*')
+            .eq('user_id', memberId)
+            .order('viewed_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error getting member content views:', error);
+        return [];
+    }
+};
+
+// Get reactions for a specific member
+DatabaseService.getMemberReactions = async function(memberId) {
+    try {
+        if (!memberId) return [];
+        
+        const { data, error } = await supabase
+            .from('user_reactions')
+            .select('*')
+            .eq('user_id', memberId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error getting member reactions:', error);
+        return [];
+    }
+};

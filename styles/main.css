@@ -785,6 +785,18 @@ small, .text-sm {
     transition: transform var(--transition-fast) var(--easing-ease);
 }
 
+.admin-panel-btn {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2));
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.admin-panel-btn:hover {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.3));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
 .nav-icon-btn:hover {
     background: var(--color-bg-secondary);
     color: var(--color-accent-primary);
@@ -890,6 +902,40 @@ small, .text-sm {
     50% {
         transform: scale(1.2);
     }
+}
+
+/* Bell shake animation for new notifications */
+@keyframes bellShake {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: rotate(-10deg);
+    }
+    20%, 40%, 60%, 80% {
+        transform: rotate(10deg);
+    }
+}
+
+/* Apply shake animation to notification button */
+.notifications-btn.shake {
+    animation: bellShake 0.5s ease-in-out;
+}
+
+/* Slide-in animation for notification panel */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notifications-panel.active {
+    animation: slideInRight 0.3s var(--easing-ease);
 }
 
 /* Hamburger Menu - Kaldırıldı, artık kullanılmıyor */

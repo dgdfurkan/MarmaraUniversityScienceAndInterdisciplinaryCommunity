@@ -1,17 +1,122 @@
 // Admin Panel JavaScript
 
-// Navigation
-const navItems = document.querySelectorAll('.nav-item');
-const contentSections = document.querySelectorAll('.content-section');
+// Bottom Navigation Scroll Handler
+let lastScrollY = 0;
+let ticking = false;
 
-navItems.forEach(item => {
-    item.addEventListener('click', () => {
-        const sectionId = item.getAttribute('data-section');
-        showSection(sectionId);
-        
-        // Update active nav item
-        navItems.forEach(nav => nav.classList.remove('active'));
-        item.classList.add('active');
+function handleBottomNavScroll() {
+    if (!ticking) {
+        window.requestAnimationFrame(() => {
+            const bottomNav = document.getElementById('bottomNav');
+            if (!bottomNav) {
+                ticking = false;
+                return;
+            }
+            
+            const currentScrollY = window.scrollY;
+            const scrollingDown = currentScrollY > lastScrollY;
+            const scrollingUp = currentScrollY < lastScrollY;
+            
+            if (currentScrollY <= 50) {
+                bottomNav.classList.remove('hidden');
+                bottomNav.classList.add('visible');
+            } else if (scrollingDown && currentScrollY > 50) {
+                bottomNav.classList.add('hidden');
+                bottomNav.classList.remove('visible');
+            } else if (scrollingUp) {
+                bottomNav.classList.remove('hidden');
+                bottomNav.classList.add('visible');
+            }
+            
+            lastScrollY = currentScrollY;
+            ticking = false;
+        });
+        ticking = true;
+    }
+}
+
+function setupBottomNavigation() {
+    const bottomNav = document.getElementById('bottomNav');
+    if (!bottomNav) return;
+    
+    // Scroll handler
+    window.addEventListener('scroll', handleBottomNavScroll, { passive: true });
+    
+    // Show on hover
+    bottomNav.addEventListener('mouseenter', () => {
+        bottomNav.classList.remove('hidden');
+        bottomNav.classList.add('visible');
+    });
+    
+    // Click handlers for bottom nav items
+    const bottomNavItems = bottomNav.querySelectorAll('.bottom-nav-item');
+    bottomNavItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const section = item.getAttribute('data-section');
+            if (section) {
+                showSection(section);
+                // Update active state
+                bottomNavItems.forEach(navItem => navItem.classList.remove('active'));
+                item.classList.add('active');
+            }
+        });
+    });
+}
+
+// Navigation - Initialize after DOM loads
+let navItems, contentSections, sidebar, hamburgerMenu, sidebarOverlay;
+
+document.addEventListener('DOMContentLoaded', () => {
+    navItems = document.querySelectorAll('.nav-item');
+    contentSections = document.querySelectorAll('.content-section');
+    sidebar = document.querySelector('.sidebar');
+    hamburgerMenu = document.getElementById('hamburgerMenu');
+    sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    // Hamburger menu toggle for mobile
+    if (hamburgerMenu && sidebar) {
+        hamburgerMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            sidebar.classList.toggle('mobile-open');
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.toggle('active');
+            }
+        });
+    }
+
+    // Close sidebar when clicking overlay
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+            if (sidebar) {
+                sidebar.classList.remove('mobile-open');
+            }
+            sidebarOverlay.classList.remove('active');
+        });
+    }
+
+    // Close sidebar when clicking a nav item on mobile
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const sectionId = item.getAttribute('data-section');
+            if (sectionId) {
+                showSection(sectionId);
+                
+                // Update active nav item
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                
+                // Close sidebar on mobile after navigation
+                if (window.innerWidth <= 768) {
+                    if (sidebar) {
+                        sidebar.classList.remove('mobile-open');
+                    }
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove('active');
+                    }
+                }
+            }
+        });
     });
 });
 
@@ -40,6 +145,7 @@ function updatePageTitle(sectionId) {
         'announcements': { title: 'Duyuru Yönetimi', subtitle: 'Duyuruları yönetin' },
         'blog': { title: 'Blog Yönetimi', subtitle: 'Blog yazılarını yönetin' },
         'events': { title: 'Etkinlik Yönetimi', subtitle: 'Etkinlikleri yönetin' },
+        'members': { title: 'Üye Yönetimi', subtitle: 'Site üyelerini görüntüleyin ve yönetin' },
         'registrations': { title: 'Kayıt Yönetimi', subtitle: 'Etkinlik kayıtlarını görüntüleyin' },
         'media': { title: 'Medya Yönetimi', subtitle: 'Medya dosyalarını yönetin' },
         'settings': { title: 'Site Ayarları', subtitle: 'Site ayarlarını düzenleyin' }
@@ -64,6 +170,9 @@ function loadSectionData(sectionId) {
             break;
         case 'events':
             loadEvents();
+            break;
+        case 'members':
+            loadMembers();
             break;
         case 'registrations':
             loadRegistrations();
@@ -509,9 +618,9 @@ async function loadAnnouncements() {
         
         tableBody.innerHTML = announcements.map(announcement => `
             <tr>
-                <td>${announcement.title}</td>
-                <td><span class="category-badge category-${announcement.category}">${getCategoryName(announcement.category)}</span></td>
-                <td>${new Date(announcement.created_at).toLocaleString('tr-TR', {
+                <td data-label="Başlık">${announcement.title}</td>
+                <td data-label="Kategori"><span class="category-badge category-${announcement.category}">${getCategoryName(announcement.category)}</span></td>
+                <td data-label="Tarih">${new Date(announcement.created_at).toLocaleString('tr-TR', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
@@ -519,14 +628,16 @@ async function loadAnnouncements() {
                     minute: '2-digit',
                     timeZone: 'Europe/Istanbul'
                 })}</td>
-                <td><span class="status-badge status-${announcement.status}">${getStatusName(announcement.status)}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editAnnouncement(${announcement.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement(${announcement.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <td data-label="Durum"><span class="status-badge status-${announcement.status}">${getStatusName(announcement.status)}</span></td>
+                <td data-label="İşlemler">
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-secondary" onclick="editAnnouncement(${announcement.id})" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement(${announcement.id})" title="Sil">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -545,9 +656,9 @@ async function loadBlogPosts() {
         
         tableBody.innerHTML = blogPosts.map(post => `
             <tr>
-                <td>${post.title}</td>
-                <td><span class="category-badge category-${post.category}">${getCategoryName(post.category)}</span></td>
-                <td>${new Date(post.created_at).toLocaleString('tr-TR', {
+                <td data-label="Başlık">${post.title}</td>
+                <td data-label="Kategori"><span class="category-badge category-${post.category}">${getCategoryName(post.category)}</span></td>
+                <td data-label="Tarih">${new Date(post.created_at).toLocaleString('tr-TR', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
@@ -555,14 +666,16 @@ async function loadBlogPosts() {
                     minute: '2-digit',
                     timeZone: 'Europe/Istanbul'
                 })}</td>
-                <td><span class="status-badge status-${post.status}">${getStatusName(post.status)}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editBlogPost(${post.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteBlogPost(${post.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <td data-label="Durum"><span class="status-badge status-${post.status}">${getStatusName(post.status)}</span></td>
+                <td data-label="İşlemler">
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-secondary" onclick="editBlogPost(${post.id})" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteBlogPost(${post.id})" title="Sil">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -581,9 +694,9 @@ async function loadEvents() {
         
         tableBody.innerHTML = events.map(event => `
             <tr>
-                <td>${event.title}</td>
-                <td><span class="category-badge category-${event.type}">${getEventTypeName(event.type)}</span></td>
-                <td>${new Date(event.date).toLocaleString('tr-TR', {
+                <td data-label="Başlık">${event.title}</td>
+                <td data-label="Kategori"><span class="category-badge category-${event.type}">${getEventTypeName(event.type)}</span></td>
+                <td data-label="Tarih">${new Date(event.date).toLocaleString('tr-TR', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
@@ -591,14 +704,16 @@ async function loadEvents() {
                     minute: '2-digit',
                     timeZone: 'Europe/Istanbul'
                 })}</td>
-                <td>${event.registered || 0}/${event.capacity}</td>
-                <td>
-                    <button class="btn btn-sm btn-secondary" onclick="editEvent(${event.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteEvent(${event.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <td data-label="Kayıt">${event.registered || 0}/${event.capacity}</td>
+                <td data-label="İşlemler">
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-secondary" onclick="editEvent(${event.id})" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEvent(${event.id})" title="Sil">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -1133,7 +1248,7 @@ async function loadRecentActivities() {
     if (!activitiesContainer) return;
 
     try {
-        const activities = await DatabaseService.getRecentActivities(15);
+        const activities = await DatabaseService.getRecentActivities(10);
         
         if (activities.length === 0) {
             activitiesContainer.innerHTML = '<p class="no-activities">Henüz aktivite bulunmuyor.</p>';
@@ -1237,13 +1352,45 @@ function getTimeAgo(dateString) {
 }
 
 // Initialize dashboard on page load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     loadDashboardStats();
     loadAnnouncements();
     loadBlogPosts();
     loadEvents();
     loadRegistrations();
     loadMedia();
+    loadSiteSettings();
+    
+    // Load admin user info for sidebar
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const member = await DatabaseService.getMemberById(user.id);
+            if (member) {
+                const adminUserName = document.getElementById('adminUserName');
+                const adminUserAvatar = document.getElementById('adminUserAvatar');
+                
+                if (adminUserName) {
+                    adminUserName.textContent = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Admin';
+                }
+                
+                if (adminUserAvatar && member.avatar_url) {
+                    adminUserAvatar.src = member.avatar_url;
+                }
+            }
+        }
+                const adminUserEmail = document.getElementById('adminUserEmail');
+                if (adminUserEmail && member.email) {
+                    adminUserEmail.textContent = member.email;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading admin user info:', error);
+    }
+    
+    // Setup bottom navigation
+    setupBottomNavigation();
     
     // Initialize RichTextEditor instances
     setTimeout(() => {
@@ -2027,6 +2174,507 @@ function addEditorListeners(editorId) {
         console.error('Editor element not found:', editorId);
     }
 }
+
+// ============================================
+// MEMBERS MANAGEMENT
+// ============================================
+
+let allMembers = [];
+let filteredMembers = [];
+
+async function loadMembers() {
+    try {
+        allMembers = await DatabaseService.getAllMembers();
+        filteredMembers = [...allMembers];
+        renderMembersTable();
+        setupMemberFilters();
+    } catch (error) {
+        console.error('Error loading members:', error);
+        document.getElementById('members-table').innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem; color: #ef4444;">
+                    Üyeler yüklenirken bir hata oluştu.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function renderMembersTable() {
+    const tbody = document.getElementById('members-table');
+    if (!tbody) return;
+    
+    if (filteredMembers.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    Henüz üye bulunmuyor.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = filteredMembers.map(member => {
+        const avatarUrl = member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}`;
+        const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'İsimsiz';
+        const phone = member.phone ? `${member.phone_country || '+90'} ${member.phone}` : '-';
+        const university = member.university || '-';
+        const department = member.department || '-';
+        const createdAt = member.created_at ? new Date(member.created_at).toLocaleDateString('tr-TR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }) : '-';
+        
+        return `
+            <tr>
+                <td>
+                    <div class="member-avatar-cell">
+                        <img src="${avatarUrl}" alt="${fullName}" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}'">
+                    </div>
+                </td>
+                <td><strong>${fullName}</strong> ${isAdmin ? '<span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin</span>' : ''}</td>
+                <td>${member.email || '-'}</td>
+                <td>${phone}</td>
+                <td>${university}</td>
+                <td>${department}</td>
+                <td>${createdAt}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-primary" onclick="openMemberDetailModal('${member.user_id || member.id}')" title="Detaylar">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${!isAdmin ? `<button class="btn btn-sm btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName}')" title="Admin Yap">
+                            <i class="fas fa-user-shield"></i>
+                        </button>` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function setupMemberFilters() {
+    const searchInput = document.getElementById('member-search');
+    const universityFilter = document.getElementById('member-filter-university');
+    const departmentFilter = document.getElementById('member-filter-department');
+    
+    // Populate university and department filters
+    const universities = [...new Set(allMembers.map(m => m.university).filter(Boolean))].sort();
+    const departments = [...new Set(allMembers.map(m => m.department).filter(Boolean))].sort();
+    
+    if (universityFilter) {
+        universities.forEach(uni => {
+            const option = document.createElement('option');
+            option.value = uni;
+            option.textContent = uni;
+            universityFilter.appendChild(option);
+        });
+        
+        universityFilter.addEventListener('change', () => {
+            applyFilters();
+        });
+    }
+    
+    if (departmentFilter) {
+        departments.forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            departmentFilter.appendChild(option);
+        });
+        
+        departmentFilter.addEventListener('change', () => {
+            applyFilters();
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            applyFilters();
+        });
+    }
+}
+
+function applyFilters() {
+    const searchInput = document.getElementById('member-search');
+    const universityFilter = document.getElementById('member-filter-university');
+    const departmentFilter = document.getElementById('member-filter-department');
+    
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedUniversity = universityFilter ? universityFilter.value : '';
+    const selectedDepartment = departmentFilter ? departmentFilter.value : '';
+    
+    filteredMembers = allMembers.filter(member => {
+        // Search filter
+        if (searchTerm) {
+            const fullName = `${member.first_name || ''} ${member.last_name || ''}`.toLowerCase();
+            const email = (member.email || '').toLowerCase();
+            const phone = (member.phone || '').toLowerCase();
+            const university = (member.university || '').toLowerCase();
+            const department = (member.department || '').toLowerCase();
+            
+            const matchesSearch = fullName.includes(searchTerm) ||
+                                 email.includes(searchTerm) ||
+                                 phone.includes(searchTerm) ||
+                                 university.includes(searchTerm) ||
+                                 department.includes(searchTerm);
+            
+            if (!matchesSearch) return false;
+        }
+        
+        // University filter
+        if (selectedUniversity && member.university !== selectedUniversity) {
+            return false;
+        }
+        
+        // Department filter
+        if (selectedDepartment && member.department !== selectedDepartment) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    renderMembersTable();
+}
+
+async function openMemberDetailModal(memberId) {
+    try {
+        // Try to get member by user_id first, then by id
+        let member = await DatabaseService.getMemberById(memberId);
+        if (!member) {
+            // Try to find by user_id if memberId is a UUID
+            const allMembers = await DatabaseService.getAllMembers();
+            member = allMembers.find(m => m.user_id === memberId || m.id === memberId);
+        }
+        
+        if (!member) {
+            alert('Üye bulunamadı.');
+            return;
+        }
+        
+        // Use user_id for content views and reactions
+        const userId = member.user_id || member.id;
+        const contentViews = await DatabaseService.getMemberContentViews(userId);
+        const reactions = await DatabaseService.getMemberReactions(userId);
+        
+        await renderMemberDetails(member, contentViews, reactions);
+        
+        const modal = document.getElementById('member-detail-modal');
+        if (modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    } catch (error) {
+        console.error('Error opening member detail modal:', error);
+        alert('Üye detayları yüklenirken bir hata oluştu.');
+    }
+}
+
+function closeMemberDetailModal() {
+    const modal = document.getElementById('member-detail-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+async function renderMemberDetails(member, contentViews, reactions) {
+    const title = document.getElementById('member-detail-title');
+    const content = document.getElementById('member-detail-content');
+    
+    if (title) {
+        const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'İsimsiz';
+        title.textContent = `${fullName} - Detaylar`;
+    }
+    
+    if (!content) return;
+    
+    const avatarUrl = member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}`;
+    const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'İsimsiz';
+    const phone = member.phone ? `${member.phone_country || '+90'} ${member.phone}` : '-';
+    const createdAt = member.created_at ? new Date(member.created_at).toLocaleDateString('tr-TR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }) : '-';
+    
+    // Group content views by type
+    const viewsByType = {
+        announcement: contentViews.filter(v => v.content_type === 'announcement'),
+        event: contentViews.filter(v => v.content_type === 'event'),
+        blog: contentViews.filter(v => v.content_type === 'blog')
+    };
+    
+    // Group reactions by type
+    const reactionsByType = {
+        announcement: reactions.filter(r => r.content_type === 'announcement'),
+        event: reactions.filter(r => r.content_type === 'event'),
+        blog: reactions.filter(r => r.content_type === 'blog')
+    };
+    
+    // Fetch content titles for views
+    const contentTitlesMap = new Map();
+    const uniqueContentIds = {
+        announcement: [...new Set(viewsByType.announcement.map(v => v.content_id))],
+        event: [...new Set(viewsByType.event.map(v => v.content_id))],
+        blog: [...new Set(viewsByType.blog.map(v => v.content_id))]
+    };
+    
+    // Fetch all announcement titles
+    for (const id of uniqueContentIds.announcement) {
+        try {
+            const announcement = await getAnnouncementById(id);
+            if (announcement) {
+                contentTitlesMap.set(`announcement-${id}`, announcement.title || 'Başlıksız Duyuru');
+            }
+        } catch (error) {
+            console.error(`Error fetching announcement ${id}:`, error);
+            contentTitlesMap.set(`announcement-${id}`, `Duyuru #${id}`);
+        }
+    }
+    
+    // Fetch all event titles
+    for (const id of uniqueContentIds.event) {
+        try {
+            const event = await getEventById(id);
+            if (event) {
+                contentTitlesMap.set(`event-${id}`, event.title || 'Başlıksız Etkinlik');
+            }
+        } catch (error) {
+            console.error(`Error fetching event ${id}:`, error);
+            contentTitlesMap.set(`event-${id}`, `Etkinlik #${id}`);
+        }
+    }
+    
+    // Fetch all blog post titles
+    for (const id of uniqueContentIds.blog) {
+        try {
+            const blogPost = await getBlogPostById(id);
+            if (blogPost) {
+                contentTitlesMap.set(`blog-${id}`, blogPost.title || 'Başlıksız Blog');
+            }
+        } catch (error) {
+            console.error(`Error fetching blog post ${id}:`, error);
+            contentTitlesMap.set(`blog-${id}`, `Blog #${id}`);
+        }
+    }
+    
+    // Fetch content titles for reactions
+    const reactionContentIds = {
+        announcement: [...new Set(reactionsByType.announcement.map(r => r.content_id))],
+        event: [...new Set(reactionsByType.event.map(r => r.content_id))],
+        blog: [...new Set(reactionsByType.blog.map(r => r.content_id))]
+    };
+    
+    // Fetch missing announcement titles for reactions
+    for (const id of reactionContentIds.announcement) {
+        if (!contentTitlesMap.has(`announcement-${id}`)) {
+            try {
+                const announcement = await getAnnouncementById(id);
+                if (announcement) {
+                    contentTitlesMap.set(`announcement-${id}`, announcement.title || 'Başlıksız Duyuru');
+                }
+            } catch (error) {
+                console.error(`Error fetching announcement ${id}:`, error);
+                contentTitlesMap.set(`announcement-${id}`, `Duyuru #${id}`);
+            }
+        }
+    }
+    
+    // Fetch missing event titles for reactions
+    for (const id of reactionContentIds.event) {
+        if (!contentTitlesMap.has(`event-${id}`)) {
+            try {
+                const event = await getEventById(id);
+                if (event) {
+                    contentTitlesMap.set(`event-${id}`, event.title || 'Başlıksız Etkinlik');
+                }
+            } catch (error) {
+                console.error(`Error fetching event ${id}:`, error);
+                contentTitlesMap.set(`event-${id}`, `Etkinlik #${id}`);
+            }
+        }
+    }
+    
+    // Fetch missing blog post titles for reactions
+    for (const id of reactionContentIds.blog) {
+        if (!contentTitlesMap.has(`blog-${id}`)) {
+            try {
+                const blogPost = await getBlogPostById(id);
+                if (blogPost) {
+                    contentTitlesMap.set(`blog-${id}`, blogPost.title || 'Başlıksız Blog');
+                }
+            } catch (error) {
+                console.error(`Error fetching blog post ${id}:`, error);
+                contentTitlesMap.set(`blog-${id}`, `Blog #${id}`);
+            }
+        }
+    }
+    
+    content.innerHTML = `
+        <div class="member-detail-grid">
+            <div class="member-detail-section">
+                <h3><i class="fas fa-user"></i> Kişisel Bilgiler</h3>
+                <div class="member-info-card">
+                    <div class="member-avatar-large">
+                        <img src="${avatarUrl}" alt="${fullName}" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}'">
+                    </div>
+                    <div class="member-info-list">
+                        <div class="info-item">
+                            <span class="info-label">Ad Soyad:</span>
+                            <span class="info-value">${fullName}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">E-posta:</span>
+                            <span class="info-value">${member.email || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Telefon:</span>
+                            <span class="info-value">${phone}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Üniversite:</span>
+                            <span class="info-value">${member.university || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Bölüm:</span>
+                            <span class="info-value">${member.department || '-'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Kayıt Tarihi:</span>
+                            <span class="info-value">${createdAt}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="member-detail-section">
+                <h3><i class="fas fa-eye"></i> Görüntülenen İçerikler (${contentViews.length})</h3>
+                <div class="content-views-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Duyurular:</span>
+                        <span class="summary-value">${viewsByType.announcement.length}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Etkinlikler:</span>
+                        <span class="summary-value">${viewsByType.event.length}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Blog Yazıları:</span>
+                        <span class="summary-value">${viewsByType.blog.length}</span>
+                    </div>
+                </div>
+                ${contentViews.length > 0 ? `
+                    <div class="content-views-table-container">
+                        <table class="content-views-table">
+                            <thead>
+                                <tr>
+                                    <th>İçerik Türü</th>
+                                    <th>İçerik Başlığı</th>
+                                    <th>Görüntülenme Tarihi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${contentViews.slice(0, 20).map(view => {
+                                    const titleKey = `${view.content_type}-${view.content_id}`;
+                                    const contentTitle = contentTitlesMap.get(titleKey) || `${view.content_type === 'announcement' ? 'Duyuru' : view.content_type === 'event' ? 'Etkinlik' : 'Blog'} #${view.content_id}`;
+                                    return `
+                                        <tr>
+                                            <td>${view.content_type === 'announcement' ? 'Duyuru' : view.content_type === 'event' ? 'Etkinlik' : 'Blog'}</td>
+                                            <td><strong>${contentTitle}</strong></td>
+                                            <td>${new Date(view.viewed_at).toLocaleDateString('tr-TR', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        ${contentViews.length > 20 ? `<p style="text-align: center; color: #6b7280; margin-top: 1rem;">Ve ${contentViews.length - 20} tane daha...</p>` : ''}
+                    </div>
+                ` : '<p style="text-align: center; color: #6b7280; padding: 2rem;">Henüz içerik görüntülenmemiş.</p>'}
+            </div>
+            
+            <div class="member-detail-section">
+                <h3><i class="fas fa-heart"></i> Tepkiler (${reactions.length})</h3>
+                <div class="reactions-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Duyurular:</span>
+                        <span class="summary-value">${reactionsByType.announcement.length}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Etkinlikler:</span>
+                        <span class="summary-value">${reactionsByType.event.length}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Blog Yazıları:</span>
+                        <span class="summary-value">${reactionsByType.blog.length}</span>
+                    </div>
+                </div>
+                ${reactions.length > 0 ? `
+                    <div class="reactions-table-container">
+                        <table class="reactions-table">
+                            <thead>
+                                <tr>
+                                    <th>İçerik Türü</th>
+                                    <th>İçerik Başlığı</th>
+                                    <th>Tepki</th>
+                                    <th>Tarih</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${reactions.slice(0, 20).map(reaction => {
+                                    const reactionIcons = {
+                                        'like': '👍',
+                                        'dislike': '👎',
+                                        'love': '❤️',
+                                        'laugh': '😂',
+                                        'wow': '😮',
+                                        'sad': '😢'
+                                    };
+                                    const titleKey = `${reaction.content_type}-${reaction.content_id}`;
+                                    const contentTitle = contentTitlesMap.get(titleKey) || `${reaction.content_type === 'announcement' ? 'Duyuru' : reaction.content_type === 'event' ? 'Etkinlik' : 'Blog'} #${reaction.content_id}`;
+                                    return `
+                                        <tr>
+                                            <td>${reaction.content_type === 'announcement' ? 'Duyuru' : reaction.content_type === 'event' ? 'Etkinlik' : 'Blog'}</td>
+                                            <td><strong>${contentTitle}</strong></td>
+                                            <td>${reactionIcons[reaction.reaction_type] || reaction.reaction_type}</td>
+                                            <td>${new Date(reaction.created_at).toLocaleDateString('tr-TR', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        ${reactions.length > 20 ? `<p style="text-align: center; color: #6b7280; margin-top: 1rem;">Ve ${reactions.length - 20} tane daha...</p>` : ''}
+                    </div>
+                ` : '<p style="text-align: center; color: #6b7280; padding: 2rem;">Henüz tepki verilmemiş.</p>'}
+            </div>
+        </div>
+    `;
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('member-detail-modal');
+    if (modal && e.target === modal) {
+        closeMemberDetailModal();
+    }
+});
 
 // Add event listener to all editors
 document.addEventListener('DOMContentLoaded', () => {

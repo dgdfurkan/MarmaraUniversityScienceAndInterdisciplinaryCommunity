@@ -2260,6 +2260,38 @@ let userIdentifier = null; // IP veya user ID
 let visitedSections = new Set(); // Ziyaret edilen bölümler
 let clickedItems = new Set(); // Tıklanan öğeler (blog post, event, announcement)
 
+// Load notifications from localStorage on page load
+function loadNotificationsFromStorage() {
+    if (!userIdentifier) return;
+    
+    try {
+        const savedNotifications = localStorage.getItem(`notifications-${userIdentifier}`);
+        if (savedNotifications) {
+            const parsed = JSON.parse(savedNotifications);
+            notifications = parsed.notifications || [];
+            unreadCount = notifications.filter(n => n.unread).length;
+            renderNotifications();
+            updateNotificationBadge();
+        }
+    } catch (error) {
+        console.error('Error loading notifications from storage:', error);
+    }
+}
+
+// Save notifications to localStorage
+function saveNotificationsToStorage() {
+    if (!userIdentifier) return;
+    
+    try {
+        localStorage.setItem(`notifications-${userIdentifier}`, JSON.stringify({
+            notifications: notifications,
+            lastUpdated: new Date().toISOString()
+        }));
+    } catch (error) {
+        console.error('Error saving notifications to storage:', error);
+    }
+}
+
 // Get user identifier (IP or user ID)
 async function getUserIdentifier() {
     if (userIdentifier) return userIdentifier;
@@ -2338,17 +2370,36 @@ function setupSectionObserver() {
 }
 
 // Mark notifications as read when section is visited
-function markNotificationsAsReadBySection(sectionId) {
+async function markNotificationsAsReadBySection(sectionId) {
+    // Get current user (if logged in)
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user ? user.id : null;
+    
     let marked = false;
-    notifications.forEach(notif => {
-        if (notif.unread && notif.link === `#${sectionId}`) {
-            notif.unread = false;
-            unreadCount = Math.max(0, unreadCount - 1);
-            marked = true;
+    const notificationsToMark = notifications.filter(notif => notif.unread && notif.link === `#${sectionId}`);
+    
+    // Mark as viewed in database for logged-in users
+    for (const notif of notificationsToMark) {
+        if (notif.itemId) {
+            const contentType = notif.type; // 'announcement', 'event', 'blog'
+            try {
+                await DatabaseService.markContentAsViewed(userId, contentType, notif.itemId);
+            } catch (error) {
+                console.error('Error marking content as viewed:', error);
+            }
         }
+    }
+    
+    notificationsToMark.forEach(notif => {
+        notif.unread = false;
+        unreadCount = Math.max(0, unreadCount - 1);
+        marked = true;
     });
     
     if (marked) {
+        // Save to storage
+        saveNotificationsToStorage();
+        
         updateNotificationBadge();
         renderNotifications();
     }
@@ -2423,23 +2474,58 @@ if (notificationsBtn && notificationsPanel) {
 async function checkNotifications() {
     try {
         await getUserIdentifier();
-        loadUserState();
         
-        // Get new announcements, events, and blog posts
-        const announcements = await DatabaseService.getAnnouncements();
-        const events = await DatabaseService.getEvents();
-        const blogPosts = await DatabaseService.getBlogPosts();
+        // Get current user (if logged in)
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user ? user.id : null;
+        
+        // Get last visit timestamp
+        const lastVisitKey = userId ? `lastVisit-user-${userId}` : `lastVisit-${userIdentifier}`;
+        const lastVisit = localStorage.getItem(lastVisitKey);
+        
+        // Get unviewed content using database service
+        let unviewedContent;
+        if (userId) {
+            // For logged-in users: use database
+            unviewedContent = await DatabaseService.getUnviewedContent(userId, null); // null = check all unviewed, not just since last visit
+        } else {
+            // For anonymous users: use localStorage (backward compatibility)
+            loadUserState();
+            unviewedContent = await DatabaseService.getUnviewedContent(null, null);
+            
+            // Also check localStorage for clicked items and visited sections
+            const viewedMap = new Map();
+            const viewedContent = await DatabaseService.getUserContentViews(null);
+            viewedContent.forEach(view => {
+                const key = `${view.content_type}-${view.content_id}`;
+                viewedMap.set(key, true);
+            });
+            
+            // Filter out items that are in localStorage but not in database
+            unviewedContent.announcements = unviewedContent.announcements.filter(ann => {
+                const notifId = `announcement-${ann.id}`;
+                return !clickedItems.has(notifId) && !visitedSections.has('announcements');
+            });
+            
+            unviewedContent.events = unviewedContent.events.filter(event => {
+                const notifId = `event-${event.id}`;
+                return !clickedItems.has(notifId) && !visitedSections.has('events');
+            });
+            
+            unviewedContent.blog = unviewedContent.blog.filter(post => {
+                const notifId = `blog-${post.id}`;
+                return !clickedItems.has(notifId) && !visitedSections.has('blog');
+            });
+        }
         
         const newNotifications = [];
+        const existingNotificationIds = new Set(notifications.map(n => n.id));
         
-        // Check announcements
-        announcements.forEach(announcement => {
+        // Process announcements
+        unviewedContent.announcements.forEach(announcement => {
             const notifId = `announcement-${announcement.id}`;
-            const isClicked = clickedItems.has(notifId);
-            const isVisited = visitedSections.has('announcements');
-            
-            // Only add if not clicked and section not visited
-            if (!isClicked && !isVisited) {
+            // Only add if not already in notifications
+            if (!existingNotificationIds.has(notifId)) {
                 newNotifications.push({
                     id: notifId,
                     type: 'announcement',
@@ -2448,18 +2534,16 @@ async function checkNotifications() {
                     icon: 'fa-bullhorn',
                     time: announcement.created_at,
                     link: '#announcements',
-                    itemId: announcement.id
+                    itemId: announcement.id,
+                    unread: true
                 });
             }
         });
         
-        // Check events
-        events.forEach(event => {
+        // Process events
+        unviewedContent.events.forEach(event => {
             const notifId = `event-${event.id}`;
-            const isClicked = clickedItems.has(notifId);
-            const isVisited = visitedSections.has('events');
-            
-            if (!isClicked && !isVisited) {
+            if (!existingNotificationIds.has(notifId)) {
                 newNotifications.push({
                     id: notifId,
                     type: 'event',
@@ -2468,18 +2552,16 @@ async function checkNotifications() {
                     icon: 'fa-calendar-alt',
                     time: event.created_at,
                     link: '#events',
-                    itemId: event.id
+                    itemId: event.id,
+                    unread: true
                 });
             }
         });
         
-        // Check blog posts
-        blogPosts.forEach(post => {
+        // Process blog posts
+        unviewedContent.blog.forEach(post => {
             const notifId = `blog-${post.id}`;
-            const isClicked = clickedItems.has(notifId);
-            const isVisited = visitedSections.has('blog');
-            
-            if (!isClicked && !isVisited) {
+            if (!existingNotificationIds.has(notifId)) {
                 newNotifications.push({
                     id: notifId,
                     type: 'blog',
@@ -2488,22 +2570,51 @@ async function checkNotifications() {
                     icon: 'fa-blog',
                     time: post.created_at,
                     link: '#blog',
-                    itemId: post.id
+                    itemId: post.id,
+                    unread: true
                 });
             }
         });
         
-        // Add new notifications (only if not already exists)
+        // Add new notifications
+        let hasNewNotifications = false;
         newNotifications.forEach(notif => {
-            if (!notifications.find(n => n.id === notif.id)) {
-                notif.unread = true;
-                notifications.unshift(notif);
-                unreadCount++;
-            }
+            notifications.unshift(notif);
+            unreadCount++;
+            hasNewNotifications = true;
         });
         
+        // Remove notifications for content that has been viewed (cleanup)
+        if (userId) {
+            const viewedContent = await DatabaseService.getUserContentViews(userId);
+            const viewedMap = new Map();
+            viewedContent.forEach(view => {
+                const key = `${view.content_type}-${view.content_id}`;
+                viewedMap.set(key, true);
+            });
+            
+            // Remove notifications for viewed content
+            const beforeCount = notifications.length;
+            notifications = notifications.filter(notif => {
+                if (!notif.itemId) return true; // Keep notifications without itemId
+                const key = `${notif.type}-${notif.itemId}`;
+                return !viewedMap.has(key);
+            });
+            
+            // Update unread count
+            unreadCount = notifications.filter(n => n.unread).length;
+        }
+        
+        // Update last visit timestamp only if this is the first visit today
+        if (!lastVisit) {
+            localStorage.setItem(lastVisitKey, new Date().toISOString());
+        }
+        
+        // Save notifications to storage
+        saveNotificationsToStorage();
+        
         // Update UI
-        updateNotificationBadge();
+        updateNotificationBadge(hasNewNotifications);
         renderNotifications();
         
     } catch (error) {
@@ -2512,12 +2623,21 @@ async function checkNotifications() {
 }
 
 // Update notification badge
-function updateNotificationBadge() {
+function updateNotificationBadge(hasNewNotifications = false) {
     if (notificationBadge) {
         if (unreadCount > 0) {
             notificationBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
             notificationBadge.classList.add('show');
             notificationBadge.classList.add('pulse');
+            
+            // Add shake animation to bell icon if new notification
+            if (hasNewNotifications && notificationsBtn) {
+                notificationsBtn.classList.add('shake');
+                setTimeout(() => {
+                    notificationsBtn.classList.remove('shake');
+                }, 600);
+            }
+            
             setTimeout(() => {
                 notificationBadge.classList.remove('pulse');
             }, 600);
@@ -2579,11 +2699,34 @@ function renderNotifications() {
 }
 
 // Mark notification as read
-function markNotificationAsRead(notifId) {
+async function markNotificationAsRead(notifId) {
     const notif = notifications.find(n => n.id === notifId);
-    if (notif && notif.unread) {
+    if (notif && notif.unread && notif.itemId) {
+        // Get current user (if logged in)
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user ? user.id : null;
+        
+        // Mark as viewed in database for logged-in users
+        const contentType = notif.type; // 'announcement', 'event', 'blog'
+        try {
+            await DatabaseService.markContentAsViewed(userId, contentType, notif.itemId);
+        } catch (error) {
+            console.error('Error marking content as viewed:', error);
+        }
+        
+        // For anonymous users, also update localStorage
+        if (!userId) {
+            const notifIdKey = notifId;
+            clickedItems.add(notifIdKey);
+            saveUserState();
+        }
+        
         notif.unread = false;
         unreadCount = Math.max(0, unreadCount - 1);
+        
+        // Save to storage
+        saveNotificationsToStorage();
+        
         updateNotificationBadge();
         renderNotifications();
     }
@@ -2609,8 +2752,14 @@ function getTimeAgo(dateString) {
 document.addEventListener('DOMContentLoaded', async () => {
     await getUserIdentifier();
     loadUserState();
+    
+    // Load notifications from storage first
+    loadNotificationsFromStorage();
+    
     setupSectionObserver();
     setupClickTracking();
+    
+    // Then check for new notifications
     checkNotifications();
     // Check for new notifications every 5 minutes
     setInterval(checkNotifications, 5 * 60 * 1000);
@@ -2631,6 +2780,14 @@ const showSignup = document.getElementById('showSignup');
 const showLogin = document.getElementById('showLogin');
 const loginFormElement = document.getElementById('loginFormElement');
 const signupFormElement = document.getElementById('signupFormElement');
+
+// Admin Panel Button Click Handler
+const adminPanelBtn = document.getElementById('adminPanelBtn');
+if (adminPanelBtn) {
+    adminPanelBtn.addEventListener('click', () => {
+        window.location.href = 'admin.html';
+    });
+}
 
 // Open/Close Profile Modal
 if (profileBtn && profileModal) {
@@ -3384,59 +3541,52 @@ function startVerificationTimer(seconds) {
 
 // Update user UI after login
 async function updateUserUI(user) {
-    if (user) {
-        const profileBtn = document.querySelector('.profile-btn');
-        if (profileBtn) {
+    const profileBtn = document.getElementById('profileBtn');
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
+    
+    if (user && profileBtn) {
+        try {
             // Get user data from members table
-            const { data: memberData, error: memberError } = await supabase
-                .from('members')
-                .select('first_name, last_name, avatar_url')
-                .eq('user_id', user.id)
-                .maybeSingle();
+            const member = await DatabaseService.getMemberById(user.id);
             
-            // Ignore errors if column doesn't exist yet (migration not run)
-            if (memberError && memberError.code !== 'PGRST204' && memberError.code !== 'PGRST116') {
-                console.warn('Error fetching member data:', memberError);
+            if (member && member.avatar_url) {
+                profileBtn.classList.add('has-avatar');
+                profileBtn.innerHTML = `<img src="${member.avatar_url}" alt="Avatar" onerror="this.classList.remove('has-avatar'); this.innerHTML='<i class=\\'fas fa-user\\'></i>';">
+                    <span class="profile-indicator"></span>`;
+                profileBtn.setAttribute('aria-label', `Profil - ${member.first_name || ''} ${member.last_name || ''}`);
+            } else {
+                profileBtn.classList.remove('has-avatar');
+                profileBtn.innerHTML = '<i class="fas fa-user"></i>';
+                profileBtn.setAttribute('aria-label', 'Profil');
             }
             
-            const userName = memberData ? `${memberData.first_name} ${memberData.last_name}` : user.email?.split('@')[0] || 'Kullanıcı';
-            profileBtn.setAttribute('aria-label', `Profil - ${userName}`);
-            
-            // Update profile button with avatar or icon
-            const profileIcon = profileBtn.querySelector('i');
-            let profileAvatar = profileBtn.querySelector('.profile-avatar-img');
-            
-            if (memberData?.avatar_url) {
-                // Show avatar
-                if (profileIcon) profileIcon.style.display = 'none';
-                if (!profileAvatar) {
-                    const img = document.createElement('img');
-                    img.src = memberData.avatar_url;
-                    img.alt = userName;
-                    img.className = 'profile-avatar-img';
-                    profileBtn.appendChild(img);
+            // Check admin status
+            if (adminPanelBtn) {
+                const isAdmin = await DatabaseService.checkAdminStatus(user.id);
+                if (isAdmin) {
+                    adminPanelBtn.style.display = 'flex';
                 } else {
-                    profileAvatar.src = memberData.avatar_url;
+                    adminPanelBtn.style.display = 'none';
                 }
-                profileBtn.classList.add('has-avatar');
-            } else {
-                // Show icon with logged in indicator
-                if (profileIcon) profileIcon.style.display = 'block';
-                if (profileAvatar) profileAvatar.remove();
-                profileBtn.classList.add('logged-in');
+            }
+        } catch (error) {
+            console.error('Error updating user UI:', error);
+            if (profileBtn) {
                 profileBtn.classList.remove('has-avatar');
+                profileBtn.innerHTML = '<i class="fas fa-user"></i>';
+                profileBtn.setAttribute('aria-label', 'Profil');
+            }
+            if (adminPanelBtn) {
+                adminPanelBtn.style.display = 'none';
             }
         }
-    } else {
-        // User logged out - reset button
-        const profileBtn = document.querySelector('.profile-btn');
-        if (profileBtn) {
-            const profileIcon = profileBtn.querySelector('i');
-            const profileAvatar = profileBtn.querySelector('.profile-avatar-img');
-            if (profileIcon) profileIcon.style.display = 'block';
-            if (profileAvatar) profileAvatar.remove();
-            profileBtn.classList.remove('logged-in', 'has-avatar');
-            profileBtn.setAttribute('aria-label', 'Profil');
+    } else if (profileBtn) {
+        profileBtn.classList.remove('has-avatar');
+        profileBtn.innerHTML = '<i class="fas fa-user"></i>';
+        profileBtn.setAttribute('aria-label', 'Profil');
+        
+        if (adminPanelBtn) {
+            adminPanelBtn.style.display = 'none';
         }
     }
 }
