@@ -230,47 +230,8 @@ async function incrementAnnouncementViewCount(announcementId) {
 
 // Global updateVoteDisplay fonksiyonu
 function updateVoteDisplay(announcementCard) {
-    const announcementId = announcementCard.dataset.announcementId;
-    const reactions = announcementCard.querySelectorAll('.reaction');
-    
-    // Total votes'u hesapla
-    let totalVotes = 0;
-    reactions.forEach(reaction => {
-        const count = parseInt(reaction.querySelector('.count').textContent);
-        totalVotes += count;
-    });
-    
-    // Total votes span'ini güncelle
-    const totalVotesSpan = announcementCard.querySelector(`#total-votes-count-${announcementId}`);
-    if (totalVotesSpan) {
-        totalVotesSpan.textContent = totalVotes;
-    }
-    
-    // Progress bar'ları güncelle
-    reactions.forEach(reaction => {
-        const count = parseInt(reaction.querySelector('.count').textContent);
-        const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
-        const progressBar = reaction.querySelector('.reaction-progress');
-            if (progressBar) {
-                // Oylar varsa göster
-                if (count > 0) {
-                    progressBar.classList.add('show');
-                    progressBar.style.opacity = '0.4';
-                } else {
-                    progressBar.classList.remove('show');
-                    progressBar.style.opacity = '0';
-                }
-                
-                // İlk yüklemede transition'ı geçici disable et
-                progressBar.style.transition = 'none';
-                progressBar.style.width = `${percentage}%`;
-                
-                // Kısa bir süre sonra transition'ı tekrar aktif et
-                setTimeout(() => {
-                    progressBar.style.transition = 'width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
-                }, 100);
-            }
-    });
+    // Total votes artık gösterilmiyor, bu fonksiyon boş bırakıldı
+    // Gerekirse ileride kullanılabilir
 }
 
 // Load announcements dynamically
@@ -330,42 +291,47 @@ async function loadAnnouncements() {
                 <div class="announcement-content">
                         ${announcement.content || '<p>İçerik bulunmuyor</p>'}
                 </div>
-                <div class="announcement-footer">
-                        <div class="reactions-group reactions">
-                            <div class="reaction ${activeReaction === 'onay' ? 'active' : ''}" data-reaction="onay">
-                                <div class="reaction-progress"></div>
-                                <span class="emoji">👍</span>
-                                <span class="count">${announcement.reaction_onay || 0}</span>
+                <!-- Reaksiyon Popup Menü - Kartın üstünde görünecek -->
+                <div class="reaction-popup" data-announcement-id="${announcement.id}">
+                    <div class="reaction-popup-item" data-reaction="onay" title="Onay">👍</div>
+                    <div class="reaction-popup-item" data-reaction="katiliyorum" title="Katılıyorum">✅</div>
+                    <div class="reaction-popup-item" data-reaction="katilamiyorum" title="Katılamıyorum">❌</div>
+                    <div class="reaction-popup-item" data-reaction="sorum_var" title="Sorum Var">🤔</div>
+                    <div class="reaction-popup-item" data-reaction="destek" title="Destek">👏</div>
                 </div>
-                            <div class="reaction ${activeReaction === 'katiliyorum' ? 'active' : ''}" data-reaction="katiliyorum">
-                                <div class="reaction-progress"></div>
-                                <span class="emoji">✅</span>
-                                <span class="count">${announcement.reaction_katiliyorum || 0}</span>
-            </div>
-                            <div class="reaction ${activeReaction === 'katilamiyorum' ? 'active' : ''}" data-reaction="katilamiyorum">
-                                <div class="reaction-progress"></div>
-                                <span class="emoji">❌</span>
-                                <span class="count">${announcement.reaction_katilamiyorum || 0}</span>
-                            </div>
-                            <div class="reaction ${activeReaction === 'sorum_var' ? 'active' : ''}" data-reaction="sorum_var">
-                                <div class="reaction-progress"></div>
-                                <span class="emoji">🤔</span>
-                                <span class="count">${announcement.reaction_sorum_var || 0}</span>
-                            </div>
-                            <div class="reaction ${activeReaction === 'destek' ? 'active' : ''}" data-reaction="destek">
-                                <div class="reaction-progress"></div>
-                                <span class="emoji">👏</span>
-                                <span class="count">${announcement.reaction_destek || 0}</span>
-                            </div>
-                        </div>
+                <!-- Footer - Görüntülenme ve reaksiyonlar -->
+                <div class="announcement-footer">
                         <div class="footer-stats">
                             <div class="view-count">
                                 <i class="fas fa-eye"></i>
                                 <span>${announcement.view_count || 0}</span>
                             </div>
-                            <div class="total-votes">
-                                <i class="fas fa-poll"></i>
-                                <span id="total-votes-count-${announcement.id}">${(announcement.reaction_onay || 0) + (announcement.reaction_katiliyorum || 0) + (announcement.reaction_katilamiyorum || 0) + (announcement.reaction_sorum_var || 0) + (announcement.reaction_destek || 0)}</span>
+                            <!-- Instagram benzeri reaksiyonlar - Footer'da -->
+                            <div class="announcement-reactions" data-announcement-id="${announcement.id}">
+                                ${(() => {
+                                    const reactions = [
+                                        { type: 'onay', emoji: '👍', count: announcement.reaction_onay || 0 },
+                                        { type: 'katiliyorum', emoji: '✅', count: announcement.reaction_katiliyorum || 0 },
+                                        { type: 'katilamiyorum', emoji: '❌', count: announcement.reaction_katilamiyorum || 0 },
+                                        { type: 'sorum_var', emoji: '🤔', count: announcement.reaction_sorum_var || 0 },
+                                        { type: 'destek', emoji: '👏', count: announcement.reaction_destek || 0 }
+                                    ];
+                                    // Sadece count > 0 olanları göster, aktif reaksiyonu da ekle
+                                    const visibleReactions = reactions.filter(r => r.count > 0 || r.type === activeReaction);
+                                    // Duplicate'leri önlemek için unique yap
+                                    const uniqueReactions = [];
+                                    const seen = new Set();
+                                    visibleReactions.forEach(r => {
+                                        if (!seen.has(r.type)) {
+                                            seen.add(r.type);
+                                            uniqueReactions.push(r);
+                                        }
+                                    });
+                                    return uniqueReactions.map(r => {
+                                        const isActive = r.type === activeReaction;
+                                        return `<span class="reaction-badge ${isActive ? 'active' : ''}" data-reaction="${r.type}"><span class="reaction-emoji">${r.emoji}</span><span class="reaction-count">${r.count}</span></span>`;
+                                    }).join('');
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -1983,52 +1949,561 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Announcement reaction handlers
+    // Reaksiyon popup menü ve long press/swipe desteği - Instagram mantığı ile
+    let longPressTimer = null;
+    let isReactionMode = false;
+    let currentPopup = null;
+    let pressX = 0;
+    let pressY = 0;
+    let pressStartX = 0;
+    let pressStartY = 0;
+    let currentlyHoveredEmoji = null;
+    let currentCard = null;
+    let isSelectionCancelled = false; // Emoji seçimi iptal edildi mi?
+    const longPressDuration = 300; // 300ms
+    const dragThreshold = 10; // 10px sürükleme eşiği
+    const cancelThreshold = 140; // 200px - Çok fazla sağa/sola giderse seçimi iptal et
+    
+    // Instagram mantığı: Basma işlemi (touchstart ve mousedown)
+    function onPressStart(e, card) {
+        // Sadece sol tık (PC) veya tek dokunuşu (Mobil) dikkate al
+        if (e.type === 'mousedown' && e.button !== 0) return;
+        
+        // Zaten bir reaksiyon paneli açıksa yenisini açma
+        if (isReactionMode) return;
+        
+        // Eğer tıklanan yer bir emoji paneli değilse
+        if (e.target.closest('.reaction-popup-item') || 
+            e.target.closest('.reaction-badge') || 
+            e.target.closest('.footer-stats')) {
+            return;
+        }
+        
+        // Başlangıç koordinatlarını kaydet
+        pressX = e.clientX || e.touches[0].clientX;
+        pressY = e.clientY || e.touches[0].clientY;
+        pressStartX = pressX;
+        pressStartY = pressY;
+        currentCard = card;
+        
+        // Basılı tutma zamanlayıcısını başlat
+        longPressTimer = setTimeout(() => {
+            if (e.cancelable) e.preventDefault();
+            const popup = card.querySelector('.reaction-popup');
+            if (popup) {
+                showReactionPopup(card, popup);
+            }
+        }, longPressDuration);
+    }
+    
+    // Instagram mantığı: Sürüklemeyi iptal etme (scroll kontrolü)
+    function onMoveCancel(e) {
+        // CRITICAL FIX: Reaksiyon modu aktifse, bu fonksiyon çalışmamalı
+        // Çünkü bu durumda onDragSelect çalışmalı
+        if (isReactionMode) return;
+        
+        // Sadece long press zamanlayıcısı çalışırken kontrol et
+        if (!longPressTimer) return;
+        
+        const moveX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const moveY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+        
+        // Koordinatlar geçerli değilse çık
+        if (!moveX && !moveY) return;
+        
+        const deltaX = Math.abs(moveX - pressStartX);
+        const deltaY = Math.abs(moveY - pressStartY);
+        
+        // Eğer sürükleme eşiğini (10px) aşarsa, long press'i iptal et
+        if (deltaX > dragThreshold || deltaY > dragThreshold) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+            currentCard = null;
+        }
+    }
+    
+    // Instagram mantığı: Sürükleyerek seçim - Basılan noktadan sağa-sola hareket ile emoji seçimi
+    function onDragSelect(e) {
+        // Sadece reaksiyon modu aktifken çalış
+        if (!isReactionMode || !currentPopup) return;
+        
+        // CRITICAL FIX: Event'in yayılmasını önce durdur (onMoveCancel ile çakışmayı engelle)
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Dokunmatikte sayfanın kaymasını engelle
+        if (e.cancelable) e.preventDefault();
+        
+        // Farenin/parmağın o anki X koordinatını al
+        const currentX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        
+        // Koordinat geçerli değilse çık
+        if (!currentX) return;
+        
+        // Emoji panelindeki tüm emoji öğelerini al
+        const popupItems = currentPopup.querySelectorAll('.reaction-popup-item');
+        
+        if (popupItems.length === 0) return;
+        
+        // Basılan noktadan (pressX) şu anki noktaya kadar olan hareket miktarını hesapla
+        const deltaX = currentX - pressX;
+        const absDeltaX = Math.abs(deltaX);
+        
+        // CRITICAL FEATURE: Çok fazla sağa/sola giderse seçimi iptal et
+        if (absDeltaX > cancelThreshold) {
+            isSelectionCancelled = true;
+            // Eğer bir emoji seçiliyse, vurgusunu kaldır
+            if (currentlyHoveredEmoji) {
+                currentlyHoveredEmoji.classList.remove('selected', 'is-hovered');
+                currentlyHoveredEmoji = null;
+            }
+            return;
+        }
+        
+        // Eğer eşik içindeyse, seçim iptal edilmemiş demektir
+        isSelectionCancelled = false;
+        
+        // Her emoji öğesinin genişliğini ve gap'i hesapla
+        // Emoji öğesi: 48px genişlik + 8px gap (CSS'den)
+        const itemWidth = 48; // .reaction-popup-item width
+        const gap = 8; // .reaction-popup gap
+        const totalItemWidth = itemWidth + gap;
+        
+        // Hareket miktarına göre hangi emoji seçileceğini hesapla
+        // Sağa hareket: pozitif deltaX, sola hareket: negatif deltaX
+        // Panel merkezinden başlayarak (ortadaki emoji index: Math.floor(popupItems.length / 2))
+        const centerIndex = Math.floor(popupItems.length / 2);
+        const indexOffset = Math.round(deltaX / totalItemWidth);
+        let selectedIndex = centerIndex + indexOffset;
+        
+        // Index sınırlarını kontrol et
+        selectedIndex = Math.max(0, Math.min(selectedIndex, popupItems.length - 1));
+        
+        // Seçilen emoji öğesini al
+        const selectedItem = popupItems[selectedIndex];
+        
+        // Eğer hala aynı emojinin üzerindeysek bir şey yapma
+        if (selectedItem === currentlyHoveredEmoji) return;
+        
+        // Eğer daha önce bir emoji seçiliyse, onun vurgusunu kaldır
+        if (currentlyHoveredEmoji) {
+            currentlyHoveredEmoji.classList.remove('selected', 'is-hovered');
+        }
+        
+        // Yeni emojiyi vurgula
+        if (selectedItem) {
+            selectedItem.classList.add('selected', 'is-hovered');
+        }
+        
+        // Şu anki vurgulanan emojiyi güncelle
+        currentlyHoveredEmoji = selectedItem;
+    }
+    
+    // Instagram mantığı: Bırakma işlemi
+    function onPressEnd(e) {
+        // Eğer basılı tutma süresi dolmadan bırakıldıysa, zamanlayıcıyı iptal et
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        
+        // Eğer sürükleyerek bir emoji seçildiyse (ve seçim iptal edilmediyse)
+        if (isReactionMode && currentlyHoveredEmoji && !isSelectionCancelled) {
+            const reactionType = currentlyHoveredEmoji.dataset.reaction;
+            const announcementId = currentCard.dataset.announcementId;
+            if (reactionType && announcementId) {
+                handleReactionSelection(announcementId, reactionType, currentCard);
+            }
+            hideReactionPopup();
+            return;
+        }
+        
+        // Eğer seçim iptal edildiyse, sadece popup'ı kapat (reaksiyon ekleme)
+        if (isReactionMode && isSelectionCancelled) {
+            hideReactionPopup();
+            return;
+        }
+        
+        // Eğer reaksiyon modu aktifse ama bir emoji seçilmediyse
+        // Hiçbir şey yapma, menü açık kalsın
+        currentCard = null;
+    }
+    
+    // Instagram mantığı: Tüm kartlara event listener ekle (event delegation)
+    // Dinamik olarak yüklenen kartlar için event delegation kullan
+    document.addEventListener('mousedown', function(e) {
+        const card = e.target.closest('.announcement-card');
+        if (card && !e.target.closest('.reaction-popup') && 
+            !e.target.closest('.reaction-badge') && 
+            !e.target.closest('.footer-stats')) {
+            onPressStart(e, card);
+        }
+    });
+    
+    document.addEventListener('touchstart', function(e) {
+        const card = e.target.closest('.announcement-card');
+        if (card && !e.target.closest('.reaction-popup') && 
+            !e.target.closest('.reaction-badge') && 
+            !e.target.closest('.footer-stats')) {
+            onPressStart(e, card);
+        }
+    }, { passive: true });
+    
+    // Sürüklemeyi iptal etme (scroll kontrolü)
+    // CRITICAL FIX: capture phase'de dinle ama onDragSelect'ten sonra çalışsın diye normal phase'de bırak
+    // Ama onMoveCancel içinde isReactionMode kontrolü var, bu yeterli
+    document.addEventListener('mousemove', onMoveCancel, { passive: true });
+    document.addEventListener('touchmove', onMoveCancel, { passive: false });
+    
+    // Bırakma işlemi
+    document.addEventListener('mouseup', onPressEnd);
+    document.addEventListener('touchend', onPressEnd);
+    
+    // Fare kartın dışına çıkarsa da basılı tutmayı iptal et
+    document.addEventListener('mouseleave', function(e) {
+        // CRITICAL FIX: e.target bir element olmayabilir, kontrol et
+        if (e.target && typeof e.target.closest === 'function' && e.target.closest('.announcement-card')) {
+            onPressEnd(e);
+        }
+    });
+    
+    
+    // Instagram mantığı: Emojiye tıklama (mousedown/touchstart kullanarak)
+    document.addEventListener('mousedown', function(e) {
+        const popupItem = e.target.closest('.reaction-popup-item');
+        if (popupItem && isReactionMode) {
+            e.stopPropagation();
+            const reactionType = popupItem.dataset.reaction;
+            const announcementId = popupItem.closest('.reaction-popup').dataset.announcementId;
+            if (reactionType && announcementId) {
+                const announcementCard = document.querySelector(`[data-announcement-id="${announcementId}"]`);
+                if (announcementCard) {
+                    handleReactionSelection(announcementId, reactionType, announcementCard);
+                    hideReactionPopup();
+                }
+            }
+        }
+    });
+    
+    document.addEventListener('touchstart', function(e) {
+        const popupItem = e.target.closest('.reaction-popup-item');
+        if (popupItem && isReactionMode) {
+            e.stopPropagation();
+            const reactionType = popupItem.dataset.reaction;
+            const announcementId = popupItem.closest('.reaction-popup').dataset.announcementId;
+            if (reactionType && announcementId) {
+                const announcementCard = document.querySelector(`[data-announcement-id="${announcementId}"]`);
+                if (announcementCard) {
+                    handleReactionSelection(announcementId, reactionType, announcementCard);
+                    hideReactionPopup();
+                }
+            }
+        }
+    }, { passive: true });
+    
+    function showReactionPopup(card, popup) {
+        // Sadece reaksiyon modu zaten aktif değilse çalıştır
+        if (isReactionMode) return;
+        
+        isReactionMode = true;
+        isSelectionCancelled = false; // Yeni popup açıldığında seçim iptal durumunu sıfırla
+        currentPopup = popup;
+        popup.classList.add('show');
+        
+        // Instagram mantığı: Dinamik konumlandırma - basılan yerin üstünde aç
+        const cardRect = card.getBoundingClientRect();
+        const relativeX = pressX - cardRect.left;
+        const relativeY = pressY - cardRect.top;
+        
+        // Panel parmağın/farenin 20px üstünde açılsın
+        let popupLeft = relativeX;
+        let popupTop = relativeY - 20;
+        
+        // CRITICAL FIX: Ekran daraldığında popup'ın kesilmemesi için sınır kontrolü
+        // Popup'ın genişliğini ve yüksekliğini hesapla (henüz görünür değil, tahmin edelim)
+        const popupWidth = 5 * 48 + 4 * 8 + 24; // 5 emoji * 48px + 4 gap * 8px + 24px padding
+        const popupHeight = 48 + 24; // emoji yüksekliği + padding
+        
+        // Popup'ın ekran sınırlarını kontrol et
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Sol sınır kontrolü (popup'ın yarısı ekranın dışına çıkmasın)
+        const popupLeftInViewport = cardRect.left + popupLeft;
+        if (popupLeftInViewport - popupWidth / 2 < 10) {
+            popupLeft = 10 - cardRect.left + popupWidth / 2;
+        }
+        
+        // Sağ sınır kontrolü
+        if (popupLeftInViewport + popupWidth / 2 > viewportWidth - 10) {
+            popupLeft = viewportWidth - 10 - cardRect.left - popupWidth / 2;
+        }
+        
+        // Üst sınır kontrolü (popup yukarıda açılıyor, üstten taşmasın)
+        const popupTopInViewport = cardRect.top + popupTop - popupHeight;
+        if (popupTopInViewport < 10) {
+            // Eğer üstten taşacaksa, popup'ı aşağıya al (basılan noktanın altına)
+            popupTop = relativeY + 20;
+        }
+        
+        popup.style.left = `${popupLeft}px`;
+        popup.style.top = `${popupTop}px`;
+        
+        // CRITICAL FIX: Popup görünür olduktan sonra gerçek boyutlarını al ve tekrar konumlandır
+        // requestAnimationFrame ile bir sonraki frame'de kontrol et
+        requestAnimationFrame(() => {
+            const popupRect = popup.getBoundingClientRect();
+            const actualPopupWidth = popupRect.width;
+            const actualPopupHeight = popupRect.height;
+            
+            // Gerçek boyutlara göre tekrar kontrol et
+            const currentPopupLeftInViewport = cardRect.left + popupLeft;
+            const currentPopupTopInViewport = cardRect.top + popupTop - actualPopupHeight;
+            
+            let adjustedLeft = popupLeft;
+            let adjustedTop = popupTop;
+            
+            // Sol sınır kontrolü (popup'ın yarısı ekranın dışına çıkmasın)
+            if (currentPopupLeftInViewport - actualPopupWidth / 2 < 10) {
+                adjustedLeft = 10 - cardRect.left + actualPopupWidth / 2;
+            }
+            
+            // Sağ sınır kontrolü
+            if (currentPopupLeftInViewport + actualPopupWidth / 2 > viewportWidth - 10) {
+                adjustedLeft = viewportWidth - 10 - cardRect.left - actualPopupWidth / 2;
+            }
+            
+            // Üst sınır kontrolü
+            if (currentPopupTopInViewport < 10) {
+                adjustedTop = relativeY + 20;
+            }
+            
+            // Eğer konum değiştiyse güncelle
+            if (adjustedLeft !== popupLeft || adjustedTop !== popupTop) {
+                popup.style.left = `${adjustedLeft}px`;
+                popup.style.top = `${adjustedTop}px`;
+            }
+        });
+        
+        // Overlay ekle ve body scroll'u engelle
+        const overlay = document.createElement('div');
+        overlay.className = 'reaction-overlay';
+        overlay.id = 'reaction-overlay';
+        document.body.appendChild(overlay);
+        
+        // Aktif kartı öne çıkar ve text selection'ı engelle
+        card.classList.add('reaction-active-card');
+        card.style.userSelect = 'none';
+        card.style.webkitUserSelect = 'none';
+        
+        // Body scroll'u engelle - Mobil için scroll pozisyonunu kaydet
+        const scrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Scroll pozisyonunu kaydet
+        document.body.setAttribute('data-scroll-y', scrollY.toString());
+        
+        // CRITICAL FIX: position: fixed yerine sadece overflow: hidden kullan
+        // Bu, scroll pozisyonunun korunmasını sağlar ve sayfanın başa kaymasını engeller
+        document.body.style.overflow = 'hidden';
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+        
+        // HTML elementini de sabitle (mobil için)
+        document.documentElement.style.overflow = 'hidden';
+        
+        // Instagram mantığı: Sürükleyerek seçme için event listener'ları ekle
+        // CRITICAL FIX: capture phase'de dinle ki diğer event'lerden önce çalışsın
+        document.addEventListener('mousemove', onDragSelect, true);
+        document.addEventListener('touchmove', onDragSelect, { passive: false, capture: true });
+        
+        // Dışarı tıklanınca kapat
+        setTimeout(() => {
+            document.addEventListener('click', closePopupOnOutsideClick, true);
+        }, 100);
+    }
+    
+    function hideReactionPopup() {
+        if (!isReactionMode) return;
+        
+        isReactionMode = false;
+        
+        if (currentPopup) {
+            currentPopup.classList.remove('show');
+            currentPopup = null;
+        }
+        
+        // Overlay'i kaldır
+        const overlay = document.getElementById('reaction-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        
+        // Aktif kart class'ını kaldır ve text selection'ı geri aç
+        document.querySelectorAll('.reaction-active-card').forEach(card => {
+            card.classList.remove('reaction-active-card');
+            card.style.userSelect = '';
+            card.style.webkitUserSelect = '';
+        });
+        
+        // Instagram mantığı: Listener'ları kaldır ve hover'ı temizle
+        // CRITICAL FIX: capture phase'de eklediğimiz için burada da capture: true kullan
+        document.removeEventListener('mousemove', onDragSelect, true);
+        document.removeEventListener('touchmove', onDragSelect, { capture: true });
+        
+        if (currentlyHoveredEmoji) {
+            currentlyHoveredEmoji.classList.remove('selected', 'is-hovered');
+            currentlyHoveredEmoji = null;
+        }
+        
+        // Seçim iptal durumunu sıfırla
+        isSelectionCancelled = false;
+        
+        // Body scroll'u tekrar aktif et - Mobil için önemli!
+        const scrollY = parseInt(document.body.getAttribute('data-scroll-y') || '0');
+        
+        // CRITICAL FIX: position: fixed kullanmadığımız için scroll pozisyonu otomatik korunur
+        // Sadece overflow stillerini temizle
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('user-select');
+        document.body.style.removeProperty('-webkit-user-select');
+        document.body.removeAttribute('data-scroll-y');
+        
+        // HTML elementini de temizle
+        document.documentElement.style.removeProperty('overflow');
+        
+        // Scroll pozisyonu zaten korunmuş olmalı, ama güvenlik için kontrol et
+        requestAnimationFrame(() => {
+            const currentScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+            if (Math.abs(currentScroll - scrollY) > 1) {
+                window.scrollTo(0, scrollY);
+            }
+        });
+        
+        document.removeEventListener('click', closePopupOnOutsideClick, true);
+        currentCard = null;
+    }
+    
+    function closePopupOnOutsideClick(e) {
+        const overlay = document.getElementById('reaction-overlay');
+        if (currentPopup && !currentPopup.contains(e.target) && e.target !== overlay) {
+            hideReactionPopup();
+        } else if (overlay && e.target === overlay) {
+            // Overlay'e direkt tıklandığında da kapat
+            hideReactionPopup();
+        }
+    }
+    
+    // Instagram mantığı: Overlay'e tıklandığında popup'ı kapat
+    document.addEventListener('mousedown', function(e) {
+        const overlay = document.getElementById('reaction-overlay');
+        if (overlay && e.target === overlay) {
+            hideReactionPopup();
+        }
+    });
+    
+    document.addEventListener('touchstart', function(e) {
+        const overlay = document.getElementById('reaction-overlay');
+        if (overlay && e.target === overlay) {
+            hideReactionPopup();
+        }
+    }, { passive: true });
+    
+    async function handleReactionSelection(announcementId, reactionType, announcementCard) {
+        try {
+            // Mevcut aktif reaksiyonu kontrol et
+            const reactionsContainer = announcementCard.querySelector('.announcement-reactions');
+            const activeBadge = reactionsContainer.querySelector('.reaction-badge.active');
+            
+            // Kullanıcının mevcut reaksiyonunu kontrol et
+            const userReaction = activeBadge ? activeBadge.dataset.reaction : null;
+            
+            if (userReaction === reactionType) {
+                // Aynı reaksiyona tekrar tıklandıysa, iptal et
+                await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, false);
+                updateReactionBadges(announcementCard, announcementId);
+            } else {
+                // Yeni reaksiyonu ekle
+                if (userReaction) {
+                    // Eski reaksiyonu kaldır
+                    await DatabaseService.updateAnnouncementReaction(announcementId, userReaction, false);
+                }
+                
+                await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, true);
+                triggerAnnouncementEffects(announcementCard, reactionType);
+                updateReactionBadges(announcementCard, announcementId);
+            }
+            
+            updateVoteDisplay(announcementCard);
+        } catch (error) {
+            console.error('Error updating reaction:', error);
+            alert('Reaksiyon güncellenirken bir hata oluştu.');
+        }
+    }
+    
+    // Reaksiyon badge'lerini güncelle
+    async function updateReactionBadges(announcementCard, announcementId) {
+        try {
+            // Veritabanından güncel reaksiyonları al
+            const announcements = await DatabaseService.getAnnouncements();
+            const announcement = announcements.find(a => a.id == announcementId);
+            
+            if (!announcement) return;
+            
+            // Kullanıcının aktif reaksiyonunu kontrol et
+            const userInteraction = await DatabaseService.getUserInteraction(announcementId);
+            const activeReaction = userInteraction?.reaction_type;
+            
+            const reactionsContainer = announcementCard.querySelector('.announcement-reactions');
+            const reactions = [
+                { type: 'onay', emoji: '👍', count: announcement.reaction_onay || 0 },
+                { type: 'katiliyorum', emoji: '✅', count: announcement.reaction_katiliyorum || 0 },
+                { type: 'katilamiyorum', emoji: '❌', count: announcement.reaction_katilamiyorum || 0 },
+                { type: 'sorum_var', emoji: '🤔', count: announcement.reaction_sorum_var || 0 },
+                { type: 'destek', emoji: '👏', count: announcement.reaction_destek || 0 }
+            ];
+            
+            // Sadece count > 0 olanları veya aktif reaksiyonu göster
+            const visibleReactions = reactions.filter(r => r.count > 0 || r.type === activeReaction);
+            
+            // Duplicate'leri önlemek için unique yap
+            const uniqueReactions = [];
+            const seen = new Set();
+            visibleReactions.forEach(r => {
+                if (!seen.has(r.type)) {
+                    seen.add(r.type);
+                    uniqueReactions.push(r);
+                }
+            });
+            
+            reactionsContainer.innerHTML = uniqueReactions.map(r => {
+                const isActive = r.type === activeReaction;
+                return `<span class="reaction-badge ${isActive ? 'active' : ''}" data-reaction="${r.type}"><span class="reaction-emoji">${r.emoji}</span><span class="reaction-count">${r.count}</span></span>`;
+            }).join('');
+        } catch (error) {
+            console.error('Error updating reaction badges:', error);
+        }
+    }
+    
+    // Reaksiyon badge'lerine tıklama (Instagram gibi - tepkiyi kaldırma)
     document.addEventListener('click', async function(e) {
-        if (e.target.closest('.reaction')) {
-            const reaction = e.target.closest('.reaction');
-            const announcementCard = reaction.closest('.announcement-card');
+        const reactionBadge = e.target.closest('.reaction-badge');
+        if (reactionBadge) {
+            e.preventDefault();
+            e.stopPropagation();
+            const announcementCard = reactionBadge.closest('.announcement-card');
             const announcementId = announcementCard.dataset.announcementId;
-            const reactionType = reaction.dataset.reaction;
+            const reactionType = reactionBadge.dataset.reaction;
             
             if (!announcementId || !reactionType) return;
             
-            const parent = reaction.closest('.reactions');
-            const currentlyActive = parent.querySelector('.reaction.active');
-            const countSpan = reaction.querySelector('.count');
-            let count = parseInt(countSpan.textContent);
-
-            try {
-                if (reaction.classList.contains('active')) {
-                    // Aynı reaksiyona tekrar tıklandıysa, iptal et
+            // Aktif reaksiyona tıklandıysa kaldır
+            if (reactionBadge.classList.contains('active')) {
+                try {
                     await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, false);
-                    reaction.classList.remove('active');
-                    countSpan.textContent = count - 1;
-                } else {
-                    // Eski aktif reaksiyonu bul ve sayısını azalt
-                    const oldActiveReaction = parent.querySelector('.reaction.active');
-                    if (oldActiveReaction && oldActiveReaction !== reaction) {
-                        const oldCountSpan = oldActiveReaction.querySelector('.count');
-                        const oldCount = parseInt(oldCountSpan.textContent);
-                        oldCountSpan.textContent = oldCount - 1;
-                        oldActiveReaction.classList.remove('active');
-                    }
-                    
-                    // Yeni reaksiyonu aktif yap ve sayısını artır
-                    await DatabaseService.updateAnnouncementReaction(announcementId, reactionType, true);
-                    reaction.classList.add('active');
-                    countSpan.textContent = count + 1;
-                    
-                    // Konfeti ve ışık efektlerini tetikle
-                    triggerAnnouncementEffects(announcementCard, reactionType);
+                    updateReactionBadges(announcementCard, announcementId);
+                    updateVoteDisplay(announcementCard);
+                } catch (error) {
+                    console.error('Error removing reaction:', error);
+                    alert('Reaksiyon kaldırılırken bir hata oluştu.');
                 }
-                
-                // Total votes'u ve progress bar'ları güncelle
-                updateVoteDisplay(announcementCard);
-                
-            } catch (error) {
-                console.error('Error updating reaction:', error);
-                alert('Reaksiyon güncellenirken bir hata oluştu.');
             }
         }
     });

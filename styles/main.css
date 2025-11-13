@@ -338,6 +338,8 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* CRITICAL FIX: Reaksiyon modunda body'ye blur uygulanmasını engelle */
+    filter: none !important;
 }
 
 .container {
@@ -597,6 +599,8 @@ small, .text-sm {
     object-fit: contain;
     transition: height var(--transition-base) var(--easing-ease), width var(--transition-base) var(--easing-ease);
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 /* Kademeli küçültme - 968px altı */
@@ -634,13 +638,18 @@ small, .text-sm {
         font-size: 0.95rem;
     }
     
-    /* Profile button with avatar - 768px altı (%25 küçük) */
+    /* Profile button with avatar - 768px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: 31.5px !important;
-        height: 31.5px !important;
-        min-width: 31.5px !important;
+        width: calc(42px * 0.75 * 0.95) !important;
+        height: calc(42px * 0.75 * 0.95) !important;
+        min-width: calc(42px * 0.75 * 0.95) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+    }
+    
+    /* Notification icon - %15 smaller */
+    .notifications-btn i {
+        font-size: calc(0.95rem * 0.85);
     }
     
     .profile-btn.has-avatar:hover {
@@ -785,16 +794,30 @@ small, .text-sm {
     transition: transform var(--transition-fast) var(--easing-ease);
 }
 
+/* Notification icon - %15 smaller and black */
+.notifications-btn i {
+    font-size: calc(var(--font-size-lg) * 0.85);
+    color: var(--color-text-primary);
+}
+
 .admin-panel-btn {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2));
-    border-color: rgba(245, 158, 11, 0.3);
-    color: #f59e0b;
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+}
+
+/* Admin panel icon - diğer iconlarla aynı boyutta */
+.admin-panel-btn i {
+    font-size: var(--font-size-lg);
 }
 
 .admin-panel-btn:hover {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.3));
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+}
+
+.admin-panel-btn:hover i {
+    color: var(--color-text-primary);
 }
 
 .nav-icon-btn:hover {
@@ -804,6 +827,11 @@ small, .text-sm {
 
 .nav-icon-btn:hover i {
     transform: scale(1.1);
+}
+
+/* Notification icon stays black on hover */
+.notifications-btn:hover i {
+    color: var(--color-text-primary);
 }
 
 .nav-icon-btn:active {
@@ -1027,6 +1055,15 @@ small, .text-sm {
         position: absolute !important;
         z-index: var(--z-tooltip) !important;
     }
+    
+    /* Profile button with avatar - 968px altı (nav-icon-btn ile aynı oranda küçük) */
+    .profile-btn.has-avatar {
+        width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
+        height: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
+        min-width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
+        border: 1px solid var(--color-white);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+    }
 }
 
 @media (max-width: 480px) {
@@ -1043,6 +1080,31 @@ small, .text-sm {
     .nav-menu a i {
         font-size: var(--font-size-sm);
     }
+    
+    /* Nav actions küçültme */
+    .nav-icon-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+    }
+    
+    .nav-icon-btn i {
+        font-size: var(--font-size-sm);
+    }
+    
+    /* Profile button with avatar - 480px altı (nav-icon-btn ile aynı oranda küçük) */
+    .profile-btn.has-avatar {
+        width: calc(40px * 0.75 * 0.95) !important;
+        height: calc(40px * 0.75 * 0.95) !important;
+        min-width: calc(40px * 0.75 * 0.95) !important;
+        border: 1px solid var(--color-white);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+    }
+    
+    /* Notification icon - %15 smaller */
+    .notifications-btn i {
+        font-size: calc(var(--font-size-sm) * 0.85);
+    }
 }
 
 /* İki Satırlı Navbar - 435px ve altı */
@@ -1052,32 +1114,47 @@ small, .text-sm {
     }
     
     .nav-container {
-    flex-direction: column;
+        flex-direction: column;
         height: auto;
-        padding: 0 var(--spacing-xs);
+        min-height: 48px;
+        padding: 8px var(--spacing-xs);
         gap: 0;
         position: relative;
+        align-items: stretch;
     }
     
-    /* Üst satır: Logo (solda) ve Actions (sağda) - yan yana */
+    /* Üst satır: Logo (solda) ve Actions (sağda) - yan yana, aynı yatay hizada */
     .nav-logo {
         order: 1;
-        flex: 0 0 auto;
-        width: 100%;
+        flex: 1 1 auto;
         display: flex;
         justify-content: flex-start;
         align-items: center;
-        padding-bottom: 8px;
+        height: 48px;
+        min-height: 48px;
+        position: relative;
+        padding: 0;
+        margin: 0;
     }
     
-    /* nav-actions'ı nav-container'ın sağına taşı (üst satırda) */
+    /* nav-actions'ı nav-container'ın sağına taşı (üst satırda, nav-logo ile aynı hizada) */
     .nav-actions {
         order: 1;
         flex: 0 0 auto;
         position: absolute;
         right: var(--spacing-xs);
         top: 8px;
+        display: flex;
+        align-items: center;
+        height: 48px;
         margin-left: 0;
+        padding: 0;
+        z-index: 10;
+    }
+    
+    /* Nav-logo ile nav-actions aynı yatay hizada olmalı */
+    .nav-logo {
+        z-index: 1;
     }
     
     /* Alt satır: Sadece Nav Menu */
@@ -1102,13 +1179,13 @@ small, .text-sm {
         font-size: 0.9rem;
     }
     
-    /* Logo küçültme */
+    /* Logo küçültme - nav-icon-btn ile aynı hizada olması için */
     .nav-logo-img {
-        height: 32px !important;
+        height: 38px !important;
     }
     
     .navbar.shrunk .nav-logo-img {
-        height: 28px !important;
+        height: 34px !important;
     }
     
     /* Nav actions küçültme */
@@ -1122,11 +1199,18 @@ small, .text-sm {
         font-size: 0.9rem;
     }
     
-    /* Profile button with avatar - 435px altı */
+    /* Profile button with avatar - 435px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: 28.5px !important;
-        height: 28.5px !important;
-        min-width: 28.5px !important;
+        width: calc(38px * 0.75 * 0.95) !important;
+        height: calc(38px * 0.75 * 0.95) !important;
+        min-width: calc(38px * 0.75 * 0.95) !important;
+        border: 1px solid var(--color-white);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+    }
+    
+    /* Notification icon - %15 smaller */
+    .notifications-btn i {
+        font-size: calc(0.9rem * 0.85);
     }
 }
 
@@ -1135,6 +1219,14 @@ small, .text-sm {
     .nav-container {
         padding: 0 var(--spacing-xs);
         height: 48px;
+        flex-direction: row;
+        position: relative;
+    }
+    
+    /* Nav-actions normal konumunda kalmalı (absolute değil) */
+    .nav-actions {
+        position: static;
+        order: 4;
     }
     
     /* Logo küçültme */
@@ -1193,14 +1285,19 @@ small, .text-sm {
         font-size: 0.875rem;
     }
     
-    /* Profile button with avatar küçültme - %25 daha küçük (border dahil) */
+    /* Profile button with avatar küçültme - 450px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: 27px !important;
-        height: 27px !important;
-        min-width: 27px !important;
+        width: calc(36px * 0.75 * 0.95) !important;
+        height: calc(36px * 0.75 * 0.95) !important;
+        min-width: calc(36px * 0.75 * 0.95) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
         padding: 0;
+    }
+    
+    /* Notification icon - %15 smaller */
+    .notifications-btn i {
+        font-size: calc(0.875rem * 0.85);
     }
     
     .profile-btn.has-avatar:hover {
@@ -1249,7 +1346,7 @@ small, .text-sm {
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 641px) {
     .nav-container {
         padding: 0 var(--spacing-sm);
     }
@@ -1289,13 +1386,18 @@ small, .text-sm {
         font-size: 0.95rem;
     }
     
-    /* Profile button with avatar - 640px altı (%25 küçük) */
+    /* Profile button with avatar - 641px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
+        width: calc(42px * 0.75 * 0.95) !important;
+        height: calc(42px * 0.75 * 0.95) !important;
+        min-width: calc(42px * 0.75 * 0.95) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
+    }
+    
+    /* Notification icon - %15 smaller */
+    .notifications-btn i {
+        font-size: calc(0.95rem * 0.85);
     }
     
     .profile-btn.has-avatar:hover {
@@ -3672,6 +3774,57 @@ section {
     background: rgba(99, 102, 241, 0.5);
 }
 
+/* Instagram benzeri reaksiyonlar - Footer'da */
+.announcement-reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.reaction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.04);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.reaction-badge:hover {
+    background: rgba(0, 0, 0, 0.08);
+    transform: scale(1.05);
+}
+
+.reaction-badge.active {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.reaction-emoji {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.reaction-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    line-height: 1;
+}
+
+.reaction-badge.active .reaction-count {
+    color: #6366f1;
+    font-weight: 700;
+}
+
 .announcement-content p:last-child {
     margin-bottom: 0;
 }
@@ -4652,10 +4805,9 @@ section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(248, 250, 252, 0.8) 100%);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 12px 24px;
+    background: transparent;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
     position: relative;
@@ -4663,35 +4815,252 @@ section {
     overflow: hidden;
     flex-shrink: 0;
     margin-top: auto;
-    gap: 16px;
+    gap: 12px;
 }
 
 .reactions-group {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
     align-items: center;
     flex: 1;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    -webkit-overflow-scrolling: touch;
+}
+
+.reactions-group::-webkit-scrollbar {
+    height: 4px;
+}
+
+.reactions-group::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.reactions-group::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
 }
 
 .reaction {
     display: flex;
     align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+    border: none;
+    box-shadow: none;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Reaksiyon Ver Butonu - Dar ekranlarda gösterilecek */
+.reaction-trigger-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
     padding: 8px 14px;
     border-radius: 24px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(99, 102, 241, 0.1);
     backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(99, 102, 241, 0.3);
+    color: #6366f1;
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    flex-shrink: 0;
     position: relative;
-    overflow: hidden;
-    z-index: 1;
-    border: 1.5px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.reaction:not(:last-child) {
-    margin-right: 10px;
+.reaction-trigger-btn:hover,
+.reaction-trigger-btn.active {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.reaction-trigger-btn i {
+    font-size: 1rem;
+}
+
+/* Reaksiyon Overlay - Karartma ve blur tamamen kaldırıldı */
+.reaction-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    min-width: 100%;
+    min-height: 100%;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    z-index: 999;
+    animation: overlayFadeIn 0.2s ease;
+    pointer-events: auto;
+    overflow: hidden;
+}
+
+
+@keyframes overlayFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Aktif kart - Overlay açıldığında öne çıkar */
+.announcement-card.reaction-active-card {
+    position: relative;
+    z-index: 1001;
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Overlay'in blur'undan etkilenmez - z-index ile overlay'in üstünde */
+    isolation: isolate; /* Yeni stacking context oluştur */
+    /* Instagram mantığı: Panel kesilmesin */
+    overflow: visible !important;
+}
+
+/* Reaksiyon Popup Menü - Instagram mantığı: Basılan yerin üstünde açılır */
+.reaction-popup {
+    position: absolute;
+    /* top ve left JavaScript ile dinamik olarak ayarlanacak */
+    transform: translate(-50%, -100%); /* Instagram mantığı: Parmağın tam üstünde */
+    display: none;
+    flex-direction: row;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 1);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    border-radius: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 1002;
+    animation: reactionPopupBounceIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Overlay'in blur'undan etkilenmez - z-index ile overlay'in üstünde */
+    isolation: isolate; /* Yeni stacking context oluştur */
+    transform-origin: bottom center; /* Animasyon için */
+    /* CRITICAL FIX: Ekran daraldığında popup'ın kesilmemesi için */
+    min-width: fit-content;
+    max-width: calc(100vw - 20px);
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+.reaction-popup.show {
+    display: flex;
+    pointer-events: all;
+    /* CRITICAL FIX: elementFromPoint için pointer-events aktif olmalı */
+}
+
+.reaction-popup::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid rgba(255, 255, 255, 0.98);
+}
+
+.reaction-popup-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    font-size: 1.5rem;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Daha yumuşak görünüm için */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.reaction-popup-item:hover {
+    transform: scale(1.15);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+.reaction-popup-item.active {
+    transform: scale(1.2);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Sürükleme sırasında seçilen emoji - daha belirgin */
+.reaction-popup-item.selected {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: #6366f1;
+    border-width: 3px;
+    transform: scale(1.35);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    z-index: 10;
+}
+
+/* Instagram mantığı: Sürükleme sırasında hover efekti */
+.reaction-popup-item.is-hovered {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: #6366f1;
+    border-width: 3px;
+    transform: scale(1.35);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    z-index: 10;
+}
+
+/* Instagram mantığı: Bounce animasyonu - translate(-50%, -100%) korunur */
+@keyframes reactionPopupBounceIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -100%) scale(0.7);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -100%) scale(1);
+    }
 }
 
 .reaction-progress {
@@ -4718,63 +5087,76 @@ section {
 .reaction[data-reaction="destek"] .reaction-progress { background-color: #6c63ff; }
 
 .reaction .emoji {
-    font-size: 1.15rem;
+    font-size: 2rem;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
     z-index: 2;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
 }
 
 .reaction .count {
-    font-size: 0.875rem;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: #475569;
-    margin-left: 6px;
-    position: relative;
-    z-index: 2;
-    min-width: 16px;
-    text-align: center;
+    color: #ffffff;
+    background: #ef4444;
+    border-radius: 10px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    z-index: 3;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #ffffff;
+    line-height: 1;
+}
+
+/* Sayı 0 olduğunda badge'i gizle - JavaScript ile kontrol edilecek */
+.reaction .count[data-count="0"],
+.reaction .count:empty {
+    display: none;
 }
 
 .reaction:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: rgba(99, 102, 241, 0.3);
+    transform: scale(1.1);
 }
 
 .reaction:hover .emoji {
-    transform: scale(1.3) rotate(5deg);
+    transform: scale(1.15);
+}
+
+.reaction:active {
+    transform: scale(0.95);
 }
 
 /* Hover effects for each reaction type */
 .reaction[data-reaction="onay"]:hover { 
-    background-color: #cfe2ff; 
-    border-color: rgba(59, 89, 152, 0.5); 
-    box-shadow: 0 0 8px rgba(59, 89, 152, 0.4); 
+    background-color: rgba(59, 89, 152, 0.1); 
 }
 
 .reaction[data-reaction="katiliyorum"]:hover { 
-    background-color: #d4edda; 
-    border-color: rgba(40, 167, 69, 0.5); 
-    box-shadow: 0 0 8px rgba(40, 167, 69, 0.4); 
+    background-color: rgba(40, 167, 69, 0.1); 
 }
 
 .reaction[data-reaction="katilamiyorum"]:hover { 
-    background-color: #f8d7da; 
-    border-color: rgba(220, 53, 69, 0.5); 
-    box-shadow: 0 0 8px rgba(220, 53, 69, 0.4); 
+    background-color: rgba(220, 53, 69, 0.1); 
 }
 
 .reaction[data-reaction="sorum_var"]:hover { 
-    background-color: #fff3cd; 
-    border-color: rgba(255, 193, 7, 0.5); 
-    box-shadow: 0 0 8px rgba(255, 193, 7, 0.4); 
+    background-color: rgba(255, 193, 7, 0.1); 
 }
 
 .reaction[data-reaction="destek"]:hover { 
-    background-color: #e2e0ff; 
-    border-color: rgba(108, 99, 255, 0.5); 
-    box-shadow: 0 0 8px rgba(108, 99, 255, 0.4); 
+    background-color: rgba(108, 99, 255, 0.1); 
 }
 
 .reaction.active {
@@ -4782,18 +5164,28 @@ section {
 }
 
 /* Aktif oy parlaması */
-.reaction[data-reaction="onay"].active { background-color: #cfe2ff; border-color: rgba(59, 89, 152, 0.7); box-shadow: 0 0 10px rgba(59, 89, 152, 0.6); }
-.reaction[data-reaction="katiliyorum"].active { background-color: #d4edda; border-color: rgba(40, 167, 69, 0.7); box-shadow: 0 0 10px rgba(40, 167, 69, 0.6); }
-.reaction[data-reaction="katilamiyorum"].active { background-color: #f8d7da; border-color: rgba(220, 53, 69, 0.7); box-shadow: 0 0 10px rgba(220, 53, 69, 0.6); }
-.reaction[data-reaction="sorum_var"].active { background-color: #fff3cd; border-color: rgba(255, 193, 7, 0.7); box-shadow: 0 0 10px rgba(255, 193, 7, 0.6); }
-.reaction[data-reaction="destek"].active { background-color: #e2e0ff; border-color: rgba(108, 99, 255, 0.7); box-shadow: 0 0 10px rgba(108, 99, 255, 0.6); }
+.reaction[data-reaction="onay"].active { background-color: rgba(59, 89, 152, 0.15); }
+.reaction[data-reaction="katiliyorum"].active { background-color: rgba(40, 167, 69, 0.15); }
+.reaction[data-reaction="katilamiyorum"].active { background-color: rgba(220, 53, 69, 0.15); }
+.reaction[data-reaction="sorum_var"].active { background-color: rgba(255, 193, 7, 0.15); }
+.reaction[data-reaction="destek"].active { background-color: rgba(108, 99, 255, 0.15); }
 
 .reaction.active .emoji {
     animation: emojiPop 0.5s cubic-bezier(0.1, 0.8, 0.5, 1.5);
 }
 
 .reaction.active .count {
-    color: var(--primary-color, #3b5998);
+    background: #10b981;
+    animation: countPulse 0.3s ease;
+}
+
+@keyframes countPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
 }
 
 /* Progress bars will be controlled by JavaScript */
@@ -4805,12 +5197,13 @@ section {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
     flex-shrink: 0;
+    width: 100%;
+    justify-content: space-between;
 }
 
-.footer-stats .view-count,
-.footer-stats .total-votes {
+.footer-stats .view-count {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -4823,22 +5216,21 @@ section {
     border-radius: 16px;
     border: 1px solid rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
-.footer-stats .view-count:hover,
-.footer-stats .total-votes:hover {
+.footer-stats .view-count:hover {
     background: rgba(255, 255, 255, 0.9);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
-.footer-stats .view-count i,
-.footer-stats .total-votes i {
+.footer-stats .view-count i {
     color: #6366f1;
     font-size: 0.9rem;
 }
 
-.view-count, .total-votes {
+.view-count {
     display: flex;
     align-items: center;
     font-size: 0.8rem;
@@ -4846,11 +5238,7 @@ section {
     color: #606770;
 }
 
-.view-count {
-    margin-bottom: 5px; /* Alt alta boşluk */
-}
-
-.view-count i, .total-votes i {
+.view-count i {
     margin-right: 6px;
 }
 
@@ -4864,6 +5252,25 @@ section {
 }
 
 /* Mobile responsiveness for Announcements */
+@media (max-width: 968px) {
+    .reaction {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .reaction .emoji {
+        font-size: 1.8rem;
+    }
+    
+    .reaction .count {
+        font-size: 0.65rem;
+        min-width: 16px;
+        height: 16px;
+        top: -3px;
+        right: -3px;
+    }
+}
+
 @media (max-width: 768px) {
     .announcements {
         padding: 3rem 0;
@@ -4911,17 +5318,27 @@ section {
     }
     
     .reactions-group {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 6px;
+        overflow-x: auto;
     }
     
     .reaction {
-        font-size: 0.75rem;
-        padding: 6px 12px;
+        width: 40px;
+        height: 40px;
     }
     
     .reaction .emoji {
-        font-size: 1rem;
+        font-size: 1.6rem;
+    }
+    
+    .reaction .count {
+        font-size: 0.6rem;
+        min-width: 14px;
+        height: 14px;
+        top: -2px;
+        right: -2px;
+        padding: 0 3px;
     }
     
     .footer-stats {
@@ -4934,6 +5351,49 @@ section {
     .footer-stats .total-votes {
         font-size: 0.75rem;
         padding: 5px 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .reaction {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .reaction .emoji {
+        font-size: 1.5rem;
+    }
+    
+    .reaction .count {
+        font-size: 0.55rem;
+        min-width: 13px;
+        height: 13px;
+        top: -2px;
+        right: -2px;
+        padding: 0 2px;
+    }
+}
+
+@media (max-width: 600px) {
+    /* 600px ve altında reaksiyon butonlarını gizle, trigger butonunu göster */
+    .reactions-group .reaction {
+        display: none;
+    }
+    
+    .reaction-trigger-btn {
+        display: flex;
+    }
+    
+    .reaction-popup {
+        bottom: calc(100% + 8px);
+        padding: 10px;
+        gap: 6px;
+    }
+    
+    .reaction-popup-item {
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
     }
 }
 
@@ -4981,12 +5441,43 @@ section {
     }
     
     .reaction {
-        font-size: 0.7rem;
-        padding: 5px 10px;
+        width: 36px;
+        height: 36px;
     }
     
     .reaction .emoji {
+        font-size: 1.4rem;
+    }
+    
+    .reaction .count {
+        font-size: 0.5rem;
+        min-width: 12px;
+        height: 12px;
+        top: -1px;
+        right: -1px;
+        padding: 0 2px;
+        border-width: 1.5px;
+    }
+    
+    .reaction-trigger-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .reaction-trigger-btn i {
         font-size: 0.9rem;
+    }
+    
+    .reaction-popup {
+        bottom: calc(100% + 6px);
+        padding: 8px;
+        gap: 5px;
+    }
+    
+    .reaction-popup-item {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
     }
     
     .footer-stats {
@@ -6461,9 +6952,9 @@ section {
 .profile-btn.has-avatar {
     position: relative;
     overflow: visible;
-    width: 33px !important;
-    height: 33px !important;
-    min-width: 33px !important;
+    width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
+    height: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
+    min-width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
     border: 2px solid var(--color-white);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--color-accent-primary);
     transition: all var(--transition-base) var(--easing-ease);

@@ -18,7 +18,7 @@ async function checkAdminAccess() {
             console.error('Error getting session:', sessionError);
             if (!adminPageRedirecting) {
                 adminPageRedirecting = true;
-                window.location.href = 'index.html';
+            window.location.href = 'index.html';
             }
             return false;
         }
@@ -27,7 +27,7 @@ async function checkAdminAccess() {
             // Not logged in, redirect to main page (not admin-login to prevent loop)
             if (!adminPageRedirecting) {
                 adminPageRedirecting = true;
-                window.location.href = 'index.html';
+            window.location.href = 'index.html';
             }
             return false;
         }
@@ -39,8 +39,8 @@ async function checkAdminAccess() {
             // Not admin, redirect to main page
             if (!adminPageRedirecting) {
                 adminPageRedirecting = true;
-                alert('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
-                window.location.href = 'index.html';
+            alert('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+            window.location.href = 'index.html';
             }
             return false;
         }
@@ -133,7 +133,7 @@ function setupBottomNavigation() {
         if (window.innerWidth <= 800) {
             // Add scroll handler if not already attached
             if (!scrollHandlerAttached) {
-                window.addEventListener('scroll', handleBottomNavScroll, { passive: true });
+    window.addEventListener('scroll', handleBottomNavScroll, { passive: true });
                 scrollHandlerAttached = true;
             }
             // Initial state
@@ -165,8 +165,8 @@ function setupBottomNavigation() {
     // Show on hover (for desktop if visible)
     bottomNav.addEventListener('mouseenter', () => {
         if (window.innerWidth > 800) {
-            bottomNav.classList.remove('hidden');
-            bottomNav.classList.add('visible');
+        bottomNav.classList.remove('hidden');
+        bottomNav.classList.add('visible');
         }
     });
     
@@ -828,14 +828,14 @@ async function loadAnnouncements() {
                     <td>${announcement.title}</td>
                     <td><span class="category-badge category-${announcement.category}">${getCategoryName(announcement.category)}</span></td>
                     <td>${new Date(announcement.created_at).toLocaleString('tr-TR', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Europe/Istanbul'
-                    })}</td>
-                </tr>
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                })}</td>
+            </tr>
             `;
         }).join('');
     } catch (error) {
@@ -867,14 +867,14 @@ async function loadBlogPosts() {
                     <td>${post.title}</td>
                     <td><span class="category-badge category-${post.category}">${getCategoryName(post.category)}</span></td>
                     <td>${new Date(post.created_at).toLocaleString('tr-TR', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Europe/Istanbul'
-                    })}</td>
-                </tr>
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                })}</td>
+            </tr>
             `;
         }).join('');
     } catch (error) {
@@ -912,15 +912,15 @@ async function loadEvents() {
                     <td>${event.title}</td>
                     <td><span class="category-badge category-${event.type}">${getEventTypeName(event.type)}</span></td>
                     <td>${new Date(event.date).toLocaleString('tr-TR', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Europe/Istanbul'
-                    })}</td>
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                })}</td>
                     <td>${event.registered || 0}/${event.capacity || '∞'}</td>
-                </tr>
+            </tr>
             `;
         }).join('');
     } catch (error) {

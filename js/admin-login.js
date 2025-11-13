@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     isRedirecting = true;
                     // Small delay to prevent rapid redirects
                     setTimeout(() => {
-                        window.location.href = 'admin.html';
+                window.location.href = 'admin.html';
                     }, 100);
                 }
                 return;
