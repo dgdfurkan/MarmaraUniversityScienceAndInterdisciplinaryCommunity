@@ -1583,7 +1583,7 @@ async function loadAdminMembers() {
                     </div>
                     <div class="admin-member-actions">
                         ${!isAdmin ? `
-                            <button class="btn btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName.replace(/'/g, "\\'")}')" title="Admin Yap">
+                            <button type="button" class="btn btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName.replace(/'/g, "\\'")}')" title="Admin Yap">
                                 <i class="fas fa-user-shield"></i>
                                 <span>Admin Yap</span>
                             </button>
@@ -1653,7 +1653,7 @@ async function filterAdminMembers() {
                     </div>
                     <div class="admin-member-actions">
                         ${!isAdmin ? `
-                            <button class="btn btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName.replace(/'/g, "\\'")}')" title="Admin Yap">
+                            <button type="button" class="btn btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName.replace(/'/g, "\\'")}')" title="Admin Yap">
                                 <i class="fas fa-user-shield"></i>
                                 <span>Admin Yap</span>
                             </button>
