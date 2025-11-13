@@ -64,16 +64,20 @@ body {
     max-width: 100%;
     object-fit: contain;
     display: none;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 0;
+    will-change: opacity, transform;
+    transform: translateX(-10px);
 }
 
-/* Dar modda (75px) - logo tamamen gizli */
-.sidebar .logo img {
+/* Dar modda - logo tamamen gizli */
+.sidebar:not(:hover) .logo img {
     display: none;
+    opacity: 0;
 }
 
-/* Hover modda (260px) - logo görünür ve geniş */
+/* Hover modda - logo smooth görünür */
 .sidebar:hover .logo {
     justify-content: flex-start;
     padding-left: 20px;
@@ -81,7 +85,9 @@ body {
 
 .sidebar:hover .logo img {
     display: block;
+    opacity: 1;
     height: 60px;
+    transform: translateX(0);
 }
 
 /* Links/Navigation */
@@ -107,10 +113,16 @@ body {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+    opacity: 0;
+    transform: translateX(-10px);
 }
 
 .sidebar:hover .links h4 {
     display: block;
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .sidebar .links hr {
@@ -168,11 +180,17 @@ body {
     white-space: nowrap;
     text-decoration: none;
     font-size: 0.95rem;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+    opacity: 0;
+    transform: translateX(-10px);
 }
 
 .sidebar:hover .links li span,
 .sidebar:hover .links li a {
     display: block;
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .sidebar .links li.view-site-link a {
@@ -190,130 +208,79 @@ body {
     left: 0;
     right: 0;
     padding: 15px 10px;
+    padding-top: 15px;
+    margin-top: 15px;
     border-top: 2px solid rgba(0, 0, 0, 0.1);
     background: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     flex-wrap: nowrap;
-    min-height: 70px;
 }
 
-.sidebar:hover .user-profile {
-    padding: 15px 20px;
-    flex-direction: row;
-    justify-content: flex-start;
-}
-
-.user-profile-avatar {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 2px solid rgba(255, 255, 255, 0.5);
+/* Nav Image - sidebar_2.txt gibi */
+.sidebar .user-profile .nav_image {
     display: flex;
-    align-items: center;
+    min-width: 55px;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
 }
 
-.user-profile-avatar img {
-    width: 100%;
-    height: 100%;
+.sidebar .user-profile .nav_image img {
+    height: 35px;
+    width: 35px;
+    border-radius: 50%;
     object-fit: cover;
 }
 
 .user-profile-avatar-placeholder {
-    width: 100%;
-    height: 100%;
+    height: 35px;
+    width: 35px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #1f2937;
     font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.3);
 }
 
-.user-profile-info {
+/* Data Text - sidebar_2.txt gibi */
+.sidebar .user-profile .data_text {
     display: none;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     flex: 1;
     min-width: 0;
     overflow: hidden;
-    align-items: flex-start;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+    opacity: 0;
+    transform: translateX(-10px);
 }
 
-.sidebar:hover .user-profile-info {
+.sidebar:hover .user-profile .data_text {
     display: flex;
+    opacity: 1;
+    transform: translateX(0);
 }
 
-.user-profile-name {
-    font-weight: 600;
-    color: #1f2937;
-    font-size: 0.9rem;
+.sidebar .user-profile .data_text .name {
+    font-size: 18px;
+    color: #333;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 100%;
 }
 
-.user-profile-email {
-    font-size: 0.75rem;
+.sidebar .user-profile .data_text .email {
+    font-size: 15px;
     color: #6b7280;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 100%;
-}
-
-.user-profile-logout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    padding: 0;
-    background: rgba(239, 68, 68, 0.2);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 50%;
-    color: #dc2626;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: 'Inter', sans-serif;
-    flex-shrink: 0;
-}
-
-.sidebar:hover .user-profile-logout {
-    width: auto;
-    min-width: auto;
-    padding: 6px 12px;
-    border-radius: 6px;
-    gap: 6px;
-}
-
-.user-profile-logout:hover {
-    background: rgba(239, 68, 68, 0.3);
-    border-color: rgba(239, 68, 68, 0.5);
-    transform: translateY(-2px);
-}
-
-.user-profile-logout i {
-    font-size: 0.9rem;
-}
-
-.user-profile-logout span {
-    display: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.sidebar:hover .user-profile-logout span {
-    display: inline;
 }
 
 .view-site i {
