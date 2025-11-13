@@ -286,7 +286,7 @@ body {
 .sidebar_profile {
     padding-top: 15px;
     margin-top: 15px;
-    gap: 15px;
+    gap: 10px;
     border-top: 2px solid rgba(0, 0, 0, 0.1);
     font-family: 'Inter', sans-serif;
 }
@@ -331,6 +331,7 @@ body {
     flex: 1;
     min-width: 0;
     overflow: hidden;
+    margin-right: 0;
 }
 
 .sidebar:not(.close) .sidebar_profile .data_text {
@@ -351,10 +352,11 @@ body {
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: 'Inter', sans-serif;
-    margin-left: auto;
+    margin-left: 4px;
     will-change: transform, background-color;
     min-width: 36px;
     height: 36px;
+    flex-shrink: 0;
 }
 
 .sidebar:not(.close) .sidebar_profile .user-profile-logout {
