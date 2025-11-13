@@ -1358,6 +1358,105 @@ function getTimeAgo(dateString) {
     }
 }
 
+// Open all activities modal
+async function openAllActivitiesModal() {
+    try {
+        const allActivities = await DatabaseService.getRecentActivities(100); // Get more activities
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal all-activities-modal';
+        modal.innerHTML = `
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>Tüm Aktiviteler</h2>
+                    <button class="modal-close" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="activity-list-full" id="all-activities-list">
+                        ${allActivities.length === 0 ? '<p class="no-activities">Henüz aktivite bulunmuyor.</p>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        const activitiesList = document.getElementById('all-activities-list');
+        if (activitiesList && allActivities.length > 0) {
+            activitiesList.innerHTML = allActivities.map(activity => {
+                const timeAgo = getTimeAgo(activity.created_at);
+                const exactTime = new Date(activity.created_at).toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Istanbul'
+                });
+                
+                let icon = 'fas fa-plus';
+                let message = '';
+                let actionClass = '';
+
+                switch(activity.action_type) {
+                    case 'create':
+                        icon = 'fas fa-plus';
+                        message = `Yeni ${getTableDisplayName(activity.table_name)} eklendi: "${activity.record_title}"`;
+                        actionClass = 'create';
+                        break;
+                    case 'update':
+                        icon = 'fas fa-edit';
+                        message = `${getTableDisplayName(activity.table_name)} güncellendi: "${activity.record_title}"`;
+                        actionClass = 'update';
+                        break;
+                    case 'delete':
+                        icon = 'fas fa-trash';
+                        message = `${getTableDisplayName(activity.table_name)} silindi: "${activity.record_title}"`;
+                        actionClass = 'delete';
+                        break;
+                    case 'draft':
+                        icon = 'fas fa-save';
+                        message = `Taslak kaydedildi: "${activity.record_title}"`;
+                        actionClass = 'draft';
+                        break;
+                    case 'restore':
+                        icon = 'fas fa-undo';
+                        message = `Versiyon geri yüklendi: "${activity.record_title}"`;
+                        actionClass = 'restore';
+                        break;
+                    default:
+                        icon = 'fas fa-info';
+                        message = `Aktivite: "${activity.record_title}"`;
+                        actionClass = 'info';
+                }
+
+                return `
+                    <div class="activity-item ${actionClass}">
+                        <div class="activity-icon">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p>${message}</p>
+                            <span class="activity-time" title="${exactTime}">${timeAgo}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Close modal on overlay click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    } catch (error) {
+        console.error('Error loading all activities:', error);
+        alert('Aktiviteler yüklenirken bir hata oluştu.');
+    }
+}
+
 // Initialize dashboard on page load
 document.addEventListener('DOMContentLoaded', async () => {
     loadDashboardStats();
