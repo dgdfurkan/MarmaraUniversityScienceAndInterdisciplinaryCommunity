@@ -97,26 +97,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Close sidebar when clicking a nav item on mobile
     navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const sectionId = item.getAttribute('data-section');
-            if (sectionId) {
-                showSection(sectionId);
-                
-                // Update active nav item
-                navItems.forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
-                
-                // Close sidebar on mobile after navigation
-                if (window.innerWidth <= 768) {
-                    if (sidebar) {
-                        sidebar.classList.remove('mobile-open');
-                    }
-                    if (sidebarOverlay) {
-                        sidebarOverlay.classList.remove('active');
+        const link = item.querySelector('.link');
+        if (link) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = item.getAttribute('data-section');
+                if (sectionId) {
+                    showSection(sectionId);
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Close sidebar on mobile after navigation
+                    if (window.innerWidth <= 768) {
+                        if (sidebar) {
+                            sidebar.classList.remove('mobile-open');
+                        }
+                        if (sidebarOverlay) {
+                            sidebarOverlay.classList.remove('active');
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     });
 });
 
@@ -1377,8 +1381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (adminUserAvatar && member.avatar_url) {
                     adminUserAvatar.src = member.avatar_url;
                 }
-            }
-        }
+                
                 const adminUserEmail = document.getElementById('adminUserEmail');
                 if (adminUserEmail && member.email) {
                     adminUserEmail.textContent = member.email;

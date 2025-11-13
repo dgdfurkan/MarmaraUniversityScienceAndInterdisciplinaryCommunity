@@ -20,65 +20,97 @@
             <div class="logo">
                 <img src="images/music_logo_cropped.png" alt="MUSIC Logo">
             </div>
-            <ul class="links">
-                <h4>Ana Menü</h4>
-                <li class="nav-item active" data-section="dashboard">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </li>
-                <li class="nav-item" data-section="announcements">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>Duyurular</span>
-                </li>
-                <li class="nav-item" data-section="blog">
-                    <i class="fas fa-blog"></i>
-                    <span>Blog Yazıları</span>
-                </li>
-                <li class="nav-item" data-section="events">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Etkinlikler</span>
-                </li>
-                <hr>
-                <h4>Yönetim</h4>
-                <li class="nav-item" data-section="members">
-                    <i class="fas fa-user-friends"></i>
-                    <span>Üyeler</span>
-                </li>
-                <li class="nav-item" data-section="registrations">
-                    <i class="fas fa-users"></i>
-                    <span>Kayıtlar</span>
-                </li>
-                <li class="nav-item" data-section="media">
-                    <i class="fas fa-images"></i>
-                    <span>Medya</span>
-                </li>
-                <hr>
-                <h4>Ayarlar</h4>
-                <li class="nav-item" data-section="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Ayarlar</span>
-                </li>
-                <li class="nav-item view-site-link">
-                    <i class="fas fa-external-link-alt"></i>
-                    <a href="index.html" target="_blank">Siteyi Görüntüle</a>
-                </li>
-            </ul>
-            <!-- User Profile Section at Bottom - sidebar_2.txt inspired -->
-            <div class="user-profile">
-                <span class="nav_image">
-                    <img id="adminUserAvatar" src="" alt="User Avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="user-profile-avatar-placeholder" style="display: none;">
-                        <i class="fas fa-user"></i>
-                    </div>
-                </span>
-                <div class="data_text">
-                    <span class="name" id="adminUserName">Admin</span>
-                    <span class="email" id="adminUserEmail"></span>
+            <div class="menu_container">
+                <div class="menu_items">
+                    <ul class="menu_item">
+                        <div class="menu_title flex">
+                            <span class="title">Ana Menü</span>
+                            <span class="line"></span>
+                        </div>
+                        <li class="item nav-item active" data-section="dashboard">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="item nav-item" data-section="announcements">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-bullhorn"></i>
+                                <span>Duyurular</span>
+                            </a>
+                        </li>
+                        <li class="item nav-item" data-section="blog">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-blog"></i>
+                                <span>Blog Yazıları</span>
+                            </a>
+                        </li>
+                        <li class="item nav-item" data-section="events">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Etkinlikler</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="menu_item">
+                        <div class="menu_title flex">
+                            <span class="title">Yönetim</span>
+                            <span class="line"></span>
+                        </div>
+                        <li class="item nav-item" data-section="members">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-user-friends"></i>
+                                <span>Üyeler</span>
+                            </a>
+                        </li>
+                        <li class="item nav-item" data-section="registrations">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-users"></i>
+                                <span>Kayıtlar</span>
+                            </a>
+                        </li>
+                        <li class="item nav-item" data-section="media">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-images"></i>
+                                <span>Medya</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="menu_item">
+                        <div class="menu_title flex">
+                            <span class="title">Ayarlar</span>
+                            <span class="line"></span>
+                        </div>
+                        <li class="item nav-item" data-section="settings">
+                            <a href="#" class="link flex">
+                                <i class="fas fa-cog"></i>
+                                <span>Ayarlar</span>
+                            </a>
+                        </li>
+                        <li class="item nav-item view-site-link">
+                            <a href="index.html" target="_blank" class="link flex">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>Siteyi Görüntüle</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-                <button class="user-profile-logout" onclick="logout()" title="Çıkış Yap">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Çıkış</span>
-                </button>
+                <div class="sidebar_profile flex">
+                    <span class="nav_image">
+                        <img id="adminUserAvatar" src="" alt="User Avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="user-profile-avatar-placeholder" style="display: none;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </span>
+                    <div class="data_text">
+                        <span class="name" id="adminUserName">Admin</span>
+                        <span class="email" id="adminUserEmail"></span>
+                    </div>
+                    <button class="user-profile-logout" onclick="logout()" title="Çıkış Yap">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Çıkış</span>
+                    </button>
+                </div>
             </div>
         </aside>
 
