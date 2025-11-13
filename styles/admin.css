@@ -22,133 +22,120 @@ body {
     align-items: center;
 }
 
-/* Glassmorphism Sidebar */
+/* Nav Image - sidebar_2.txt gibi */
+.nav_image {
+    display: flex;
+    min-width: 55px;
+    justify-content: center;
+}
+
+.nav_image img {
+    height: 35px;
+    width: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Sidebar - sidebar_2.txt tam yapısı */
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    width: calc(55px + 20px); /* 75px total - sidebar_2.txt gibi */
     height: 100%;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+    width: 270px;
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(17px);
     -webkit-backdrop-filter: blur(17px);
-    border-right: 1px solid rgba(255, 255, 255, 0.7);
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: width;
+    padding: 15px 10px;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s ease;
     z-index: 1000;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
-    padding: 15px 10px;
 }
 
 .sidebar::-webkit-scrollbar {
     display: none;
 }
 
-.sidebar:hover {
-    width: 260px;
+.sidebar.close {
+    width: calc(55px + 20px);
 }
 
-/* Logo Section */
-.sidebar .logo {
-    color: #1f2937;
-    display: flex;
-    align-items: center;
-    padding: 20px 10px 15px;
-    width: 100%;
-    justify-content: center;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+/* Logo Items - sidebar_2.txt gibi */
+.logo_items {
+    gap: 8px;
+    padding: 15px 10px;
 }
 
-.sidebar .logo img {
-    width: auto;
-    height: 60px;
-    max-width: 100%;
-    object-fit: contain;
-    display: none;
+.logo_name {
+    font-size: 22px;
+    color: #333;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.sidebar.close .logo_name {
     opacity: 0;
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 0;
-    will-change: opacity, transform;
-    transform: translateX(-10px);
+    pointer-events: none;
 }
 
-/* Dar modda - logo tamamen gizli */
-.sidebar:not(:hover) .logo img {
-    display: none;
-    opacity: 0;
+.logo_items .nav_image img {
+    height: 35px;
+    width: 35px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-/* Hover modda - logo smooth görünür */
-.sidebar:hover .logo {
-    justify-content: flex-start;
-    padding-left: 20px;
-}
-
-.sidebar:hover .logo img {
-    display: block;
-    opacity: 1;
-    height: 60px;
-    transform: translateX(0);
-}
-
-/* Menu Container - sidebar_2.txt gibi */
-.sidebar .menu_container {
+/* Menu Container - sidebar_2.txt tam yapısı */
+.menu_container {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     margin-top: 40px;
     overflow-y: auto;
     height: calc(100% - 82px);
-    width: 100%;
 }
 
-.sidebar .menu_container::-webkit-scrollbar {
+.menu_container::-webkit-scrollbar {
     display: none;
 }
 
-.sidebar .menu_items {
+.menu_items {
     width: 100%;
 }
 
 /* Menu Item - sidebar_2.txt gibi */
-.sidebar .menu_item {
+.menu_item {
     list-style: none;
     margin-bottom: 20px;
 }
 
-/* Menu Title - sidebar_2.txt gibi */
-.sidebar .menu_title {
+/* Menu Title - sidebar_2.txt tam yapısı */
+.menu_title {
     position: relative;
     height: 50px;
     width: 55px;
-    display: flex;
-    align-items: center;
-    margin: 0 auto;
 }
 
-.sidebar .menu_title .title {
+.menu_title .title {
     margin-left: 15px;
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #1f2937;
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.sidebar.close .title {
     opacity: 0;
-    pointer-events: none;
 }
 
-.sidebar:hover .menu_title .title {
-    opacity: 1;
-}
-
-/* Line - sidebar_2.txt gibi (dar modda görünür) */
-.sidebar .menu_title .line {
+.menu_title .line {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -156,46 +143,38 @@ body {
     width: 20px;
     border-radius: 25px;
     background: #aaa;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 1;
-}
-
-.sidebar:hover .menu_title .line {
+    transition: all 0.3s ease;
     opacity: 0;
 }
 
+.sidebar.close .line {
+    opacity: 1;
+}
+
 /* Item - sidebar_2.txt gibi */
-.sidebar .item {
+.item {
     list-style: none;
 }
 
-/* Link - sidebar_2.txt gibi */
-.sidebar .link {
+/* Link - sidebar_2.txt tam yapısı */
+.link {
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 8px;
     color: #707070;
-    display: flex;
-    align-items: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', sans-serif;
 }
 
-.sidebar .link:hover {
+.link:hover {
     color: #fff;
     background-color: #4070f4;
 }
 
-.sidebar .link span {
+.link span {
     white-space: nowrap;
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0;
 }
 
-.sidebar:hover .link span {
-    opacity: 1;
-}
-
-.sidebar .link i {
+.link i {
     height: 50px;
     min-width: 55px;
     display: flex;
@@ -206,26 +185,26 @@ body {
 }
 
 /* Active state */
-.sidebar .item.nav-item.active .link {
+.item.nav-item.active .link {
     background-color: rgba(59, 130, 246, 0.2);
     color: #3b82f6;
 }
 
-.sidebar .item.nav-item.active .link i {
+.item.nav-item.active .link i {
     color: #3b82f6;
 }
 
-.sidebar .item.nav-item.active .link span {
+.item.nav-item.active .link span {
     color: #3b82f6;
     font-weight: 600;
 }
 
 /* View site link */
-.sidebar .item.view-site-link .link {
+.item.view-site-link .link {
     color: #3b82f6;
 }
 
-.sidebar .item.view-site-link .link:hover {
+.item.view-site-link .link:hover {
     color: #2563eb;
     background-color: rgba(59, 130, 246, 0.1);
 }
