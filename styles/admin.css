@@ -230,26 +230,29 @@ body {
     background-color: rgba(59, 130, 246, 0.1);
 }
 
-/* Sidebar Profile - sidebar_2.txt gibi */
-.sidebar .sidebar_profile {
+/* Sidebar Profile - sidebar_2.txt tam yapısı */
+.sidebar_profile {
     padding-top: 15px;
     margin-top: 15px;
     gap: 15px;
     border-top: 2px solid rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', sans-serif;
 }
 
-/* Nav Image - sidebar_2.txt gibi */
-.sidebar .sidebar_profile .nav_image {
-    display: flex;
-    min-width: 55px;
-    justify-content: center;
-    flex-shrink: 0;
+.sidebar_profile .name {
+    font-size: 18px;
+    color: #333;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
 }
 
-.sidebar .sidebar_profile .nav_image img {
+.sidebar_profile .email {
+    font-size: 15px;
+    color: #6b7280;
+    font-family: 'Inter', sans-serif;
+}
+
+.sidebar_profile .nav_image img {
     height: 35px;
     width: 35px;
     border-radius: 50%;
@@ -269,41 +272,21 @@ body {
 }
 
 /* Data Text - sidebar_2.txt gibi */
-.sidebar .sidebar_profile .data_text {
+.sidebar_profile .data_text {
     display: none;
     flex-direction: column;
     gap: 2px;
     flex: 1;
     min-width: 0;
     overflow: hidden;
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0;
 }
 
-.sidebar:hover .sidebar_profile .data_text {
+.sidebar:not(.close) .sidebar_profile .data_text {
     display: flex;
-    opacity: 1;
-}
-
-.sidebar .sidebar_profile .data_text .name {
-    font-size: 18px;
-    color: #333;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sidebar .sidebar_profile .data_text .email {
-    font-size: 15px;
-    color: #6b7280;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 /* Logout Button */
-.sidebar .sidebar_profile .user-profile-logout {
+.sidebar_profile .user-profile-logout {
     display: none;
     align-items: center;
     justify-content: center;
@@ -322,17 +305,17 @@ body {
     will-change: transform, background-color;
 }
 
-.sidebar:hover .sidebar_profile .user-profile-logout {
+.sidebar:not(.close) .sidebar_profile .user-profile-logout {
     display: flex;
 }
 
-.sidebar .sidebar_profile .user-profile-logout:hover {
+.sidebar_profile .user-profile-logout:hover {
     background: rgba(239, 68, 68, 0.3);
     border-color: rgba(239, 68, 68, 0.5);
     transform: translateY(-2px);
 }
 
-.sidebar .sidebar_profile .user-profile-logout i {
+.sidebar_profile .user-profile-logout i {
     font-size: 0.9rem;
 }
 
@@ -343,13 +326,13 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    margin-left: 75px;
+    margin-left: 270px;
     min-height: 100vh;
     transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar:hover ~ .main-content {
-    margin-left: 260px;
+.sidebar.close ~ .main-content {
+    margin-left: calc(55px + 20px);
 }
 
 .admin-header {

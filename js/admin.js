@@ -63,7 +63,7 @@ function setupBottomNavigation() {
     });
 }
 
-// Navigation - Initialize after DOM loads
+// Navigation - Initialize after DOM loads - sidebar_2.txt mantığı
 let navItems, contentSections, sidebar, hamburgerMenu, sidebarOverlay;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -72,6 +72,22 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebar = document.querySelector('.sidebar');
     hamburgerMenu = document.getElementById('hamburgerMenu');
     sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    // Sidebar_2.txt mantığı: hover ile açılır/kapanır
+    if (sidebar) {
+        // Başlangıçta dar mod
+        sidebar.classList.add('close');
+        
+        // Mouse enter - genişlet
+        sidebar.addEventListener('mouseenter', () => {
+            sidebar.classList.remove('close');
+        });
+        
+        // Mouse leave - daralt
+        sidebar.addEventListener('mouseleave', () => {
+            sidebar.classList.add('close');
+        });
+    }
 
     // Hamburger menu toggle for mobile
     if (hamburgerMenu && sidebar) {
@@ -95,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close sidebar when clicking a nav item on mobile
+    // Close sidebar when clicking a nav item
     navItems.forEach(item => {
         const link = item.querySelector('.link');
         if (link) {
