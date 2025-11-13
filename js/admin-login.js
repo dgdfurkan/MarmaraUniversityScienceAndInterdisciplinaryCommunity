@@ -1,8 +1,35 @@
 // Admin Login JavaScript
 
+// Prevent redirect loop
+let isRedirecting = false;
+
 // Check if user is already logged in and is admin
 document.addEventListener('DOMContentLoaded', async () => {
+    // Prevent multiple simultaneous checks
+    if (isRedirecting) {
+        return;
+    }
+    
     try {
+        // Check if supabase is defined
+        if (typeof supabase === 'undefined') {
+            console.error('Supabase is not loaded. Please check if the script is included.');
+            showAccessDeniedMessage('Sistem yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.');
+            return;
+        }
+        
+        // Check if DatabaseService is defined
+        if (typeof DatabaseService === 'undefined') {
+            console.error('DatabaseService is not loaded. Please check if the script is included.');
+            showAccessDeniedMessage('Sistem yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.');
+            return;
+        }
+        
+        // Check if we're already on admin page (prevent redirect loop)
+        if (window.location.pathname.includes('admin.html')) {
+            return;
+        }
+        
         // Check Supabase auth session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -18,7 +45,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (isAdmin) {
                 // User is admin, redirect to admin panel immediately
-                window.location.href = 'admin.html';
+                // But only if we're not already redirecting
+                if (!isRedirecting) {
+                    isRedirecting = true;
+                    // Small delay to prevent rapid redirects
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 100);
+                }
                 return;
             } else {
                 // User is logged in but not admin

@@ -236,8 +236,6 @@
                                     <th>Başlık</th>
                                     <th>Kategori</th>
                                     <th>Tarih</th>
-                                    <th>Durum</th>
-                                    <th>İşlemler</th>
                                 </tr>
                             </thead>
                             <tbody id="announcements-table">
@@ -263,8 +261,6 @@
                                     <th>Başlık</th>
                                     <th>Kategori</th>
                                     <th>Tarih</th>
-                                    <th>Durum</th>
-                                    <th>İşlemler</th>
                                 </tr>
                             </thead>
                             <tbody id="blog-table">
@@ -291,7 +287,6 @@
                                     <th>Tür</th>
                                     <th>Tarih</th>
                                     <th>Kayıt Sayısı</th>
-                                    <th>İşlemler</th>
                                 </tr>
                             </thead>
                             <tbody id="events-table">
@@ -491,6 +486,44 @@
             </div>
         </main>
     </div>
+
+    <!-- Bottom Navigation for Mobile -->
+    <nav id="bottomNav" class="bottom-nav">
+        <div class="bottom-nav-container">
+            <button class="bottom-nav-item active" data-section="dashboard" title="Dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="bottom-nav-item" data-section="announcements" title="Duyurular">
+                <i class="fas fa-bullhorn"></i>
+                <span>Duyurular</span>
+            </button>
+            <button class="bottom-nav-item" data-section="blog" title="Blog Yazıları">
+                <i class="fas fa-blog"></i>
+                <span>Blog</span>
+            </button>
+            <button class="bottom-nav-item" data-section="events" title="Etkinlikler">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Etkinlikler</span>
+            </button>
+            <button class="bottom-nav-item" data-section="members" title="Üyeler">
+                <i class="fas fa-user-friends"></i>
+                <span>Üyeler</span>
+            </button>
+            <button class="bottom-nav-item" data-section="registrations" title="Kayıtlar">
+                <i class="fas fa-users"></i>
+                <span>Kayıtlar</span>
+            </button>
+            <button class="bottom-nav-item" data-section="media" title="Medya">
+                <i class="fas fa-images"></i>
+                <span>Medya</span>
+            </button>
+            <button class="bottom-nav-item" data-section="settings" title="Ayarlar">
+                <i class="fas fa-cog"></i>
+                <span>Ayarlar</span>
+            </button>
+        </div>
+    </nav>
 
     <!-- Modals -->
     <div id="announcement-modal" class="modal">
@@ -722,14 +755,6 @@
     <script type="text/javascript" src="richtexteditor/richtexteditor/lang/rte-lang-tr.js"></script>
     <script type="text/javascript" src="richtexteditor/richtexteditor/plugins/all_plugins.js"></script>
     <script>
-        // Check authentication
-        document.addEventListener('DOMContentLoaded', () => {
-            const isLoggedIn = sessionStorage.getItem('adminLoggedIn') === 'true' || localStorage.getItem('adminLoggedIn') === 'true';
-            if (!isLoggedIn) {
-                window.location.href = 'admin-login.html';
-            }
-        });
-        
         // Logout function
         function logout() {
             sessionStorage.removeItem('adminLoggedIn');

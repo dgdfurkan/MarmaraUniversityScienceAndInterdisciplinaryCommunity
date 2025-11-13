@@ -1,20 +1,34 @@
 // Admin Panel JavaScript
 
+// Prevent redirect loop
+let adminPageRedirecting = false;
+
 // Check authentication and admin status on page load
 async function checkAdminAccess() {
+    // Prevent multiple simultaneous checks
+    if (adminPageRedirecting) {
+        return false;
+    }
+    
     try {
         // Check Supabase auth session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
             console.error('Error getting session:', sessionError);
-            window.location.href = 'index.html';
+            if (!adminPageRedirecting) {
+                adminPageRedirecting = true;
+                window.location.href = 'index.html';
+            }
             return false;
         }
         
         if (!session || !session.user) {
-            // Not logged in, redirect to main page
-            window.location.href = 'index.html';
+            // Not logged in, redirect to main page (not admin-login to prevent loop)
+            if (!adminPageRedirecting) {
+                adminPageRedirecting = true;
+                window.location.href = 'index.html';
+            }
             return false;
         }
         
@@ -23,8 +37,11 @@ async function checkAdminAccess() {
         
         if (!isAdmin) {
             // Not admin, redirect to main page
-            alert('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
-            window.location.href = 'index.html';
+            if (!adminPageRedirecting) {
+                adminPageRedirecting = true;
+                alert('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+                window.location.href = 'index.html';
+            }
             return false;
         }
         
@@ -104,17 +121,53 @@ function handleBottomNavScroll() {
     }
 }
 
+// Store scroll handler reference for proper cleanup
+let scrollHandlerAttached = false;
+
 function setupBottomNavigation() {
     const bottomNav = document.getElementById('bottomNav');
     if (!bottomNav) return;
     
-    // Scroll handler
-    window.addEventListener('scroll', handleBottomNavScroll, { passive: true });
+    // Only setup scroll handler if window width <= 800px
+    function setupScrollHandler() {
+        if (window.innerWidth <= 800) {
+            // Add scroll handler if not already attached
+            if (!scrollHandlerAttached) {
+                window.addEventListener('scroll', handleBottomNavScroll, { passive: true });
+                scrollHandlerAttached = true;
+            }
+            // Initial state
+            handleBottomNavScroll();
+        } else {
+            // Remove scroll handler on desktop
+            if (scrollHandlerAttached) {
+                window.removeEventListener('scroll', handleBottomNavScroll);
+                scrollHandlerAttached = false;
+            }
+            // Always visible on desktop (if shown)
+            bottomNav.classList.remove('hidden');
+            bottomNav.classList.add('visible');
+        }
+    }
     
-    // Show on hover
+    // Initial setup
+    setupScrollHandler();
+    
+    // Re-setup on resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            setupScrollHandler();
+        }, 100);
+    });
+    
+    // Show on hover (for desktop if visible)
     bottomNav.addEventListener('mouseenter', () => {
-        bottomNav.classList.remove('hidden');
-        bottomNav.classList.add('visible');
+        if (window.innerWidth > 800) {
+            bottomNav.classList.remove('hidden');
+            bottomNav.classList.add('visible');
+        }
     });
     
     // Click handlers for bottom nav items
@@ -125,11 +178,34 @@ function setupBottomNavigation() {
             if (section) {
                 showSection(section);
                 // Update active state
-                bottomNavItems.forEach(navItem => navItem.classList.remove('active'));
-                item.classList.add('active');
+                updateBottomNavActive(section);
             }
         });
     });
+}
+
+// Update bottom navigation active state
+function updateBottomNavActive(sectionId) {
+    const bottomNav = document.getElementById('bottomNav');
+    if (!bottomNav) return;
+    
+    const bottomNavItems = bottomNav.querySelectorAll('.bottom-nav-item');
+    bottomNavItems.forEach(navItem => {
+        navItem.classList.remove('active');
+        if (navItem.getAttribute('data-section') === sectionId) {
+            navItem.classList.add('active');
+        }
+    });
+    
+    // Also update sidebar nav items
+    if (navItems) {
+        navItems.forEach(nav => {
+            nav.classList.remove('active');
+            if (nav.getAttribute('data-section') === sectionId) {
+                nav.classList.add('active');
+            }
+        });
+    }
 }
 
 // Navigation - Initialize after DOM loads - sidebar_2.txt mantığı
@@ -186,6 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     navItems.forEach(nav => nav.classList.remove('active'));
                     item.classList.add('active');
                     
+                    // Update bottom nav active state
+                    updateBottomNavActive(sectionId);
+                    
                     // Close sidebar on mobile after navigation
                     if (window.innerWidth <= 768) {
                         if (sidebar) {
@@ -199,6 +278,34 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+    // Handle responsive sidebar visibility (800px breakpoint)
+    function handleResponsiveSidebar() {
+        if (window.innerWidth <= 800) {
+            if (sidebar) {
+                sidebar.style.display = 'none';
+            }
+        } else {
+            if (sidebar) {
+                sidebar.style.display = '';
+            }
+        }
+    }
+
+    // Initial check
+    handleResponsiveSidebar();
+
+    // Listen for window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            handleResponsiveSidebar();
+        }, 100);
+    });
+
+    // Initialize bottom navigation
+    setupBottomNavigation();
 });
 
 function showSection(sectionId) {
@@ -215,6 +322,9 @@ function showSection(sectionId) {
     
     // Update page title
     updatePageTitle(sectionId);
+    
+    // Update navigation active states (both sidebar and bottom nav)
+    updateBottomNavActive(sectionId);
     
     // Load section data
     loadSectionData(sectionId);
@@ -702,34 +812,35 @@ async function loadAnnouncements() {
     try {
         const announcements = await DatabaseService.getAnnouncements();
         
-        tableBody.innerHTML = announcements.map(announcement => `
-            <tr>
-                <td data-label="Başlık">${announcement.title}</td>
-                <td data-label="Kategori"><span class="category-badge category-${announcement.category}">${getCategoryName(announcement.category)}</span></td>
-                <td data-label="Tarih">${new Date(announcement.created_at).toLocaleString('tr-TR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: 'Europe/Istanbul'
-                })}</td>
-                <td data-label="Durum"><span class="status-badge status-${announcement.status}">${getStatusName(announcement.status)}</span></td>
-                <td data-label="İşlemler">
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-secondary" onclick="editAnnouncement(${announcement.id})" title="Düzenle">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement(${announcement.id})" title="Sil">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        tableBody.innerHTML = announcements.map(announcement => {
+            // Determine row status class based on status and dates
+            let statusClass = 'row-status-';
+            if (announcement.status === 'active') {
+                statusClass += 'active'; // Soft green
+            } else if (announcement.status === 'draft') {
+                statusClass += 'scheduled'; // Soft orange
+            } else {
+                statusClass += 'inactive'; // Soft red
+            }
+            
+            return `
+                <tr class="clickable-row ${statusClass}" onclick="editAnnouncement(${announcement.id})" style="cursor: pointer;">
+                    <td>${announcement.title}</td>
+                    <td><span class="category-badge category-${announcement.category}">${getCategoryName(announcement.category)}</span></td>
+                    <td>${new Date(announcement.created_at).toLocaleString('tr-TR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'Europe/Istanbul'
+                    })}</td>
+                </tr>
+            `;
+        }).join('');
     } catch (error) {
         console.error('Error loading announcements:', error);
-        tableBody.innerHTML = '<tr><td colspan="5">Duyurular yüklenirken bir hata oluştu.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3">Duyurular yüklenirken bir hata oluştu.</td></tr>';
     }
 }
 
@@ -740,34 +851,35 @@ async function loadBlogPosts() {
     try {
         const blogPosts = await DatabaseService.getBlogPosts();
         
-        tableBody.innerHTML = blogPosts.map(post => `
-            <tr>
-                <td data-label="Başlık">${post.title}</td>
-                <td data-label="Kategori"><span class="category-badge category-${post.category}">${getCategoryName(post.category)}</span></td>
-                <td data-label="Tarih">${new Date(post.created_at).toLocaleString('tr-TR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: 'Europe/Istanbul'
-                })}</td>
-                <td data-label="Durum"><span class="status-badge status-${post.status}">${getStatusName(post.status)}</span></td>
-                <td data-label="İşlemler">
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-secondary" onclick="editBlogPost(${post.id})" title="Düzenle">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteBlogPost(${post.id})" title="Sil">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        tableBody.innerHTML = blogPosts.map(post => {
+            // Determine row status class based on status
+            let statusClass = 'row-status-';
+            if (post.status === 'published') {
+                statusClass += 'active'; // Soft green
+            } else if (post.status === 'draft') {
+                statusClass += 'scheduled'; // Soft orange
+            } else {
+                statusClass += 'inactive'; // Soft red
+            }
+            
+            return `
+                <tr class="clickable-row ${statusClass}" onclick="editBlogPost(${post.id})" style="cursor: pointer;">
+                    <td>${post.title}</td>
+                    <td><span class="category-badge category-${post.category}">${getCategoryName(post.category)}</span></td>
+                    <td>${new Date(post.created_at).toLocaleString('tr-TR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'Europe/Istanbul'
+                    })}</td>
+                </tr>
+            `;
+        }).join('');
     } catch (error) {
         console.error('Error loading blog posts:', error);
-        tableBody.innerHTML = '<tr><td colspan="5">Blog yazıları yüklenirken bir hata oluştu.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3">Blog yazıları yüklenirken bir hata oluştu.</td></tr>';
     }
 }
 
@@ -777,35 +889,43 @@ async function loadEvents() {
     
     try {
         const events = await DatabaseService.getEvents(true); // Include past events for admin
+        const now = new Date();
         
-        tableBody.innerHTML = events.map(event => `
-            <tr>
-                <td data-label="Başlık">${event.title}</td>
-                <td data-label="Kategori"><span class="category-badge category-${event.type}">${getEventTypeName(event.type)}</span></td>
-                <td data-label="Tarih">${new Date(event.date).toLocaleString('tr-TR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: 'Europe/Istanbul'
-                })}</td>
-                <td data-label="Kayıt">${event.registered || 0}/${event.capacity}</td>
-                <td data-label="İşlemler">
-                    <div class="action-buttons">
-                        <button class="btn btn-sm btn-secondary" onclick="editEvent(${event.id})" title="Düzenle">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteEvent(${event.id})" title="Sil">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        tableBody.innerHTML = events.map(event => {
+            // Determine row status class based on event date
+            let statusClass = 'row-status-';
+            const eventDate = new Date(event.date);
+            
+            if (eventDate > now) {
+                // Future event - scheduled (soft orange)
+                statusClass += 'scheduled';
+            } else if (eventDate <= now && eventDate >= new Date(now.getTime() - 24 * 60 * 60 * 1000)) {
+                // Active/Recent event (soft green)
+                statusClass += 'active';
+            } else {
+                // Past event (soft red)
+                statusClass += 'inactive';
+            }
+            
+            return `
+                <tr class="clickable-row ${statusClass}" onclick="editEvent(${event.id})" style="cursor: pointer;">
+                    <td>${event.title}</td>
+                    <td><span class="category-badge category-${event.type}">${getEventTypeName(event.type)}</span></td>
+                    <td>${new Date(event.date).toLocaleString('tr-TR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'Europe/Istanbul'
+                    })}</td>
+                    <td>${event.registered || 0}/${event.capacity || '∞'}</td>
+                </tr>
+            `;
+        }).join('');
     } catch (error) {
         console.error('Error loading events:', error);
-        tableBody.innerHTML = '<tr><td colspan="5">Etkinlikler yüklenirken bir hata oluştu.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4">Etkinlikler yüklenirken bir hata oluştu.</td></tr>';
     }
 }
 
