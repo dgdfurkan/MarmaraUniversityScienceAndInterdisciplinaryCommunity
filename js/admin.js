@@ -1462,6 +1462,179 @@ async function openAllActivitiesModal() {
     }
 }
 
+// Load admin members for settings page
+async function loadAdminMembers() {
+    const adminMembersList = document.getElementById('admin-members-list');
+    if (!adminMembersList) return;
+    
+    try {
+        const members = await DatabaseService.getAllMembers();
+        
+        if (members.length === 0) {
+            adminMembersList.innerHTML = '<p class="no-members">Henüz üye bulunmuyor.</p>';
+            return;
+        }
+        
+        adminMembersList.innerHTML = members.map(member => {
+            const avatarUrl = member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}`;
+            const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'İsimsiz';
+            const isAdmin = member.is_admin || false;
+            
+            return `
+                <div class="admin-member-item" data-member-id="${member.user_id || member.id}">
+                    <div class="admin-member-avatar">
+                        <img src="${avatarUrl}" alt="${fullName}" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}'">
+                    </div>
+                    <div class="admin-member-info">
+                        <h4>${fullName} ${isAdmin ? '<span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin</span>' : ''}</h4>
+                        <p>${member.email || '-'}</p>
+                    </div>
+                    <div class="admin-member-actions">
+                        ${!isAdmin ? `
+                            <button class="btn btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName.replace(/'/g, "\\'")}')" title="Admin Yap">
+                                <i class="fas fa-user-shield"></i>
+                                <span>Admin Yap</span>
+                            </button>
+                        ` : `
+                            <span class="admin-status">Admin</span>
+                        `}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading admin members:', error);
+        adminMembersList.innerHTML = '<p class="error-message">Üyeler yüklenirken bir hata oluştu.</p>';
+    }
+}
+
+// Filter admin members
+function filterAdminMembers() {
+    const searchInput = document.getElementById('admin-member-search');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const memberItems = document.querySelectorAll('.admin-member-item');
+    
+    memberItems.forEach(item => {
+        const name = item.querySelector('h4')?.textContent.toLowerCase() || '';
+        const email = item.querySelector('p')?.textContent.toLowerCase() || '';
+        const matches = name.includes(searchTerm) || email.includes(searchTerm);
+        item.style.display = matches ? 'flex' : 'none';
+    });
+}
+
+// Make admin with 3-step confirmation (Apple-style)
+let makeAdminStep = 0;
+let makeAdminMemberId = null;
+let makeAdminMemberName = null;
+
+async function makeAdmin(memberId, memberName) {
+    makeAdminMemberId = memberId;
+    makeAdminMemberName = memberName;
+    makeAdminStep = 1;
+    
+    showMakeAdminConfirmation();
+}
+
+function showMakeAdminConfirmation() {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('make-admin-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal make-admin-modal';
+    modal.id = 'make-admin-modal';
+    
+    const buttonPositions = ['left', 'right', 'left']; // Alternating positions
+    const confirmText = buttonPositions[makeAdminStep - 1] === 'left' ? 'Evet, Eminim' : 'Evet';
+    const cancelText = buttonPositions[makeAdminStep - 1] === 'right' ? 'Hayır, İptal' : 'Hayır';
+    
+    modal.innerHTML = `
+        <div class="modal-content make-admin-modal-content">
+            <div class="modal-header">
+                <h2>Admin Yetkisi Verme</h2>
+                <button class="modal-close" onclick="closeMakeAdminModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="make-admin-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>${makeAdminStep === 1 ? 'İlk Onay' : makeAdminStep === 2 ? 'İkinci Onay' : 'Son Onay'}</h3>
+                    <p><strong>${makeAdminMemberName}</strong> kullanıcısına admin yetkisi vermek istediğinizden emin misiniz?</p>
+                    <p class="warning-text">Bu işlem geri alınamaz. Admin yetkisi olan kullanıcılar tüm site ayarlarına erişebilir.</p>
+                </div>
+                <div class="make-admin-buttons" style="flex-direction: ${buttonPositions[makeAdminStep - 1] === 'left' ? 'row' : 'row-reverse'};">
+                    <button class="btn btn-danger" onclick="confirmMakeAdmin()" style="order: ${buttonPositions[makeAdminStep - 1] === 'left' ? '1' : '2'};">
+                        ${confirmText}
+                    </button>
+                    <button class="btn btn-secondary" onclick="cancelMakeAdmin()" style="order: ${buttonPositions[makeAdminStep - 1] === 'right' ? '1' : '2'};">
+                        ${cancelText}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+function confirmMakeAdmin() {
+    makeAdminStep++;
+    
+    if (makeAdminStep <= 3) {
+        const modal = document.getElementById('make-admin-modal');
+        if (modal) {
+            modal.remove();
+        }
+        showMakeAdminConfirmation();
+    } else {
+        // Final confirmation - actually make admin
+        executeMakeAdmin();
+    }
+}
+
+function cancelMakeAdmin() {
+    closeMakeAdminModal();
+}
+
+function closeMakeAdminModal() {
+    const modal = document.getElementById('make-admin-modal');
+    if (modal) {
+        modal.remove();
+    }
+    document.body.style.overflow = '';
+    makeAdminStep = 0;
+    makeAdminMemberId = null;
+    makeAdminMemberName = null;
+}
+
+async function executeMakeAdmin() {
+    try {
+        const { data, error } = await supabase
+            .from('members')
+            .update({ is_admin: true })
+            .eq('user_id', makeAdminMemberId)
+            .select();
+        
+        if (error) throw error;
+        
+        alert(`${makeAdminMemberName} kullanıcısına admin yetkisi verildi!`);
+        closeMakeAdminModal();
+        
+        // Reload admin members list
+        loadAdminMembers();
+        // Reload members table
+        loadMembers();
+    } catch (error) {
+        console.error('Error making admin:', error);
+        alert('Admin yetkisi verilirken bir hata oluştu.');
+        closeMakeAdminModal();
+    }
+}
+
 // Initialize dashboard on page load
 document.addEventListener('DOMContentLoaded', async () => {
     loadDashboardStats();
