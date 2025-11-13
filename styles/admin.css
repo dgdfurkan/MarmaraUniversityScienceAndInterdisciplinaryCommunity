@@ -342,22 +342,26 @@ body {
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 8px 12px;
+    padding: 8px;
     background: rgba(239, 68, 68, 0.2);
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 6px;
     color: #dc2626;
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: 'Inter', sans-serif;
-    gap: 6px;
     margin-left: auto;
     will-change: transform, background-color;
+    min-width: 36px;
+    height: 36px;
 }
 
 .sidebar:not(.close) .sidebar_profile .user-profile-logout {
+    display: flex;
+}
+
+.sidebar.close .sidebar_profile .user-profile-logout {
     display: flex;
 }
 

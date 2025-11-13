@@ -172,6 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const link = item.querySelector('.link');
         if (link) {
             link.addEventListener('click', (e) => {
+                // Allow external links (like "Siteyi Görüntüle") to work normally
+                if (item.classList.contains('view-site-link')) {
+                    return; // Don't prevent default, let the link work
+                }
+                
                 e.preventDefault();
                 const sectionId = item.getAttribute('data-section');
                 if (sectionId) {
@@ -1548,13 +1553,16 @@ async function loadAdminMembers() {
     try {
         const members = await DatabaseService.getAllMembers();
         
-        if (members.length === 0) {
-            adminMembersList.innerHTML = '<p class="no-members">Henüz üye bulunmuyor.</p>';
+        // Filter to show only admins in the list
+        const adminMembers = members.filter(member => member.is_admin === true);
+        
+        if (adminMembers.length === 0) {
+            adminMembersList.innerHTML = '<p class="no-members">Henüz admin bulunmuyor.</p>';
             return;
         }
         
-        // Show all members initially (search will filter them)
-        adminMembersList.innerHTML = members.map(member => {
+        // Show only admin members
+        adminMembersList.innerHTML = adminMembers.map(member => {
             const avatarUrl = member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}`;
             const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'İsimsiz';
             const isAdmin = member.is_admin || false;
@@ -1594,18 +1602,67 @@ async function loadAdminMembers() {
     }
 }
 
-// Filter admin members
-function filterAdminMembers() {
+// Filter admin members - search from all members, not just admins
+async function filterAdminMembers() {
     const searchInput = document.getElementById('admin-member-search');
     const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const memberItems = document.querySelectorAll('.admin-member-item');
+    const adminMembersList = document.getElementById('admin-members-list');
     
-    memberItems.forEach(item => {
-        const name = item.querySelector('h4')?.textContent.toLowerCase() || '';
-        const email = item.querySelector('p')?.textContent.toLowerCase() || '';
-        const matches = name.includes(searchTerm) || email.includes(searchTerm);
-        item.style.display = matches ? 'flex' : 'none';
-    });
+    if (!searchTerm) {
+        // If search is empty, show only admins
+        loadAdminMembers();
+        return;
+    }
+    
+    try {
+        // Search from all members
+        const members = await DatabaseService.getAllMembers();
+        const filteredMembers = members.filter(member => {
+            const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim().toLowerCase();
+            const email = (member.email || '').toLowerCase();
+            const phone = (member.phone || '').toLowerCase();
+            const searchLower = searchTerm.toLowerCase();
+            
+            return fullName.includes(searchLower) || email.includes(searchLower) || phone.includes(searchLower);
+        });
+        
+        if (filteredMembers.length === 0) {
+            adminMembersList.innerHTML = '<p class="no-members">Arama sonucu bulunamadı.</p>';
+            return;
+        }
+        
+        // Show filtered members (both admin and non-admin)
+        adminMembersList.innerHTML = filteredMembers.map(member => {
+            const avatarUrl = member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}`;
+            const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'İsimsiz';
+            const isAdmin = member.is_admin || false;
+            
+            return `
+                <div class="admin-member-item" data-member-id="${member.user_id || member.id}">
+                    <div class="admin-member-avatar">
+                        <img src="${avatarUrl}" alt="${fullName}" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}'">
+                    </div>
+                    <div class="admin-member-info">
+                        <h4>${fullName} ${isAdmin ? '<span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin</span>' : ''}</h4>
+                        <p>${member.email || '-'}</p>
+                    </div>
+                    <div class="admin-member-actions">
+                        ${!isAdmin ? `
+                            <button class="btn btn-warning" onclick="makeAdmin('${member.user_id || member.id}', '${fullName.replace(/'/g, "\\'")}')" title="Admin Yap">
+                                <i class="fas fa-user-shield"></i>
+                                <span>Admin Yap</span>
+                            </button>
+                        ` : `
+                            <span class="admin-status">Admin</span>
+                        `}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error filtering admin members:', error);
+        adminMembersList.innerHTML = '<p class="error-message">Arama yapılırken bir hata oluştu.</p>';
+    }
 }
 
 // Make admin with 3-step confirmation (Apple-style)
@@ -1629,12 +1686,26 @@ function showMakeAdminConfirmation() {
     }
     
     const modal = document.createElement('div');
-    modal.className = 'modal make-admin-modal';
+    modal.className = 'modal make-admin-modal active';
     modal.id = 'make-admin-modal';
     
+    // 3 aşamalı onay sistemi - her aşamada farklı sorular
+    const questions = [
+        `${makeAdminMemberName} kullanıcısına admin yetkisi vermek istediğinizden emin misiniz?`,
+        `Bu kullanıcı admin yetkisi aldığında tüm site ayarlarına erişebilecek. Devam etmek istiyor musunuz?`,
+        `Son onay: ${makeAdminMemberName} kullanıcısına admin yetkisi verilecek. Bu işlem geri alınamaz. Onaylıyor musunuz?`
+    ];
+    
+    const stepTitles = ['İlk Onay', 'İkinci Onay', 'Son Onay'];
     const buttonPositions = ['left', 'right', 'left']; // Alternating positions
-    const confirmText = buttonPositions[makeAdminStep - 1] === 'left' ? 'Evet, Eminim' : 'Evet';
-    const cancelText = buttonPositions[makeAdminStep - 1] === 'right' ? 'Hayır, İptal' : 'Hayır';
+    const confirmTexts = ['Evet, Eminim', 'Evet, Devam Et', 'Evet, Onaylıyorum'];
+    const cancelTexts = ['Hayır, İptal', 'Hayır, Vazgeç', 'Hayır, İptal'];
+    
+    const currentStep = makeAdminStep - 1;
+    const confirmText = confirmTexts[currentStep];
+    const cancelText = cancelTexts[currentStep];
+    const question = questions[currentStep];
+    const stepTitle = stepTitles[currentStep];
     
     modal.innerHTML = `
         <div class="modal-content make-admin-modal-content">
@@ -1647,15 +1718,15 @@ function showMakeAdminConfirmation() {
             <div class="modal-body">
                 <div class="make-admin-warning">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <h3>${makeAdminStep === 1 ? 'İlk Onay' : makeAdminStep === 2 ? 'İkinci Onay' : 'Son Onay'}</h3>
-                    <p><strong>${makeAdminMemberName}</strong> kullanıcısına admin yetkisi vermek istediğinizden emin misiniz?</p>
+                    <h3>${stepTitle}</h3>
+                    <p><strong>${question}</strong></p>
                     <p class="warning-text">Bu işlem geri alınamaz. Admin yetkisi olan kullanıcılar tüm site ayarlarına erişebilir.</p>
                 </div>
-                <div class="make-admin-buttons" style="flex-direction: ${buttonPositions[makeAdminStep - 1] === 'left' ? 'row' : 'row-reverse'};">
-                    <button class="btn btn-danger" onclick="confirmMakeAdmin()" style="order: ${buttonPositions[makeAdminStep - 1] === 'left' ? '1' : '2'};">
+                <div class="make-admin-buttons" style="flex-direction: ${buttonPositions[currentStep] === 'left' ? 'row' : 'row-reverse'};">
+                    <button class="btn btn-danger" onclick="confirmMakeAdmin()" style="order: ${buttonPositions[currentStep] === 'left' ? '1' : '2'};">
                         ${confirmText}
                     </button>
-                    <button class="btn btn-secondary" onclick="cancelMakeAdmin()" style="order: ${buttonPositions[makeAdminStep - 1] === 'right' ? '1' : '2'};">
+                    <button class="btn btn-secondary" onclick="cancelMakeAdmin()" style="order: ${buttonPositions[currentStep] === 'right' ? '1' : '2'};">
                         ${cancelText}
                     </button>
                 </div>
@@ -1774,13 +1845,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     adminUserName.textContent = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Admin';
                 }
                 
-                if (adminUserAvatar && member.avatar_url) {
-                    adminUserAvatar.src = member.avatar_url;
-                }
-                
-                const adminUserEmail = document.getElementById('adminUserEmail');
-                if (adminUserEmail && member.email) {
-                    adminUserEmail.textContent = member.email;
+                if (adminUserAvatar) {
+                    if (member.avatar_url) {
+                        adminUserAvatar.src = member.avatar_url;
+                        adminUserAvatar.style.display = 'block';
+                        // Hide placeholder when avatar is loaded
+                        const placeholder = adminUserAvatar.nextElementSibling;
+                        if (placeholder && placeholder.classList.contains('user-profile-avatar-placeholder')) {
+                            placeholder.style.display = 'none';
+                        }
+                    } else {
+                        // Show placeholder if no avatar
+                        adminUserAvatar.style.display = 'none';
+                        const placeholder = adminUserAvatar.nextElementSibling;
+                        if (placeholder && placeholder.classList.contains('user-profile-avatar-placeholder')) {
+                            placeholder.style.display = 'flex';
+                        }
+                    }
                 }
             }
         }
