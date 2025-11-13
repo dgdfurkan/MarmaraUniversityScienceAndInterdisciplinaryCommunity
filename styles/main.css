@@ -961,7 +961,7 @@ small, .text-sm {
     }
     
     .nav-logo-text {
-        display: none;
+    display: none;
     }
     
     .nav-menu {
@@ -1052,7 +1052,7 @@ small, .text-sm {
     }
     
     .nav-container {
-        flex-direction: column;
+    flex-direction: column;
         height: auto;
         padding: 0 var(--spacing-xs);
         gap: 0;

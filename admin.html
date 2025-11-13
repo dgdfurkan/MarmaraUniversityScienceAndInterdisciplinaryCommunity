@@ -63,22 +63,18 @@
                     <a href="index.html" target="_blank">Siteyi Görüntüle</a>
                 </li>
             </ul>
-            <!-- User Profile Section at Bottom -->
+            <!-- User Profile Section at Bottom - sidebar_2.txt inspired -->
             <div class="user-profile">
-                <div class="user-profile-avatar">
+                <span class="nav_image">
                     <img id="adminUserAvatar" src="" alt="User Avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="user-profile-avatar-placeholder" style="display: none;">
                         <i class="fas fa-user"></i>
                     </div>
+                </span>
+                <div class="data_text">
+                    <span class="name" id="adminUserName">Admin</span>
+                    <span class="email" id="adminUserEmail"></span>
                 </div>
-                <div class="user-profile-info">
-                    <span class="user-profile-name" id="adminUserName">Admin</span>
-                    <span class="user-profile-email" id="adminUserEmail"></span>
-                </div>
-                <button class="user-profile-logout" onclick="logout()" title="Çıkış Yap">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Çıkış</span>
-                </button>
             </div>
         </aside>
 
