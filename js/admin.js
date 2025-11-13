@@ -1,5 +1,74 @@
 // Admin Panel JavaScript
 
+// Check authentication and admin status on page load
+async function checkAdminAccess() {
+    try {
+        // Check Supabase auth session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+            console.error('Error getting session:', sessionError);
+            window.location.href = 'index.html';
+            return false;
+        }
+        
+        if (!session || !session.user) {
+            // Not logged in, redirect to main page
+            window.location.href = 'index.html';
+            return false;
+        }
+        
+        // Check if user is admin
+        const isAdmin = await DatabaseService.checkAdminStatus(session.user.id);
+        
+        if (!isAdmin) {
+            // Not admin, redirect to main page
+            alert('Bu sayfaya erişim yetkiniz bulunmamaktadır.');
+            window.location.href = 'index.html';
+            return false;
+        }
+        
+        // User is admin, continue loading admin panel
+        console.log('Admin panel access granted');
+        
+        // Update user info in header
+        const member = await DatabaseService.getMemberById(session.user.id);
+        if (member) {
+            const userName = document.querySelector('.user-name');
+            if (userName) {
+                userName.textContent = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Admin';
+            }
+            const userAvatar = document.querySelector('.user-avatar');
+            if (userAvatar && member.avatar_url) {
+                userAvatar.innerHTML = `<img src="${member.avatar_url}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            }
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error checking admin access:', error);
+        window.location.href = 'index.html';
+        return false;
+    }
+}
+
+// Logout function
+async function logout() {
+    try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        
+        // Redirect to main page
+        window.location.href = 'index.html';
+    } catch (error) {
+        console.error('Error logging out:', error);
+        alert('Çıkış yapılırken bir hata oluştu.');
+    }
+}
+
+// Make logout function global
+window.logout = logout;
+
 // Bottom Navigation Scroll Handler
 let lastScrollY = 0;
 let ticking = false;
@@ -1374,7 +1443,7 @@ async function openAllActivitiesModal() {
             <div class="modal-content modal-large">
                 <div class="modal-header">
                     <h2>Tüm Aktiviteler</h2>
-                    <button class="modal-close" onclick="this.closest('.modal').remove()">
+                    <button class="modal-close" onclick="closeAllActivitiesModal()">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -1386,6 +1455,7 @@ async function openAllActivitiesModal() {
             </div>
         `;
         document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
         
         const activitiesList = document.getElementById('all-activities-list');
         if (activitiesList && allActivities.length > 0) {
@@ -1453,12 +1523,20 @@ async function openAllActivitiesModal() {
         // Close modal on overlay click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.remove();
+                closeAllActivitiesModal();
             }
         });
     } catch (error) {
         console.error('Error loading all activities:', error);
         alert('Aktiviteler yüklenirken bir hata oluştu.');
+    }
+}
+
+function closeAllActivitiesModal() {
+    const modal = document.querySelector('.all-activities-modal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = '';
     }
 }
 
@@ -1475,6 +1553,7 @@ async function loadAdminMembers() {
             return;
         }
         
+        // Show all members initially (search will filter them)
         adminMembersList.innerHTML = members.map(member => {
             const avatarUrl = member.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.email || 'default'}`;
             const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'İsimsiz';
@@ -1502,6 +1581,13 @@ async function loadAdminMembers() {
                 </div>
             `;
         }).join('');
+        
+        // Ensure search input has event listener
+        const searchInput = document.getElementById('admin-member-search');
+        if (searchInput && !searchInput.hasAttribute('data-listener-added')) {
+            searchInput.setAttribute('data-listener-added', 'true');
+            searchInput.addEventListener('input', filterAdminMembers);
+        }
     } catch (error) {
         console.error('Error loading admin members:', error);
         adminMembersList.innerHTML = '<p class="error-message">Üyeler yüklenirken bir hata oluştu.</p>';
@@ -1613,13 +1699,36 @@ function closeMakeAdminModal() {
 
 async function executeMakeAdmin() {
     try {
-        const { data, error } = await supabase
+        // Try to update by user_id first, then by id
+        let updateResult = null;
+        let error = null;
+        
+        // First try with user_id
+        const { data: dataByUserId, error: errorByUserId } = await supabase
             .from('members')
             .update({ is_admin: true })
             .eq('user_id', makeAdminMemberId)
             .select();
         
-        if (error) throw error;
+        if (errorByUserId) {
+            // If user_id doesn't work, try with id
+            const { data: dataById, error: errorById } = await supabase
+                .from('members')
+                .update({ is_admin: true })
+                .eq('id', makeAdminMemberId)
+                .select();
+            
+            if (errorById) {
+                throw errorById;
+            }
+            updateResult = dataById;
+        } else {
+            updateResult = dataByUserId;
+        }
+        
+        if (!updateResult || updateResult.length === 0) {
+            throw new Error('Üye bulunamadı.');
+        }
         
         alert(`${makeAdminMemberName} kullanıcısına admin yetkisi verildi!`);
         closeMakeAdminModal();
@@ -1630,13 +1739,20 @@ async function executeMakeAdmin() {
         loadMembers();
     } catch (error) {
         console.error('Error making admin:', error);
-        alert('Admin yetkisi verilirken bir hata oluştu.');
+        alert('Admin yetkisi verilirken bir hata oluştu: ' + (error.message || error));
         closeMakeAdminModal();
     }
 }
 
 // Initialize dashboard on page load
 document.addEventListener('DOMContentLoaded', async () => {
+    // First check admin access
+    const hasAccess = await checkAdminAccess();
+    if (!hasAccess) {
+        return; // Redirect will happen in checkAdminAccess
+    }
+    
+    // User has admin access, continue loading
     loadDashboardStats();
     loadAnnouncements();
     loadBlogPosts();

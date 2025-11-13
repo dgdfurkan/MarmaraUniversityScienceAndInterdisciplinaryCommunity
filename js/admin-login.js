@@ -1,74 +1,62 @@
 // Admin Login JavaScript
 
-// Demo credentials
-const DEMO_CREDENTIALS = {
-    username: 'admin',
-    password: 'music2024'
-};
-
-// Check if user is already logged in
-document.addEventListener('DOMContentLoaded', () => {
-    const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
-    if (isLoggedIn === 'true') {
-        window.location.href = 'admin.html';
-    }
-});
-
-// Login form handling
-document.getElementById('login-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const username = formData.get('username');
-    const password = formData.get('password');
-    const remember = formData.get('remember');
-    
-    // Show loading state
-    const submitBtn = this.querySelector('.login-btn');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş yapılıyor...';
-    submitBtn.disabled = true;
-    
-    // Hide any previous error messages
-    hideMessages();
-    
+// Check if user is already logged in and is admin
+document.addEventListener('DOMContentLoaded', async () => {
     try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Check Supabase auth session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        // Check credentials
-        if (username === DEMO_CREDENTIALS.username && password === DEMO_CREDENTIALS.password) {
-            // Login successful
-            showSuccessMessage('Giriş başarılı! Yönlendiriliyorsunuz...');
-            
-            // Store login state
-            if (remember) {
-                localStorage.setItem('adminLoggedIn', 'true');
-                localStorage.setItem('adminUsername', username);
-            } else {
-                sessionStorage.setItem('adminLoggedIn', 'true');
-                sessionStorage.setItem('adminUsername', username);
-            }
-            
-            // Redirect to admin panel after short delay
-            setTimeout(() => {
-                window.location.href = 'admin.html';
-            }, 1500);
-            
-        } else {
-            // Login failed
-            showErrorMessage('Kullanıcı adı veya şifre hatalı!');
+        if (sessionError) {
+            console.error('Error getting session:', sessionError);
+            showAccessDeniedMessage();
+            return;
         }
         
+        if (session && session.user) {
+            // User is logged in, check if admin
+            const isAdmin = await DatabaseService.checkAdminStatus(session.user.id);
+            
+            if (isAdmin) {
+                // User is admin, redirect to admin panel immediately
+                window.location.href = 'admin.html';
+                return;
+            } else {
+                // User is logged in but not admin
+                showAccessDeniedMessage('Giriş yaptınız ancak admin yetkiniz bulunmamaktadır.');
+                return;
+            }
+        }
+        
+        // If not logged in, show message to login on main page
+        showAccessDeniedMessage('Admin paneline erişmek için önce ana sayfada giriş yapmanız gerekiyor.');
     } catch (error) {
-        console.error('Login error:', error);
-        showErrorMessage('Giriş sırasında bir hata oluştu. Lütfen tekrar deneyin.');
-    } finally {
-        // Reset button
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
+        console.error('Error checking admin status:', error);
+        showAccessDeniedMessage();
     }
 });
+
+function showAccessDeniedMessage(customMessage = null) {
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        const message = customMessage || 'Admin paneline erişmek için önce ana sayfada giriş yapmanız gerekiyor. Eğer admin yetkiniz varsa, giriş yaptıktan sonra profil butonunun yanında admin paneli butonu görünecektir.';
+        
+        loginForm.innerHTML = `
+            <div style="text-align: center; padding: 2rem;">
+                <i class="fas fa-info-circle" style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem;"></i>
+                <h2 style="margin-bottom: 1rem;">Admin Paneli Erişimi</h2>
+                <p style="margin-bottom: 2rem; color: #666;">
+                    ${message}
+                </p>
+                <a href="index.html" class="btn btn-primary" style="display: inline-block; padding: 0.75rem 2rem; text-decoration: none; border-radius: 8px; background: #3b82f6; color: white;">
+                    <i class="fas fa-arrow-left"></i> Ana Sayfaya Dön
+                </a>
+            </div>
+        `;
+    }
+}
+
+// Login form is now handled on main page
+// This file is kept for backward compatibility but redirects to main page
 
 // Toggle password visibility
 function togglePassword() {

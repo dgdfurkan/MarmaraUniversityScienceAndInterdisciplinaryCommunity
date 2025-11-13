@@ -1606,20 +1606,68 @@ DatabaseService.getAllMembers = async function() {
     }
 };
 
-// Get member by ID
+// Get member by ID (tries user_id first, then id)
 DatabaseService.getMemberById = async function(memberId) {
     try {
-        const { data, error } = await supabase
+        // First try with user_id (UUID)
+        let { data, error } = await supabase
             .from('members')
             .select('*')
-            .eq('id', memberId)
+            .eq('user_id', memberId)
             .single();
         
-        if (error) throw error;
+        if (error) {
+            // If user_id doesn't work, try with id (integer)
+            const { data: dataById, error: errorById } = await supabase
+                .from('members')
+                .select('*')
+                .eq('id', memberId)
+                .single();
+            
+            if (errorById) {
+                throw errorById;
+            }
+            data = dataById;
+        }
+        
         return data;
     } catch (error) {
         console.error('Error getting member by ID:', error);
         return null;
+    }
+};
+
+// Check if user is admin
+DatabaseService.checkAdminStatus = async function(userId) {
+    try {
+        if (!userId) return false;
+        
+        // Try with user_id first
+        let { data, error } = await supabase
+            .from('members')
+            .select('is_admin')
+            .eq('user_id', userId)
+            .single();
+        
+        if (error) {
+            // If user_id doesn't work, try with id
+            const { data: dataById, error: errorById } = await supabase
+                .from('members')
+                .select('is_admin')
+                .eq('id', userId)
+                .single();
+            
+            if (errorById) {
+                console.error('Error checking admin status:', errorById);
+                return false;
+            }
+            data = dataById;
+        }
+        
+        return data && data.is_admin === true;
+    } catch (error) {
+        console.error('Error checking admin status:', error);
+        return false;
     }
 };
 
