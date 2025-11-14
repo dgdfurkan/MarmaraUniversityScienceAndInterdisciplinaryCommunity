@@ -340,6 +340,11 @@ body {
     text-rendering: optimizeLegibility;
     /* CRITICAL FIX: Reaksiyon modunda body'ye blur uygulanmasını engelle */
     filter: none !important;
+    /* iOS Safari için özel düzenlemeler */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    /* iOS Safari viewport fix */
+    min-height: -webkit-fill-available;
 }
 
 .container {
@@ -514,6 +519,8 @@ small, .text-sm {
     z-index: var(--z-fixed);
     transition: all var(--transition-base) var(--easing-ease);
     transform: translateY(0);
+    /* iOS Safari safe area support */
+    padding-top: env(safe-area-inset-top, 0);
 }
 
 /* Navbar Scroll States */
@@ -6797,6 +6804,10 @@ section {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-sizing: border-box;
+    /* iOS Safari için özel düzenlemeler */
+    -webkit-overflow-scrolling: touch;
+    /* Safe area support - fallback değerlerle */
+    max-height: calc(85vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 }
 
 .avatar-selection-header {
@@ -7037,7 +7048,7 @@ section {
     }
     
     .avatar-grid {
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        grid-template-columns: repeat(5, 1fr);
         gap: var(--spacing-sm);
         padding: var(--spacing-md) var(--spacing-sm);
         max-height: calc(80vh - 80px);
@@ -7057,15 +7068,16 @@ section {
 /* iPhone SE2 ve küçük ekranlar için */
 @media (max-width: 480px) {
     .avatar-selection-modal {
-        width: calc(100% - var(--spacing-sm) * 2);
-        max-width: calc(100vw - var(--spacing-sm) * 2);
+        width: calc(100% - 20px);
+        max-width: calc(100vw - 20px);
         max-height: 85vh;
-        margin: var(--spacing-sm);
+        margin: 10px;
         border-radius: var(--radius-lg);
     }
     
     .avatar-selection-header {
-        padding: var(--spacing-sm);
+        padding: 14px 12px;
+        flex-shrink: 0;
     }
     
     .avatar-selection-header h3 {
@@ -7079,10 +7091,10 @@ section {
     }
     
     .avatar-grid {
-        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-        gap: var(--spacing-xs);
-        padding: var(--spacing-sm);
-        max-height: calc(85vh - 60px);
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 12px;
+        max-height: calc(85vh - 70px);
     }
     
     .avatar-item {
@@ -7104,16 +7116,23 @@ section {
         width: calc(100% - 16px);
         max-width: calc(100vw - 16px);
         margin: 8px;
+        max-height: 90vh;
     }
     
     .avatar-grid {
-        grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 8px;
-        padding: 12px;
+        padding: 10px;
+        max-height: calc(90vh - 60px);
     }
     
     .avatar-selection-header {
-        padding: 12px;
+        padding: 10px;
+        flex-shrink: 0;
+    }
+    
+    .avatar-selection-header h3 {
+        font-size: var(--font-size-sm);
     }
 }
 
