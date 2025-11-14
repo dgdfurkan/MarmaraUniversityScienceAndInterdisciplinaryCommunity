@@ -2064,9 +2064,9 @@ document.addEventListener('DOMContentLoaded', () => {
         isSelectionCancelled = false;
         
         // Her emoji öğesinin genişliğini ve gap'i hesapla
-        // Emoji öğesi: 48px genişlik + 8px gap (CSS'den)
-        const itemWidth = 48; // .reaction-popup-item width
-        const gap = 8; // .reaction-popup gap
+        // Instagram tarzı: 50px genişlik + 6px gap (CSS'den)
+        const itemWidth = 50; // .reaction-popup-item width
+        const gap = 6; // .reaction-popup gap
         const totalItemWidth = itemWidth + gap;
         
         // Hareket miktarına göre hangi emoji seçileceğini hesapla
@@ -2219,8 +2219,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // CRITICAL FIX: Ekran daraldığında popup'ın kesilmemesi için sınır kontrolü
         // Popup'ın genişliğini ve yüksekliğini hesapla (henüz görünür değil, tahmin edelim)
-        const popupWidth = 5 * 48 + 4 * 8 + 24; // 5 emoji * 48px + 4 gap * 8px + 24px padding
-        const popupHeight = 48 + 24; // emoji yüksekliği + padding
+        // Instagram tarzı: 5 emoji * 50px + 4 gap * 6px + 20px padding (8px + 10px * 2)
+        const popupWidth = 5 * 50 + 4 * 6 + 20;
+        const popupHeight = 50 + 20; // emoji yüksekliği + padding
         
         // Popup'ın ekran sınırlarını kontrol et
         const viewportWidth = window.innerWidth;

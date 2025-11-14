@@ -640,9 +640,9 @@ small, .text-sm {
     
     /* Profile button with avatar - 768px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: calc(42px * 0.75 * 0.95) !important;
-        height: calc(42px * 0.75 * 0.95) !important;
-        min-width: calc(42px * 0.75 * 0.95) !important;
+        width: calc(42px * 0.7) !important;
+        height: calc(42px * 0.7) !important;
+        min-width: calc(42px * 0.7) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
     }
@@ -1058,9 +1058,9 @@ small, .text-sm {
     
     /* Profile button with avatar - 968px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
-        height: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
-        min-width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
+        width: calc(var(--touch-target-min) * 0.7) !important;
+        height: calc(var(--touch-target-min) * 0.7) !important;
+        min-width: calc(var(--touch-target-min) * 0.7) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
     }
@@ -1094,9 +1094,9 @@ small, .text-sm {
     
     /* Profile button with avatar - 480px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: calc(40px * 0.75 * 0.95) !important;
-        height: calc(40px * 0.75 * 0.95) !important;
-        min-width: calc(40px * 0.75 * 0.95) !important;
+        width: calc(40px * 0.7) !important;
+        height: calc(40px * 0.7) !important;
+        min-width: calc(40px * 0.7) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
     }
@@ -1201,9 +1201,9 @@ small, .text-sm {
     
     /* Profile button with avatar - 435px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: calc(38px * 0.75 * 0.95) !important;
-        height: calc(38px * 0.75 * 0.95) !important;
-        min-width: calc(38px * 0.75 * 0.95) !important;
+        width: calc(38px * 0.65) !important;
+        height: calc(38px * 0.65) !important;
+        min-width: calc(38px * 0.65) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
     }
@@ -1287,9 +1287,9 @@ small, .text-sm {
     
     /* Profile button with avatar küçültme - 450px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: calc(36px * 0.75 * 0.95) !important;
-        height: calc(36px * 0.75 * 0.95) !important;
-        min-width: calc(36px * 0.75 * 0.95) !important;
+        width: calc(36px * 0.65) !important;
+        height: calc(36px * 0.65) !important;
+        min-width: calc(36px * 0.65) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
         padding: 0;
@@ -1388,9 +1388,9 @@ small, .text-sm {
     
     /* Profile button with avatar - 641px altı (nav-icon-btn ile aynı oranda küçük) */
     .profile-btn.has-avatar {
-        width: calc(42px * 0.75 * 0.95) !important;
-        height: calc(42px * 0.75 * 0.95) !important;
-        min-width: calc(42px * 0.75 * 0.95) !important;
+        width: calc(42px * 0.7) !important;
+        height: calc(42px * 0.7) !important;
+        min-width: calc(42px * 0.7) !important;
         border: 1px solid var(--color-white);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px var(--color-accent-primary);
     }
@@ -4953,17 +4953,17 @@ section {
     transform: translate(-50%, -100%); /* Instagram mantığı: Parmağın tam üstünde */
     display: none;
     flex-direction: row;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 8px 10px;
     background: rgba(255, 255, 255, 1);
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     filter: none !important;
-    border-radius: 32px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    border: 0.5px solid rgba(0, 0, 0, 0.08);
     z-index: 1002;
-    animation: reactionPopupBounceIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: reactionPopupBounceIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     white-space: nowrap;
     pointer-events: none;
     user-select: none;
@@ -4977,6 +4977,7 @@ section {
     max-width: calc(100vw - 20px);
     overflow: visible;
     box-sizing: border-box;
+    will-change: transform, opacity;
 }
 
 .reaction-popup.show {
@@ -4988,66 +4989,55 @@ section {
 .reaction-popup::after {
     content: '';
     position: absolute;
-    bottom: -8px;
+    bottom: -6px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid rgba(255, 255, 255, 0.98);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid rgba(255, 255, 255, 1);
 }
 
 .reaction-popup-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px solid rgba(0, 0, 0, 0.08);
-    font-size: 1.5rem;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: transparent;
+    border: none;
+    font-size: 1.6rem;
     position: relative;
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
-    /* Daha yumuşak görünüm için */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Instagram tarzı minimal görünüm */
+    box-shadow: none;
+    /* Smooth transform için */
+    will-change: transform;
 }
 
 .reaction-popup-item:hover {
-    transform: scale(1.15);
-    border-color: rgba(99, 102, 241, 0.4);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-    background: rgba(255, 255, 255, 1);
+    transform: scale(1.2);
 }
 
 .reaction-popup-item.active {
-    transform: scale(1.2);
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.25);
 }
 
-/* Sürükleme sırasında seçilen emoji - daha belirgin */
+/* Sürükleme sırasında seçilen emoji - Minimal vurgu */
 .reaction-popup-item.selected {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: #6366f1;
-    border-width: 3px;
     transform: scale(1.35);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     z-index: 10;
 }
 
 /* Instagram mantığı: Sürükleme sırasında hover efekti */
 .reaction-popup-item.is-hovered {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: #6366f1;
-    border-width: 3px;
     transform: scale(1.35);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     z-index: 10;
 }
 
@@ -5055,7 +5045,10 @@ section {
 @keyframes reactionPopupBounceIn {
     0% {
         opacity: 0;
-        transform: translate(-50%, -100%) scale(0.7);
+        transform: translate(-50%, -100%) scale(0.8);
+    }
+    50% {
+        transform: translate(-50%, -100%) scale(1.05);
     }
     100% {
         opacity: 1;
@@ -5386,14 +5379,22 @@ section {
     
     .reaction-popup {
         bottom: calc(100% + 8px);
-        padding: 10px;
-        gap: 6px;
+        padding: 7px 9px;
+        gap: 5px;
+        border-radius: 45px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     }
     
     .reaction-popup-item {
-        width: 44px;
-        height: 44px;
-        font-size: 1.3rem;
+        width: 46px;
+        height: 46px;
+        font-size: 1.4rem;
+    }
+    
+    .reaction-popup-item:hover,
+    .reaction-popup-item.selected,
+    .reaction-popup-item.is-hovered {
+        transform: scale(1.25);
     }
 }
 
@@ -5470,14 +5471,29 @@ section {
     
     .reaction-popup {
         bottom: calc(100% + 6px);
-        padding: 8px;
-        gap: 5px;
+        padding: 6px 8px;
+        gap: 4px;
+        border-radius: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
     
     .reaction-popup-item {
-        width: 40px;
-        height: 40px;
-        font-size: 1.2rem;
+        width: 42px;
+        height: 42px;
+        font-size: 1.3rem;
+    }
+    
+    .reaction-popup-item:hover,
+    .reaction-popup-item.selected,
+    .reaction-popup-item.is-hovered {
+        transform: scale(1.2);
+    }
+    
+    .reaction-popup::after {
+        bottom: -5px;
+        border-left-width: 5px;
+        border-right-width: 5px;
+        border-top-width: 5px;
     }
     
     .footer-stats {
@@ -6780,6 +6796,7 @@ section {
     overflow: hidden;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    box-sizing: border-box;
 }
 
 .avatar-selection-header {
@@ -6952,9 +6969,9 @@ section {
 .profile-btn.has-avatar {
     position: relative;
     overflow: visible;
-    width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
-    height: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
-    min-width: calc(var(--touch-target-min) * 0.75 * 0.95) !important;
+    width: calc(var(--touch-target-min) * 0.7) !important;
+    height: calc(var(--touch-target-min) * 0.7) !important;
+    min-width: calc(var(--touch-target-min) * 0.7) !important;
     border: 2px solid var(--color-white);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--color-accent-primary);
     transition: all var(--transition-base) var(--easing-ease);
@@ -7001,15 +7018,31 @@ section {
         text-align: center;
     }
     
-    .avatar-grid {
-        grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
-        gap: var(--spacing-sm);
-        padding: var(--spacing-md);
-    }
-    
     .avatar-selection-modal {
         width: calc(100% - var(--spacing-md) * 2);
-        max-height: 70vh;
+        max-width: calc(100vw - var(--spacing-md) * 2);
+        max-height: 80vh;
+        margin: var(--spacing-md);
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    .avatar-selection-header {
+        padding: var(--spacing-md) var(--spacing-sm);
+        flex-shrink: 0;
+    }
+    
+    .avatar-selection-header h3 {
+        font-size: var(--font-size-lg);
+    }
+    
+    .avatar-grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-sm);
+        max-height: calc(80vh - 80px);
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     
     .avatar-item-selected-badge {
@@ -7018,6 +7051,69 @@ section {
         font-size: 10px;
         top: 2px;
         right: 2px;
+    }
+}
+
+/* iPhone SE2 ve küçük ekranlar için */
+@media (max-width: 480px) {
+    .avatar-selection-modal {
+        width: calc(100% - var(--spacing-sm) * 2);
+        max-width: calc(100vw - var(--spacing-sm) * 2);
+        max-height: 85vh;
+        margin: var(--spacing-sm);
+        border-radius: var(--radius-lg);
+    }
+    
+    .avatar-selection-header {
+        padding: var(--spacing-sm);
+    }
+    
+    .avatar-selection-header h3 {
+        font-size: var(--font-size-base);
+    }
+    
+    .avatar-selection-close {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+    
+    .avatar-grid {
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm);
+        max-height: calc(85vh - 60px);
+    }
+    
+    .avatar-item {
+        border-width: 2px;
+    }
+    
+    .avatar-item-selected-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 9px;
+        top: 1px;
+        right: 1px;
+    }
+}
+
+/* Çok küçük ekranlar için (iPhone SE2 - 375px) */
+@media (max-width: 375px) {
+    .avatar-selection-modal {
+        width: calc(100% - 16px);
+        max-width: calc(100vw - 16px);
+        margin: 8px;
+    }
+    
+    .avatar-grid {
+        grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+        gap: 8px;
+        padding: 12px;
+    }
+    
+    .avatar-selection-header {
+        padding: 12px;
     }
 }
 
